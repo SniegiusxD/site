@@ -17,6 +17,13 @@ export function AppGate() {
 
   const authed = !!session?.user
 
+  // Skip intro for authenticated users on page load
+  useEffect(() => {
+    if (!isPending && authed && stage === "intro") {
+      setStage("app")
+    }
+  }, [authed, isPending, stage])
+
   // If the session resolves to authed while sitting on the auth screen, advance.
   useEffect(() => {
     if (authed && stage === "auth") setStage("config")
