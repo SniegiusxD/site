@@ -12,6 +12,7 @@ import {
   INITIAL_ACTIVE_BETS,
   SIGNALS,
 } from "./mock-data"
+import { useSignals } from "./use-signals"
 import type { ActiveBet, BetStatus, Signal } from "./types"
 
 interface PortfolioContextValue {
@@ -28,8 +29,16 @@ interface PortfolioContextValue {
 const PortfolioContext = createContext<PortfolioContextValue | null>(null)
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
-  const [signals, setSignals] = useState<Signal[]>(SIGNALS)
+  const { signals: liveSignals } = useSignals()
+  const mockOtherTabs = SIGNALS.filter((s) => s.category !== "AGGREGATOR")
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set())
   const [activeBets, setActiveBets] = useState<ActiveBet[]>(INITIAL_ACTIVE_BETS)
+
+  const signals = useMemo(
+    () =>
+      [...liveSignals, ...mockOtherTabs].filter((s) => !removedIds.has(s.id)),
+    [liveSignals, mockOtherTabs, removedIds],
+  )
 
   const placeBet = (signal: Signal) => {
     setActiveBets((prev) => {
@@ -49,7 +58,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       }
       return [newBet, ...prev]
     })
-    setSignals((prev) => prev.filter((s) => s.id !== signal.id))
+    setRemovedIds((prev) => new Set(prev).add(signal.id))
   }
 
   const settleBet = (id: string, status: Exclude<BetStatus, "laukia">) => {
