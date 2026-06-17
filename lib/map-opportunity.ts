@@ -75,10 +75,12 @@ function buildRationale(opp: BackendOpportunity, edgePct: number, sharpOdds?: nu
   return opp.description ?? ""
 }
 
+const KELLY_FRACTION = 0.25
+
 export function mapOpportunity(opp: BackendOpportunity, bankroll = 1247): Signal {
   const edgePct = (opp.edge ?? 0) * 100
   const kellyPct = (opp.kelly_fraction ?? 0) * 100
-  const stake = Math.max(3, Math.round(bankroll * (opp.kelly_fraction ?? 0.01)))
+  const stake = Math.min(50, Math.max(3, Math.round(bankroll * (opp.kelly_fraction ?? 0.01) * KELLY_FRACTION)))
   const sharpOdds =
     opp.sharp_odds ?? (opp.pinnacle_true_prob ? 1 / opp.pinnacle_true_prob : undefined)
 
