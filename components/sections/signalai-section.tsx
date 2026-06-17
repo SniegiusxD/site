@@ -17,6 +17,8 @@ const BOOK_FILTERS: ("ALL" | Bookmaker)[] = [
   "TopSport",
 ]
 
+type SortMode = "edge" | "time"
+
 /** Loosely normalise a match string so "A vs B" / "A @ B" compare. */
 function matchKey(m: string) {
   return m
@@ -30,6 +32,7 @@ export function SignalaiSection() {
   const reduce = useReducedMotion()
   const [tab, setTab] = useState<SportKey>("AGGREGATOR")
   const [book, setBook] = useState<"ALL" | Bookmaker>("ALL")
+  const [sort, setSort] = useState<SortMode>("edge")
   const [toast, setToast] = useState<string | null>(null)
   const [selected, setSelected] = useState<Signal | null>(null)
 
@@ -40,13 +43,24 @@ export function SignalaiSection() {
   }, [toast])
 
   const inCategory = signals.filter((s) => s.category === tab)
-  const filtered = useMemo(
-    () =>
+  const filtered = useMemo(() => {
+    const base =
       book === "ALL"
         ? inCategory
-        : inCategory.filter((s) => s.bookmaker === book),
-    [inCategory, book],
-  )
+        : inCategory.filter((s) => s.bookmaker === book)
+    const sorted = [...base]
+    if (sort === "edge") {
+      sorted.sort((a, b) => b.edgePercent - a.edgePercent)
+    } else {
+      // earliest game first; signals without a start time sink to the bottom
+      sorted.sort((a, b) => {
+        const ta = a.startsAt ? new Date(a.startsAt).getTime() : Infinity
+        const tb = b.startsAt ? new Date(b.startsAt).getTime() : Infinity
+        return ta - tb
+      })
+    }
+    return sorted
+  }, [inCategory, book, sort])
 
   // Set of match keys the user already has active bets on.
   const betMatchKeys = useMemo(
@@ -124,9 +138,35 @@ export function SignalaiSection() {
 
           <div className="mt-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold">Vertės galimybės</h2>
-            <span className="font-mono text-[11px] text-muted-foreground">
-              {filtered.length} signal{filtered.length === 1 ? "as" : "ai"}
-            </span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 rounded-full border border-border p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setSort("edge")}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                    sort === "edge"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Vertė
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSort("time")}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                    sort === "time"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Laikas
+                </button>
+              </div>
+              <span className="font-mono text-[11px] text-muted-foreground">
+                {filtered.length} signal{filtered.length === 1 ? "as" : "ai"}
+              </span>
+            </div>
           </div>
 
           {filtered.length === 0 ? (

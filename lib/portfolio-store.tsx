@@ -9,7 +9,6 @@ import {
 } from "react"
 import {
   BANKROLL,
-  INITIAL_ACTIVE_BETS,
   SIGNALS,
 } from "./mock-data"
 import { useSignals } from "./use-signals"
@@ -32,7 +31,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   const { signals: liveSignals } = useSignals()
   const mockOtherTabs = SIGNALS.filter((s) => s.category !== "AGGREGATOR")
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set())
-  const [activeBets, setActiveBets] = useState<ActiveBet[]>(INITIAL_ACTIVE_BETS)
+  const [activeBets, setActiveBets] = useState<ActiveBet[]>([])
 
   const signals = useMemo(
     () =>

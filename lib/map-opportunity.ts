@@ -94,6 +94,7 @@ export function mapOpportunity(opp: BackendOpportunity, bankroll = 1247): Signal
     odds: opp.soft_odds,
     stake,
     timeUntil: formatTimeUntil(opp.starts_at),
+    startsAt: opp.starts_at,
     confidence: Math.min(95, Math.round(opp.match_confidence ?? edgePct * 3)),
     edgePercent: +edgePct.toFixed(1),
     kellyPercent: +kellyPct.toFixed(1),

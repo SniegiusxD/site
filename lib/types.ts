@@ -26,6 +26,8 @@ export interface Signal {
   odds: number
   stake: number
   timeUntil: string
+  /** ISO start time for sorting (optional; undefined for mock data) */
+  startsAt?: string
   /** AI / model confidence 0-100 */
   confidence: number
   /** detected value edge in % */
