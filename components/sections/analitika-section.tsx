@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts"
 import { BookmakerLogo, bookmakerLabel } from "@/components/shared/bookmaker-logo"
+import { ClvPanel } from "@/components/sections/clv-panel"
 import { computeAnalytics, settledFromActive } from "@/lib/analytics"
 import { eur, pct } from "@/lib/format"
 import { usePortfolio } from "@/lib/portfolio-store"
@@ -97,6 +98,9 @@ export function AnalitikaSection() {
 
   return (
     <section aria-label="Analitika" className="flex flex-col gap-3">
+      {/* CLV validation loop (#21) — proves whether surfaced edges are real */}
+      <ClvPanel />
+
       {/* Real derived KPIs */}
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         <Kpi
