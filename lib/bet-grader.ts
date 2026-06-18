@@ -1,6 +1,7 @@
 /**
- * Auto-settle pending moneyline bets using ESPN public scoreboards.
- * Spread/total/BTTS stay pending until we add line-aware grading.
+ * Auto-settle pending bets using ESPN public scoreboards.
+ * Moneyline: winner. Spread/total: final scores vs line. BTTS: both scored.
+ * Tennis totals stay pending (ESPN tennis has no game-count score) — manual.
  */
 
 export type BetForGrading = {
@@ -10,6 +11,7 @@ export type BetForGrading = {
   betDescription: string
   marketType: string
   pickName: string | null
+  line: number | null
   homeName: string | null
   awayName: string | null
   startsAt: Date | null
@@ -18,7 +20,7 @@ export type BetForGrading = {
 }
 
 export type GradeResult = {
-  status: 'laimeta' | 'pralaimeta'
+  status: 'laimeta' | 'pralaimeta' | 'grazinta'
   profit: number
 }
 
@@ -78,6 +80,7 @@ function espnPathsForSport(sport: string): string[] {
 type EspnCompetitor = {
   homeAway?: string
   winner?: boolean
+  score?: string | number
   athlete?: { displayName?: string }
   team?: { displayName?: string; name?: string }
 }
@@ -155,6 +158,73 @@ function gradeFromEspnEvent(
   return null
 }
 
+function toScore(c: EspnCompetitor): number | null {
+  if (c.score == null) return null
+  const n = typeof c.score === 'number' ? c.score : parseFloat(c.score)
+  return Number.isFinite(n) ? n : null
+}
+
+/**
+ * Resolve a finished ESPN event to our fixture and return both sides oriented
+ * to OUR home/away (homeHint = our home). Returns scores for line grading.
+ * `swapped` = true when ESPN's home is our away.
+ */
+function resolveFixture(
+  ev: EspnEvent,
+  homeHint: string,
+  awayHint: string,
+): { homeScore: number; awayScore: number; eHomeName: string; eAwayName: string } | null {
+  const comp = ev.competitions?.[0]
+  if (!comp?.competitors?.length || !eventFinished(ev)) return null
+  const comps = comp.competitors
+  let eHome = comps.find((c) => c.homeAway === 'home') ?? comps[0]
+  let eAway = comps.find((c) => c.homeAway === 'away') ?? comps[1]
+  if (!eHome || !eAway) return null
+
+  const eHomeName = competitorName(eHome)
+  const eAwayName = competitorName(eAway)
+  const hs = toScore(eHome)
+  const as = toScore(eAway)
+  if (hs == null || as == null) return null
+
+  // Orient ESPN sides onto our fixture (ESPN order may differ).
+  const direct =
+    (namesMatch(homeHint, eHomeName) || namesMatch(awayHint, eAwayName)) &&
+    !(namesMatch(homeHint, eAwayName) || namesMatch(awayHint, eHomeName))
+  const swap =
+    (namesMatch(homeHint, eAwayName) || namesMatch(awayHint, eHomeName)) &&
+    !(namesMatch(homeHint, eHomeName) || namesMatch(awayHint, eAwayName))
+  if (!direct && !swap) {
+    // weak fallback: require at least one side to match in direct order
+    if (!namesMatch(homeHint, eHomeName) && !namesMatch(awayHint, eAwayName)) return null
+  }
+  if (swap) {
+    return { homeScore: as, awayScore: hs, eHomeName: eAwayName, eAwayName: eHomeName }
+  }
+  return { homeScore: hs, awayScore: as, eHomeName, eAwayName }
+}
+
+/** win=true / lose=false / push=null for a spread on OUR pick side. */
+function gradeSpread(
+  homeScore: number,
+  awayScore: number,
+  pickIsHome: boolean,
+  line: number,
+): boolean | null {
+  // line is the handicap for the PICK side. Covered if (pickScore - oppScore) + line > 0.
+  const margin = pickIsHome ? homeScore - awayScore : awayScore - homeScore
+  const adj = margin + line
+  if (Math.abs(adj) < 1e-9) return null // push
+  return adj > 0
+}
+
+/** win=true / lose=false / push=null for over/under. */
+function gradeTotal(total: number, isOver: boolean, line: number): boolean | null {
+  if (Math.abs(total - line) < 1e-9) return null // push
+  return isOver ? total > line : total < line
+}
+
+
 function yyyymmdd(d: Date): string {
   const y = d.getUTCFullYear()
   const m = String(d.getUTCMonth() + 1).padStart(2, '0')
@@ -162,17 +232,32 @@ function yyyymmdd(d: Date): string {
   return `${y}${m}${day}`
 }
 
-export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | null> {
-  if (bet.marketType !== 'moneyline') return null
+function settle(outcome: boolean | null, bet: BetForGrading): GradeResult {
+  if (outcome === null) return { status: 'grazinta', profit: 0 } // push → stake back
+  return outcome
+    ? { status: 'laimeta', profit: +(bet.stake * (bet.odds - 1)).toFixed(2) }
+    : { status: 'pralaimeta', profit: -bet.stake }
+}
 
-  const pickName =
-    bet.pickName ?? extractPickName(bet.betDescription, bet.marketType)
-  if (!pickName) return null
+export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | null> {
+  const market = (bet.marketType ?? 'moneyline').toLowerCase()
+  // Tennis totals/spreads: ESPN tennis scoreboard has no game-count totals → manual.
+  const sportU = bet.sport.toUpperCase()
+  if ((sportU === 'TENNIS' || sportU === 'TABLE_TENNIS') && market !== 'moneyline') {
+    return null
+  }
 
   const parsed = parseMatchNames(bet.match)
   const homeHint = bet.homeName ?? parsed?.home ?? ''
   const awayHint = bet.awayName ?? parsed?.away ?? ''
   if (!homeHint && !awayHint) return null
+
+  // markets that need a numeric line must have one
+  if ((market === 'spread' || market === 'total') && bet.line == null) return null
+
+  const pickName =
+    bet.pickName ?? extractPickName(bet.betDescription, bet.marketType)
+  if (market === 'moneyline' && !pickName) return null
 
   const start = bet.startsAt ?? new Date()
   if (Date.now() < start.getTime() + GRACE_MS) return null
@@ -185,6 +270,8 @@ export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | nul
   const paths = espnPathsForSport(bet.sport)
   if (!paths.length) return null
 
+  const descLower = bet.betDescription.toLowerCase()
+
   for (const path of paths) {
     for (const date of dates) {
       let events: EspnEvent[]
@@ -194,12 +281,40 @@ export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | nul
         continue
       }
       for (const ev of events) {
-        const won = gradeFromEspnEvent(ev, pickName, homeHint, awayHint)
-        if (won === null) continue
-        const profit = won
-          ? +(bet.stake * (bet.odds - 1)).toFixed(2)
-          : -bet.stake
-        return { status: won ? 'laimeta' : 'pralaimeta', profit }
+        if (market === 'moneyline') {
+          const won = gradeFromEspnEvent(ev, pickName ?? '', homeHint, awayHint)
+          if (won === null) continue
+          return settle(won, bet)
+        }
+
+        // spread / total / btts all need oriented scores
+        const fx = resolveFixture(ev, homeHint, awayHint)
+        if (!fx) continue
+
+        if (market === 'spread') {
+          // pick side: which team did we back? (pickName vs our home/away hints)
+          const pickIsHome =
+            namesMatch(pickName ?? '', fx.eHomeName) ||
+            namesMatch(pickName ?? '', homeHint)
+          const pickIsAway =
+            namesMatch(pickName ?? '', fx.eAwayName) ||
+            namesMatch(pickName ?? '', awayHint)
+          if (!pickIsHome && !pickIsAway) continue
+          const out = gradeSpread(fx.homeScore, fx.awayScore, pickIsHome, bet.line as number)
+          return settle(out, bet)
+        }
+
+        if (market === 'total') {
+          const isOver = descLower.includes('daugiau') || descLower.includes('over')
+          const out = gradeTotal(fx.homeScore + fx.awayScore, isOver, bet.line as number)
+          return settle(out, bet)
+        }
+
+        if (market === 'btts') {
+          const isYes = descLower.includes('taip') || descLower.includes('yes')
+          const bothScored = fx.homeScore > 0 && fx.awayScore > 0
+          return settle(isYes ? bothScored : !bothScored, bet)
+        }
       }
     }
   }

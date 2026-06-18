@@ -106,6 +106,13 @@ export function mapOpportunity(opp: BackendOpportunity, bankroll = 1247): Signal
   const pickName =
     extractPickName(betDescription, marketType) ??
     (marketType === "moneyline" ? betDescription.replace(/\s*moneyline\s*$/i, "").trim() : undefined)
+  // Line for spread/total: backend sends opp.line, else parse from description
+  // ("Suminis: Daugiau 210.5", "Handikapas: Team -4.5"). Last signed number.
+  let line: number | undefined = opp.line ?? undefined
+  if (line == null && (marketType === "spread" || marketType === "total")) {
+    const m = betDescription.match(/(-?\+?\d+(?:\.\d+)?)\s*$/)
+    if (m) line = Number(m[1].replace("+", ""))
+  }
 
   return {
     id: makeId(opp),
@@ -128,6 +135,7 @@ export function mapOpportunity(opp: BackendOpportunity, bankroll = 1247): Signal
     sharpBook: "Pinnacle",
     marketType,
     pickName: pickName || undefined,
+    line,
     gameKey: opp.game_key,
     homeName,
     awayName,

@@ -12,6 +12,16 @@ export function ActiveBetCard({ bet }: { bet: ActiveBet }) {
   const pending = bet.status === "laukia"
   const profit = bet.stake * (bet.odds - 1)
 
+  // Auto-grade covers moneyline (all sports) + spread/total/BTTS (team sports),
+  // but NOT tennis/table-tennis non-moneyline (ESPN has no game-count totals).
+  // Those need the manual fallback even when logged in.
+  const sportU = (bet.sport ?? "").toUpperCase()
+  const market = (bet.marketType ?? "moneyline").toLowerCase()
+  const manualOnly =
+    (sportU === "TENNIS" || sportU === "TABLE_TENNIS") && market !== "moneyline"
+  const showManualButtons = !isLoggedIn || manualOnly
+  const showAutoHint = isLoggedIn && !manualOnly
+
   return (
     <article className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-3">
@@ -48,13 +58,13 @@ export function ActiveBetCard({ bet }: { bet: ActiveBet }) {
           <span className="mr-auto font-mono text-[11px] text-muted-foreground">
             Galimas pelnas{" "}
             <b className="text-success">{eur(profit)}</b>
-            {isLoggedIn && (
+            {showAutoHint && (
               <span className="ml-1 text-[10px] text-muted-foreground">
                 · auto po rungtynių
               </span>
             )}
           </span>
-          {!isLoggedIn && (
+          {showManualButtons && (
             <>
               <Button
                 size="sm"

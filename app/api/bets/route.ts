@@ -33,6 +33,7 @@ function rowToActiveBet(row: typeof userBet.$inferSelect): ActiveBet {
     profit: row.profit,
     marketType: row.marketType,
     pickName: row.pickName ?? undefined,
+    line: row.line ?? undefined,
     startsAt: row.startsAt?.toISOString(),
   }
 }
@@ -57,6 +58,7 @@ async function gradePendingForUser(userId: string) {
       betDescription: row.betDescription,
       marketType: row.marketType,
       pickName: row.pickName,
+      line: row.line,
       homeName: row.homeName,
       awayName: row.awayName,
       startsAt: row.startsAt,

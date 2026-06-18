@@ -78,6 +78,7 @@ function addLocalBetFromSignal(prev: ActiveBet[], signal: Signal): ActiveBet[] {
     profit: null,
     marketType: signal.marketType,
     pickName: signal.pickName,
+    line: signal.line,
     startsAt: signal.startsAt,
   }
   return [newBet, ...prev]
@@ -216,6 +217,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
               stake: signal.stake,
               marketType: signal.marketType ?? "moneyline",
               pickName: signal.pickName,
+              line: signal.line,
               homeName: signal.homeName,
               awayName: signal.awayName,
               gameKey: signal.gameKey,

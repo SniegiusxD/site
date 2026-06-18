@@ -58,6 +58,8 @@ export interface Signal {
   marketType?: string
   /** team/player picked (for auto-grade) */
   pickName?: string
+  /** line for spread/total markets (e.g. -4.5 spread, 210.5 total); from description */
+  line?: number
   /** game key for dedup */
   gameKey?: string
   homeName?: string
@@ -81,6 +83,8 @@ export interface ActiveBet {
   /** moneyline | spread | total | btts */
   marketType?: string
   pickName?: string
+  /** line for spread/total markets */
+  line?: number
   startsAt?: string
 }
 
