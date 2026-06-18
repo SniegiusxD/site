@@ -233,7 +233,7 @@ export function BetDetailSheet({
               <div className="mt-4 grid grid-cols-3 gap-2 font-mono text-[11px]">
                 <Meta label="Limitas" value={eur(signal.stake * 125)} />
                 <Meta label="Rinkos pers." value={`+${pct(signal.edgePercent)}`} tone="text-success" />
-                <Meta label="Kelly" value={eur(signal.stake)} />
+                <Meta label="¼ Kelly" value={pct(signal.kellyPercent)} />
               </div>
             </div>
 

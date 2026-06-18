@@ -17,7 +17,8 @@ export function SignalCard({
   /** true if the user already has a bet on this match */
   alreadyBet?: boolean
 }) {
-  const toWin = signal.stake * (signal.odds - 1)
+  const profit = signal.stake * (signal.odds - 1)
+  const totalReturn = signal.stake * signal.odds
   const edgeTone =
     signal.edgePercent >= 6
       ? "text-success"
@@ -141,11 +142,14 @@ export function SignalCard({
           Statymas · <b className="text-foreground">{eur(signal.stake)}</b>
         </span>
         <span>
-          Laimėtum · <b className="text-success">{eur(toWin)}</b>
+          Grąža · <b className="text-success">{eur(totalReturn)}</b>
+        </span>
+        <span>
+          Pelnas · <b className="text-success">{eur(profit)}</b>
         </span>
         <span className="flex items-center gap-1">
           <TrendingUp className="size-3" aria-hidden="true" />
-          Kelly {pct(signal.kellyPercent)}
+          ¼ Kelly {pct(signal.kellyPercent)}
         </span>
       </div>
 
