@@ -1,7 +1,7 @@
 /**
  * Auto-settle pending bets using ESPN public scoreboards.
  * Moneyline: winner. Spread/total: final scores vs line. BTTS: both scored.
- * Tennis totals stay pending (ESPN tennis has no game-count score) — manual.
+ * Tennis game spread/total (#33b): sum ESPN linescores per set (ATP/WTA only).
  */
 
 export type BetForGrading = {
@@ -239,11 +239,134 @@ function settle(outcome: boolean | null, bet: BetForGrading): GradeResult {
     : { status: 'pralaimeta', profit: -bet.stake }
 }
 
+// --- #33b tennis game totals/spreads via ESPN linescores -------------------
+// Tennis events nest matches under event.groupings[].competitions[], NOT the
+// team-sport competitions[0] path. Each competitor has linescores:[{value}]
+// where value = games won that set. Game total = sum of all set values.
+
+type EspnTennisCompetitor = {
+  winner?: boolean
+  athlete?: { displayName?: string }
+  linescores?: Array<{ value?: number }>
+}
+type EspnTennisComp = {
+  status?: { type?: { completed?: boolean; state?: string } }
+  competitors?: EspnTennisCompetitor[]
+}
+type EspnTennisEvent = { groupings?: Array<{ competitions?: EspnTennisComp[] }> }
+
+function tennisGames(c: EspnTennisCompetitor): number | null {
+  if (!c.linescores?.length) return null
+  let sum = 0
+  for (const ls of c.linescores) {
+    if (typeof ls.value !== 'number') return null // incomplete → unsafe to grade
+    sum += ls.value
+  }
+  return sum
+}
+
+/**
+ * Resolve a finished ESPN tennis match to our fixture, oriented to our home.
+ * Returns per-player GAME counts (never set scores). null if not found/finished.
+ */
+function resolveTennisGames(
+  events: EspnTennisEvent[],
+  homeHint: string,
+  awayHint: string,
+): { homeGames: number; awayGames: number; homeName: string; awayName: string } | null {
+  for (const ev of events) {
+    for (const g of ev.groupings ?? []) {
+      for (const c of g.competitions ?? []) {
+        const st = c.status?.type
+        if (!(st?.completed === true || st?.state === 'post')) continue
+        const comps = c.competitors
+        if (!comps || comps.length < 2) continue
+        const p0 = comps[0]
+        const p1 = comps[1]
+        const n0 = p0.athlete?.displayName ?? ''
+        const n1 = p1.athlete?.displayName ?? ''
+        const g0 = tennisGames(p0)
+        const g1 = tennisGames(p1)
+        if (g0 == null || g1 == null) continue
+
+        // orient onto our fixture
+        const direct = namesMatch(homeHint, n0) || namesMatch(awayHint, n1)
+        const swap = namesMatch(homeHint, n1) || namesMatch(awayHint, n0)
+        if (!direct && !swap) continue
+        if (swap && !direct) {
+          return { homeGames: g1, awayGames: g0, homeName: n1, awayName: n0 }
+        }
+        return { homeGames: g0, awayGames: g1, homeName: n0, awayName: n1 }
+      }
+    }
+  }
+  return null
+}
+
+/**
+ * #33b grade a tennis GAME spread/total from ESPN linescores (ATP+WTA).
+ * Spread: pick-side game margin + line. Total: combined games vs line.
+ * Never derived from set score. Returns null if the match isn't found yet.
+ */
+async function gradeTennisLine(
+  bet: BetForGrading,
+  market: 'spread' | 'total',
+): Promise<GradeResult | null> {
+  if (bet.line == null) return null
+  const parsed = parseMatchNames(bet.match)
+  const homeHint = bet.homeName ?? parsed?.home ?? ''
+  const awayHint = bet.awayName ?? parsed?.away ?? ''
+  if (!homeHint && !awayHint) return null
+
+  const start = bet.startsAt ?? new Date()
+  if (Date.now() < start.getTime() + GRACE_MS) return null
+
+  const dates = [yyyymmdd(start)]
+  const prev = new Date(start)
+  prev.setUTCDate(prev.getUTCDate() - 1)
+  dates.push(yyyymmdd(prev))
+
+  const descLower = bet.betDescription.toLowerCase()
+  for (const path of ['tennis/atp/scoreboard', 'tennis/wta/scoreboard']) {
+    for (const date of dates) {
+      let events: EspnTennisEvent[]
+      try {
+        events = (await fetchEspnEvents(path, date)) as unknown as EspnTennisEvent[]
+      } catch {
+        continue
+      }
+      const fx = resolveTennisGames(events, homeHint, awayHint)
+      if (!fx) continue
+
+      if (market === 'total') {
+        const isOver = descLower.includes('daugiau') || descLower.includes('over')
+        const out = gradeTotal(fx.homeGames + fx.awayGames, isOver, bet.line)
+        return settle(out, bet)
+      }
+      // spread: which side did we back?
+      const pickIsHome =
+        namesMatch(bet.pickName ?? '', fx.homeName) || namesMatch(bet.pickName ?? '', homeHint)
+      const pickIsAway =
+        namesMatch(bet.pickName ?? '', fx.awayName) || namesMatch(bet.pickName ?? '', awayHint)
+      if (!pickIsHome && !pickIsAway) continue
+      const out = gradeSpread(fx.homeGames, fx.awayGames, pickIsHome, bet.line)
+      return settle(out, bet)
+    }
+  }
+  return null
+}
+
+
 export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | null> {
   const market = (bet.marketType ?? 'moneyline').toLowerCase()
   // Tennis totals/spreads: ESPN tennis scoreboard has no game-count totals → manual.
   const sportU = bet.sport.toUpperCase()
-  if ((sportU === 'TENNIS' || sportU === 'TABLE_TENNIS') && market !== 'moneyline') {
+  const isTennis = sportU === 'TENNIS' || sportU === 'TABLE_TENNIS'
+  if (isTennis && (market === 'spread' || market === 'total')) {
+    if (sportU !== 'TENNIS') return null // table tennis: no ESPN linescores
+    return gradeTennisLine(bet, market)
+  }
+  if (isTennis && market !== 'moneyline') {
     return null
   }
 
