@@ -31,6 +31,11 @@ export function SignalCard({
       ? ((signal.odds - signal.sharpOdds) / signal.sharpOdds) * 100
       : null
 
+  // #20: flag unusually-large edges (kofai rarely shows >2%). We DON'T hide
+  // them — the user sorts by edge — but warn to double-check (stale line,
+  // wrong market, thin league). Threshold 5%.
+  const unusualEdge = signal.edgePercent > 5
+
   return (
     <article
       onClick={() => onOpen(signal)}
@@ -55,6 +60,15 @@ export function SignalCard({
             <span className="flex items-center gap-1 rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-semibold text-warning">
               <AlertTriangle className="size-3" aria-hidden="true" />
               Jau statei
+            </span>
+          )}
+          {unusualEdge && (
+            <span
+              title="Neįprastai didelė vertė — patikrink liniją, rinką ir lygą prieš statydamas."
+              className="flex items-center gap-1 rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-semibold text-warning"
+            >
+              <AlertTriangle className="size-3" aria-hidden="true" />
+              Neįprasta vertė — patikrink
             </span>
           )}
         </div>
