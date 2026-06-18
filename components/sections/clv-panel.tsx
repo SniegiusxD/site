@@ -2,9 +2,29 @@
 
 import { Activity, ChevronDown, ChevronUp, TrendingUp } from "lucide-react"
 import { useState } from "react"
-import { useClv, type ClvStats } from "@/lib/use-clv"
+import {
+  Bar,
+  Cell,
+  ComposedChart,
+  Line,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
+import { useClv, type ClvRow, type ClvStats } from "@/lib/use-clv"
 
 type Tone = "pos" | "neg" | "neutral"
+
+const CHART_AXIS = "oklch(0.7 0.01 270)"
+const CHART_TOOLTIP = {
+  background: "var(--popover)",
+  border: "1px solid var(--border)",
+  borderRadius: 10,
+  fontSize: 12,
+  color: "var(--popover-foreground)",
+}
 
 const fmtClv = (v: number | null | undefined) =>
   v == null ? "—" : `${v >= 0 ? "+" : ""}${(v * 100).toFixed(2)}%`
@@ -124,6 +144,86 @@ export function ClvPanel() {
 const RECENT_COLLAPSED = 5
 const SPORT_COLLAPSED = 3
 const PAGE_STEP = 10
+const ROLLING_WINDOW = 5
+
+/**
+ * #30 CLV chart: one bar per closed bet (CLV %), oldest→newest, with a
+ * {ROLLING_WINDOW}-bet rolling-mean line. Green = +CLV, red = −CLV.
+ * v1 uses recent_closed from /api/clv (most-recent N; we reverse to chronological).
+ */
+function ClvChart({ closed }: { closed: ClvRow[] }) {
+  // recent_closed is newest-first; chart reads best oldest→newest.
+  const rows = [...closed]
+    .filter((r) => r.clv_pct != null)
+    .reverse()
+  if (rows.length < 2) return null
+
+  let runSum = 0
+  const data = rows.map((r, i) => {
+    const clv = (r.clv_pct as number) * 100
+    runSum += clv
+    const from = Math.max(0, i - (ROLLING_WINDOW - 1))
+    const windowSlice = rows.slice(from, i + 1)
+    const rolling =
+      windowSlice.reduce((acc, x) => acc + (x.clv_pct as number) * 100, 0) /
+      windowSlice.length
+    return {
+      idx: i + 1,
+      clv: +clv.toFixed(2),
+      rolling: +rolling.toFixed(2),
+      label: r.game_signature,
+    }
+  })
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+        CLV pagal statymą ({rows.length}) · slankusis vid. ({ROLLING_WINDOW})
+      </span>
+      <div className="rounded-lg border border-border bg-secondary/20 p-2">
+        <ResponsiveContainer width="100%" height={180}>
+          <ComposedChart data={data} margin={{ top: 6, right: 6, left: -20, bottom: 0 }}>
+            <XAxis dataKey="idx" stroke={CHART_AXIS} fontSize={10} tickLine={false} axisLine={false} />
+            <YAxis
+              stroke={CHART_AXIS}
+              fontSize={10}
+              tickLine={false}
+              axisLine={false}
+              unit="%"
+            />
+            <ReferenceLine y={0} stroke={CHART_AXIS} strokeOpacity={0.4} />
+            <Tooltip
+              contentStyle={CHART_TOOLTIP}
+              cursor={{ fill: "oklch(1 0 0 / 5%)" }}
+              formatter={(value: number | string, name: string) => [
+                `${Number(value) >= 0 ? "+" : ""}${value}%`,
+                name === "rolling" ? `Slankusis vid. (${ROLLING_WINDOW})` : "CLV",
+              ]}
+              labelFormatter={(_l, payload) =>
+                payload?.[0]?.payload?.label ?? ""
+              }
+            />
+            <Bar dataKey="clv" radius={[3, 3, 0, 0]} maxBarSize={28}>
+              {data.map((d, i) => (
+                <Cell
+                  key={i}
+                  fill={d.clv >= 0 ? "var(--chart-2)" : "var(--chart-4)"}
+                />
+              ))}
+            </Bar>
+            <Line
+              type="monotone"
+              dataKey="rolling"
+              stroke="var(--primary)"
+              strokeWidth={2}
+              dot={false}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+}
 
 function ClvBody({
   stats,
@@ -186,6 +286,8 @@ function ClvBody({
         „Įvertinta“ = statymai su apskaičiuotu CLV. Sąrašas rodo <b>tik juos</b> (ne
         „laukia“ / „be CLV“). Kraunama po {PAGE_STEP} eilučių.
       </p>
+
+      <ClvChart closed={ratedRows} />
 
       {stats.by_sport.length > 0 && (
         <div className="flex flex-col gap-1.5">
