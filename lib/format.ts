@@ -18,6 +18,7 @@ export const STATUS_LABEL: Record<BetStatus, string> = {
   laimeta: "Laimėta",
   pralaimeta: "Pralaimėta",
   grazinta: "Grąžinta",
+  neisspresta: "Neišspręsta",
 }
 
 /** Tailwind classes for a status pill. */
@@ -26,4 +27,5 @@ export const STATUS_CLASS: Record<BetStatus, string> = {
   laimeta: "bg-success/15 text-success border-success/30",
   pralaimeta: "bg-danger/15 text-danger border-danger/30",
   grazinta: "bg-muted text-muted-foreground border-border",
+  neisspresta: "bg-muted text-muted-foreground border-border",
 }

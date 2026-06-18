@@ -22,7 +22,12 @@ export type Sport =
   | "TABLE_TENNIS"
   | "OTHER"
 
-export type BetStatus = "laukia" | "laimeta" | "pralaimeta" | "grazinta"
+export type BetStatus =
+  | "laukia"
+  | "laimeta"
+  | "pralaimeta"
+  | "grazinta"
+  | "neisspresta" // settled-unresolvable: >24h past kickoff, no score source
 
 export type Bookmaker =
   | "7BET"

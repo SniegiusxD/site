@@ -12,15 +12,12 @@ export function ActiveBetCard({ bet }: { bet: ActiveBet }) {
   const pending = bet.status === "laukia"
   const profit = bet.stake * (bet.odds - 1)
 
-  // Auto-grade covers moneyline (all sports) + spread/total/BTTS (team sports),
-  // but NOT tennis/table-tennis non-moneyline (ESPN has no game-count totals).
-  // Those need the manual fallback even when logged in.
-  const sportU = (bet.sport ?? "").toUpperCase()
-  const market = (bet.marketType ?? "moneyline").toLowerCase()
-  const manualOnly =
-    (sportU === "TENNIS" || sportU === "TABLE_TENNIS") && market !== "moneyline"
-  const showManualButtons = !isLoggedIn || manualOnly
-  const showAutoHint = isLoggedIn && !manualOnly
+  // Product rule (#40): paying (logged-in) customers NEVER self-report results.
+  // The backend settlement cron grades every pending bet; anything unresolvable
+  // >24h becomes "neisspresta". Manual buttons are demo-only (logged-out, no
+  // backend persistence). Admin override lives in Nustatymai, not here.
+  const showManualButtons = !isLoggedIn
+  const showAutoHint = isLoggedIn
 
   return (
     <article className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
