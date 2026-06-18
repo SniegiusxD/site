@@ -10,6 +10,7 @@ const EMPTY = {
   pct_positive: null,
   by_sport: [],
   recent: [],
+  recent_closed: [],
 }
 
 export async function GET() {

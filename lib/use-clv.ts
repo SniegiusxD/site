@@ -30,12 +30,14 @@ export interface ClvStats {
   pct_positive: number | null
   by_sport: ClvBySport[]
   recent: ClvRow[]
+  /** Closed bets with CLV — matches KPI "Įvertinta" count */
+  recent_closed: ClvRow[]
   error?: string
 }
 
 const EMPTY: ClvStats = {
   total: 0, closed: 0, open: 0, mean_clv_pct: null,
-  pct_positive: null, by_sport: [], recent: [],
+  pct_positive: null, by_sport: [], recent: [], recent_closed: [],
 }
 
 const POLL_MS = 60_000

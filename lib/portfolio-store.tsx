@@ -16,6 +16,7 @@ import type { ActiveBet, BetStatus, Signal } from "./types"
 
 const BANKROLL_STORAGE_KEY = "userBankroll"
 const LOCAL_BETS_KEY = "localBets"
+const REMOVED_SIGNALS_KEY = "removedSignalIds"
 
 interface PortfolioContextValue {
   signals: Signal[]
@@ -33,6 +34,33 @@ interface PortfolioContextValue {
 }
 
 const PortfolioContext = createContext<PortfolioContextValue | null>(null)
+
+function betHideKey(b: Pick<ActiveBet, "match" | "betDescription" | "bookmaker">) {
+  return `${b.match}|${b.betDescription}|${b.bookmaker}`
+}
+
+function signalHideKey(s: Pick<Signal, "match" | "betDescription" | "bookmaker">) {
+  return `${s.match}|${s.betDescription}|${s.bookmaker}`
+}
+
+function loadStoredRemovedIds(): Set<string> {
+  try {
+    const raw = window.localStorage.getItem(REMOVED_SIGNALS_KEY)
+    if (!raw) return new Set()
+    const parsed = JSON.parse(raw) as string[]
+    return new Set(Array.isArray(parsed) ? parsed : [])
+  } catch {
+    return new Set()
+  }
+}
+
+function persistRemovedIds(ids: Set<string>) {
+  try {
+    window.localStorage.setItem(REMOVED_SIGNALS_KEY, JSON.stringify([...ids]))
+  } catch {
+    // ignore
+  }
+}
 
 function addLocalBetFromSignal(prev: ActiveBet[], signal: Signal): ActiveBet[] {
   if (prev.some((b) => b.signalId === signal.id)) return prev
@@ -62,6 +90,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [baseBankroll, setBaseBankrollState] = useState<number>(BANKROLL)
   const [activeBets, setActiveBets] = useState<ActiveBet[]>([])
   const [betsSynced, setBetsSynced] = useState(false)
+  const [removedIds, setRemovedIds] = useState<Set<string>>(() => new Set())
 
   useEffect(() => {
     try {
@@ -73,6 +102,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore
     }
+    setRemovedIds(loadStoredRemovedIds())
   }, [])
 
   const setBankroll = (value: number) => {
@@ -87,12 +117,22 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
   const { signals: liveSignals } = useSignals(baseBankroll)
   const mockOtherTabs = SIGNALS.filter((s) => s.category !== "AGGREGATOR")
-  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set())
+
+  const hiddenBetKeys = useMemo(
+    () =>
+      new Set(
+        activeBets.filter((b) => b.status === "laukia").map(betHideKey),
+      ),
+    [activeBets],
+  )
 
   const signals = useMemo(
     () =>
-      [...liveSignals, ...mockOtherTabs].filter((s) => !removedIds.has(s.id)),
-    [liveSignals, mockOtherTabs, removedIds],
+      [...liveSignals, ...mockOtherTabs].filter(
+        (s) =>
+          !removedIds.has(s.id) && !hiddenBetKeys.has(signalHideKey(s)),
+      ),
+    [liveSignals, mockOtherTabs, removedIds, hiddenBetKeys],
   )
 
   const persistLocal = useCallback((bets: ActiveBet[]) => {
@@ -103,13 +143,26 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const syncRemovedFromBets = useCallback((bets: ActiveBet[]) => {
+    setRemovedIds((prev) => {
+      const next = new Set(prev)
+      for (const b of bets) {
+        if (b.status === "laukia") next.add(b.signalId)
+      }
+      persistRemovedIds(next)
+      return next
+    })
+  }, [])
+
   const loadBets = useCallback(async () => {
     if (isLoggedIn) {
       try {
         const res = await fetch("/api/bets", { cache: "no-store" })
         if (res.ok) {
           const data = (await res.json()) as { bets: ActiveBet[] }
-          setActiveBets(data.bets ?? [])
+          const bets = data.bets ?? []
+          setActiveBets(bets)
+          syncRemovedFromBets(bets)
           setBetsSynced(true)
           return
         }
@@ -120,12 +173,14 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
 
     try {
       const raw = window.localStorage.getItem(LOCAL_BETS_KEY)
-      setActiveBets(raw ? (JSON.parse(raw) as ActiveBet[]) : [])
+      const bets = raw ? (JSON.parse(raw) as ActiveBet[]) : []
+      setActiveBets(bets)
+      syncRemovedFromBets(bets)
     } catch {
       setActiveBets([])
     }
     setBetsSynced(true)
-  }, [isLoggedIn])
+  }, [isLoggedIn, syncRemovedFromBets])
 
   useEffect(() => {
     void loadBets()
@@ -134,8 +189,16 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(id)
   }, [loadBets, isLoggedIn])
 
+  const markSignalRemoved = useCallback((signalId: string) => {
+    setRemovedIds((prev) => {
+      const next = new Set(prev).add(signalId)
+      persistRemovedIds(next)
+      return next
+    })
+  }, [])
+
   const placeBet = (signal: Signal) => {
-    setRemovedIds((prev) => new Set(prev).add(signal.id))
+    markSignalRemoved(signal.id)
 
     if (isLoggedIn) {
       void (async () => {

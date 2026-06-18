@@ -4,6 +4,8 @@ import { Activity, ChevronDown, ChevronUp, TrendingUp } from "lucide-react"
 import { useState } from "react"
 import { useClv, type ClvStats } from "@/lib/use-clv"
 
+type Tone = "pos" | "neg" | "neutral"
+
 const fmtClv = (v: number | null | undefined) =>
   v == null ? "—" : `${v >= 0 ? "+" : ""}${(v * 100).toFixed(2)}%`
 
@@ -40,7 +42,7 @@ function statusLabel(status: string): { text: string; title?: string } {
   if (status === "open") {
     return {
       text: "laukia",
-      title: "Rungtynės dar neprasidėjo arba CLV dar nefiksuotas (~5 min prieš startą)",
+      title: "Rungtynės dar neprasidėjo arba CLV dar nefiksuotas (fiksuojama iki 1 val. prieš startą)",
     }
   }
   if (status === "expired") {
@@ -87,7 +89,8 @@ function Kpi({
  */
 export function ClvPanel() {
   const { stats, isLoading, error } = useClv()
-  const [expanded, setExpanded] = useState(false)
+  const [visibleRecent, setVisibleRecent] = useState(RECENT_COLLAPSED)
+  const [visibleSports, setVisibleSports] = useState(SPORT_COLLAPSED)
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
@@ -106,7 +109,13 @@ export function ClvPanel() {
       ) : isLoading ? (
         <p className="text-[12px] text-muted-foreground">Kraunama…</p>
       ) : (
-        <ClvBody stats={stats} expanded={expanded} setExpanded={setExpanded} />
+        <ClvBody
+          stats={stats}
+          visibleRecent={visibleRecent}
+          setVisibleRecent={setVisibleRecent}
+          visibleSports={visibleSports}
+          setVisibleSports={setVisibleSports}
+        />
       )}
     </div>
   )
@@ -114,15 +123,20 @@ export function ClvPanel() {
 
 const RECENT_COLLAPSED = 5
 const SPORT_COLLAPSED = 3
+const PAGE_STEP = 10
 
 function ClvBody({
   stats,
-  expanded,
-  setExpanded,
+  visibleRecent,
+  setVisibleRecent,
+  visibleSports,
+  setVisibleSports,
 }: {
   stats: ClvStats
-  expanded: boolean
-  setExpanded: (v: boolean) => void
+  visibleRecent: number
+  setVisibleRecent: (v: number) => void
+  visibleSports: number
+  setVisibleSports: (v: number) => void
 }) {
   if (stats.total === 0) {
     return (
@@ -146,11 +160,14 @@ function ClvBody({
         ? "pos"
         : "neg"
 
-  const sports = expanded ? stats.by_sport : stats.by_sport.slice(0, SPORT_COLLAPSED)
-  const recent = expanded ? stats.recent : stats.recent.slice(0, RECENT_COLLAPSED)
-  const hasMore =
-    stats.by_sport.length > SPORT_COLLAPSED ||
-    stats.recent.length > RECENT_COLLAPSED
+  const sports = stats.by_sport.slice(0, visibleSports)
+  const ratedRows = stats.recent_closed.length
+    ? stats.recent_closed
+    : stats.recent.filter((r) => r.status === "closed" && r.clv_pct != null)
+  const recent = ratedRows.slice(0, visibleRecent)
+  const hasMoreSports = stats.by_sport.length > visibleSports
+  const hasMoreRecent = ratedRows.length > visibleRecent
+  const showRecentScroll = visibleRecent > RECENT_COLLAPSED
 
   return (
     <>
@@ -166,9 +183,8 @@ function ClvBody({
       </div>
 
       <p className="text-[11px] text-muted-foreground">
-        Skaičius skliaustuose — kiek statymų <b>viso duomenų bazėje</b> jau turi
-        CLV (uždaryta linija). Sąraše apačioje matosi tik naujausi — spausk
-        „Rodyti daugiau“, kad pamatytum visus.
+        „Įvertinta“ = statymai su apskaičiuotu CLV. Sąrašas rodo <b>tik juos</b> (ne
+        „laukia“ / „be CLV“). Kraunama po {PAGE_STEP} eilučių.
       </p>
 
       {stats.by_sport.length > 0 && (
@@ -205,10 +221,15 @@ function ClvBody({
       <div className="flex flex-col gap-1.5">
         <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
           <TrendingUp className="size-3" aria-hidden="true" />
-          Paskutiniai signalai ({stats.recent.length} viso · {stats.closed} su
-          CLV)
+          Paskutiniai su CLV ({stats.closed} įvertinta
+          {ratedRows.length < stats.closed
+            ? ` · rodoma ${ratedRows.length}`
+            : ""}
+          )
         </span>
-        <div className="flex flex-col gap-1">
+        <div
+          className={`flex flex-col gap-1 ${showRecentScroll ? "max-h-64 overflow-y-auto pr-1" : ""}`}
+        >
           {recent.map((r, i) => {
             const dateStr = formatMatchDate(r.starts_at)
             return (
@@ -264,24 +285,59 @@ function ClvBody({
         </div>
       </div>
 
-      {hasMore && (
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className="flex items-center justify-center gap-1 rounded-lg border border-border bg-secondary/30 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground"
-        >
-          {expanded ? (
-            <>
-              <ChevronUp className="size-3.5" aria-hidden="true" />
-              Rodyti mažiau
-            </>
-          ) : (
-            <>
-              <ChevronDown className="size-3.5" aria-hidden="true" />
-              Rodyti daugiau ({stats.recent.length} signalų)
-            </>
+      {(hasMoreSports || hasMoreRecent) && (
+        <div className="flex flex-col gap-2">
+          {hasMoreSports && (
+            <button
+              type="button"
+              onClick={() =>
+                setVisibleSports(
+                  visibleSports >= stats.by_sport.length
+                    ? SPORT_COLLAPSED
+                    : visibleSports + PAGE_STEP,
+                )
+              }
+              className="flex items-center justify-center gap-1 rounded-lg border border-border bg-secondary/30 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground"
+            >
+              {visibleSports >= stats.by_sport.length ? (
+                <>
+                  <ChevronUp className="size-3.5" aria-hidden="true" />
+                  Mažiau sportų
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="size-3.5" aria-hidden="true" />
+                  Daugiau sportų ({stats.by_sport.length - visibleSports} liko)
+                </>
+              )}
+            </button>
           )}
-        </button>
+          {hasMoreRecent && (
+            <button
+              type="button"
+              onClick={() =>
+                setVisibleRecent(
+                  visibleRecent >= ratedRows.length
+                    ? RECENT_COLLAPSED
+                    : visibleRecent + PAGE_STEP,
+                )
+              }
+              className="flex items-center justify-center gap-1 rounded-lg border border-border bg-secondary/30 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground"
+            >
+              {visibleRecent >= ratedRows.length ? (
+                <>
+                  <ChevronUp className="size-3.5" aria-hidden="true" />
+                  Rodyti mažiau signalų
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="size-3.5" aria-hidden="true" />
+                  Rodyti daugiau (+{PAGE_STEP}, {ratedRows.length - visibleRecent} liko)
+                </>
+              )}
+            </button>
+          )}
+        </div>
       )}
     </>
   )
