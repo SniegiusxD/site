@@ -44,7 +44,10 @@ export function settledFromActive(active: ActiveBet[]): SettledBet[] {
       bookmaker: b.bookmaker,
       odds: b.odds,
       stake: b.stake,
-      status: b.status as SettledBet["status"],
+      // #40: "neisspresta" (unresolved >24h) is void like a push — never a loss.
+      status: (b.status === "neisspresta"
+        ? "grazinta"
+        : b.status) as SettledBet["status"],
       profit: b.profit ?? 0,
     }))
 }

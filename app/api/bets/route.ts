@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
-import { eq, and, desc } from 'drizzle-orm'
+import { eq, desc } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { userBet } from '@/lib/db/schema'
 import { ensureBetsSchema } from '@/lib/db/ensure-bets-schema'
-import { tryGradeBet } from '@/lib/bet-grader'
+import { settlePendingBets } from '@/lib/settle-bets'
 import type { ActiveBet, BetStatus } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -44,39 +44,6 @@ async function requireSession() {
   return session.user.id
 }
 
-async function gradePendingForUser(userId: string) {
-  const pending = await db
-    .select()
-    .from(userBet)
-    .where(and(eq(userBet.userId, userId), eq(userBet.status, 'laukia')))
-
-  for (const row of pending) {
-    const result = await tryGradeBet({
-      id: row.id,
-      sport: row.sport,
-      match: row.match,
-      betDescription: row.betDescription,
-      marketType: row.marketType,
-      pickName: row.pickName,
-      line: row.line,
-      homeName: row.homeName,
-      awayName: row.awayName,
-      startsAt: row.startsAt,
-      stake: row.stake,
-      odds: row.odds,
-    })
-    if (!result) continue
-    await db
-      .update(userBet)
-      .set({
-        status: result.status,
-        profit: result.profit,
-        settledAt: new Date(),
-      })
-      .where(eq(userBet.id, row.id))
-  }
-}
-
 export async function GET() {
   const userId = await requireSession()
   if (!userId) {
@@ -85,7 +52,7 @@ export async function GET() {
 
   try {
     await ensureBetsSchema()
-    await gradePendingForUser(userId)
+    await settlePendingBets({ userId })
 
     const rows = await db
       .select()
