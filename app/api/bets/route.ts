@@ -13,8 +13,8 @@ export const dynamic = 'force-dynamic'
 function formatPlacedAt(d: Date): string {
   const diff = Date.now() - d.getTime()
   if (diff < 60_000) return 'Ką tik'
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} min`
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} val`
+  if (diff < 3_600_000) return `prieš ${Math.floor(diff / 60_000)} min`
+  if (diff < 86_400_000) return `prieš ${Math.floor(diff / 3_600_000)} val`
   return d.toLocaleDateString('lt-LT')
 }
 

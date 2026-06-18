@@ -1,5 +1,8 @@
 import type { Bookmaker, Signal, Sport } from "./types"
 import { extractPickName } from "./bet-grader"
+import { formatTimeUntil } from "./format"
+
+export { formatTimeUntil }
 
 /** Raw opportunity from Flask /api/opportunities */
 export interface BackendOpportunity {
@@ -54,17 +57,6 @@ const SPORT_MAP: Record<string, Sport> = {
 function normalizeBookmaker(raw: string): Bookmaker {
   if (raw.toLowerCase().includes("top")) return "TopSport"
   return "7BET"
-}
-
-export function formatTimeUntil(startsAt: string | undefined): string {
-  if (!startsAt) return "—"
-  const diffMs = new Date(startsAt).getTime() - Date.now()
-  if (diffMs <= 0) return "Pradėta"
-  const mins = Math.floor(diffMs / 60_000)
-  const hrs = Math.floor(mins / 60)
-  const rem = mins % 60
-  if (hrs > 0) return `${hrs} val ${rem} min`
-  return `${mins} min`
 }
 
 function makeId(opp: BackendOpportunity): string {

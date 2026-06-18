@@ -1,9 +1,9 @@
 "use client"
 
-import { Check, X } from "lucide-react"
+import { Check, Clock, X } from "lucide-react"
 import { SportIcon } from "@/components/shared/sport-icon"
 import { Button } from "@/components/ui/button"
-import { eur, STATUS_CLASS, STATUS_LABEL } from "@/lib/format"
+import { eur, formatKickoff, STATUS_CLASS, STATUS_LABEL } from "@/lib/format"
 import { usePortfolio } from "@/lib/portfolio-store"
 import type { ActiveBet } from "@/lib/types"
 
@@ -50,7 +50,13 @@ export function ActiveBetCard({ bet }: { bet: ActiveBet }) {
         <span>
           Statymas · <b className="text-foreground">{eur(bet.stake)}</b>
         </span>
-        <span>{bet.placedAt}</span>
+        {bet.startsAt && (
+          <span className="flex items-center gap-1">
+            <Clock className="size-3 shrink-0" aria-hidden="true" />
+            Pradžia · <b className="text-foreground">{formatKickoff(bet.startsAt)}</b>
+          </span>
+        )}
+        <span>Pastatyta · {bet.placedAt}</span>
       </div>
 
       {pending ? (

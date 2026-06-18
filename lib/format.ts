@@ -13,6 +13,36 @@ export const eur0 = (n: number) =>
 
 export const pct = (n: number, digits = 1) => `${n.toFixed(digits)}%`
 
+/** Time until kickoff in local timezone (browser). */
+export function formatTimeUntil(startsAt: string | undefined): string {
+  if (!startsAt) return "—"
+  const diffMs = new Date(startsAt).getTime() - Date.now()
+  if (diffMs <= 0) return "Pradėta"
+  const mins = Math.floor(diffMs / 60_000)
+  const hrs = Math.floor(mins / 60)
+  const rem = mins % 60
+  if (hrs > 0) return `${hrs} val ${rem} min`
+  return `${mins} min`
+}
+
+/** Local kickoff clock + countdown — for Aktyvūs / signal cards. */
+export function formatKickoff(startsAt: string | undefined): string {
+  if (!startsAt) return "—"
+  try {
+    const d = new Date(startsAt)
+    if (Number.isNaN(d.getTime())) return "—"
+    const clock = d.toLocaleTimeString("lt-LT", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+    const until = formatTimeUntil(startsAt)
+    if (until === "Pradėta") return `${clock} · pradėta`
+    return `${clock} · po ${until}`
+  } catch {
+    return "—"
+  }
+}
+
 export const STATUS_LABEL: Record<BetStatus, string> = {
   laukia: "Laukia",
   laimeta: "Laimėta",
