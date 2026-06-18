@@ -36,7 +36,22 @@ function formatMatchDate(startsAt: string | null | undefined): string {
   }
 }
 
-type Tone = "pos" | "neg" | "neutral"
+function statusLabel(status: string): { text: string; title?: string } {
+  if (status === "open") {
+    return {
+      text: "laukia",
+      title: "Rungtynės dar neprasidėjo arba CLV dar nefiksuotas (~5 min prieš startą)",
+    }
+  }
+  if (status === "expired") {
+    return {
+      text: "be CLV",
+      title:
+        "Rungtynės baigėsi, bet Pinnacle uždarymo linijos nepavyko gauti (ne laimėta/pralaimėta)",
+    }
+  }
+  return { text: status }
+}
 
 function Kpi({
   label,
@@ -151,8 +166,9 @@ function ClvBody({
       </div>
 
       <p className="text-[11px] text-muted-foreground">
-        Skaičius skliaustuose — kiek statymų jau turi CLV (uždaryta linija), ne
-        visų stebimų.
+        Skaičius skliaustuose — kiek statymų <b>viso duomenų bazėje</b> jau turi
+        CLV (uždaryta linija). Sąraše apačioje matosi tik naujausi — spausk
+        „Rodyti daugiau“, kad pamatytum visus.
       </p>
 
       {stats.by_sport.length > 0 && (
@@ -189,7 +205,8 @@ function ClvBody({
       <div className="flex flex-col gap-1.5">
         <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
           <TrendingUp className="size-3" aria-hidden="true" />
-          Paskutiniai signalai (auto-stebimi)
+          Paskutiniai signalai ({stats.recent.length} viso · {stats.closed} su
+          CLV)
         </span>
         <div className="flex flex-col gap-1">
           {recent.map((r, i) => {
@@ -228,9 +245,17 @@ function ClvBody({
                       {fmtClv(r.clv_pct)}
                     </span>
                   ) : (
-                    <span className="w-16 shrink-0 text-right text-[10px] text-muted-foreground">
-                      {r.status === "open" ? "laukia" : "baigėsi"}
-                    </span>
+                    (() => {
+                      const st = statusLabel(r.status)
+                      return (
+                        <span
+                          className="w-16 shrink-0 text-right text-[10px] text-muted-foreground"
+                          title={st.title}
+                        >
+                          {st.text}
+                        </span>
+                      )
+                    })()
                   )}
                 </div>
               </div>
