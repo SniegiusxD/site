@@ -54,6 +54,14 @@ export interface Signal {
   sharpOdds?: number
   /** sharp reference book name */
   sharpBook?: Bookmaker
+  /** market type from backend */
+  marketType?: string
+  /** team/player picked (for auto-grade) */
+  pickName?: string
+  /** game key for dedup */
+  gameKey?: string
+  homeName?: string
+  awayName?: string
 }
 
 /** A bet that has been placed and is being tracked. */
@@ -70,6 +78,10 @@ export interface ActiveBet {
   placedAt: string
   /** realised profit/loss once settled, null while pending */
   profit: number | null
+  /** moneyline | spread | total | btts */
+  marketType?: string
+  pickName?: string
+  startsAt?: string
 }
 
 export interface HistoryBet {

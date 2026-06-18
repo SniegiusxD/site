@@ -1,4 +1,10 @@
-import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core'
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  doublePrecision,
+} from 'drizzle-orm/pg-core'
 
 // --- Better Auth required tables -------------------------------------------
 // Column names are camelCase to match Better Auth's defaults. Do not rename.
@@ -54,4 +60,39 @@ export const verification = pgTable('verification', {
   expiresAt: timestamp('expiresAt').notNull(),
   createdAt: timestamp('createdAt').defaultNow(),
   updatedAt: timestamp('updatedAt').defaultNow(),
+})
+
+// --- User betting (#10) ----------------------------------------------------
+
+export const userSettings = pgTable('user_settings', {
+  userId: text('userId')
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  baseBankroll: doublePrecision('baseBankroll').notNull().default(500),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+})
+
+export const userBet = pgTable('user_bet', {
+  id: text('id').primaryKey(),
+  userId: text('userId')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  signalId: text('signalId'),
+  sport: text('sport').notNull(),
+  match: text('match').notNull(),
+  betDescription: text('betDescription').notNull(),
+  bookmaker: text('bookmaker').notNull(),
+  odds: doublePrecision('odds').notNull(),
+  stake: doublePrecision('stake').notNull(),
+  marketType: text('marketType').notNull().default('moneyline'),
+  pickName: text('pickName'),
+  line: doublePrecision('line'),
+  homeName: text('homeName'),
+  awayName: text('awayName'),
+  gameKey: text('gameKey'),
+  startsAt: timestamp('startsAt', { withTimezone: true }),
+  status: text('status').notNull().default('laukia'),
+  profit: doublePrecision('profit'),
+  placedAt: timestamp('placedAt', { withTimezone: true }).notNull().defaultNow(),
+  settledAt: timestamp('settledAt', { withTimezone: true }),
 })

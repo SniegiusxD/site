@@ -8,9 +8,9 @@ import { usePortfolio } from "@/lib/portfolio-store"
 import type { ActiveBet } from "@/lib/types"
 
 export function ActiveBetCard({ bet }: { bet: ActiveBet }) {
-  const { settleBet } = usePortfolio()
+  const { settleBet, isLoggedIn } = usePortfolio()
   const pending = bet.status === "laukia"
-  const toWin = bet.stake * (bet.odds - 1)
+  const profit = bet.stake * (bet.odds - 1)
 
   return (
     <article className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
@@ -46,27 +46,36 @@ export function ActiveBetCard({ bet }: { bet: ActiveBet }) {
       {pending ? (
         <div className="flex items-center gap-2">
           <span className="mr-auto font-mono text-[11px] text-muted-foreground">
-            Galimas laimėjimas{" "}
-            <b className="text-success">{eur(toWin)}</b>
+            Galimas pelnas{" "}
+            <b className="text-success">{eur(profit)}</b>
+            {isLoggedIn && (
+              <span className="ml-1 text-[10px] text-muted-foreground">
+                · auto po rungtynių
+              </span>
+            )}
           </span>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-success/40 text-success hover:bg-success/10 hover:text-success"
-            onClick={() => settleBet(bet.id, "laimeta")}
-          >
-            <Check className="size-4" aria-hidden="true" />
-            Laimėta
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-danger/40 text-danger hover:bg-danger/10 hover:text-danger"
-            onClick={() => settleBet(bet.id, "pralaimeta")}
-          >
-            <X className="size-4" aria-hidden="true" />
-            Pralaimėta
-          </Button>
+          {!isLoggedIn && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-success/40 text-success hover:bg-success/10 hover:text-success"
+                onClick={() => settleBet(bet.id, "laimeta")}
+              >
+                <Check className="size-4" aria-hidden="true" />
+                Laimėta
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-danger/40 text-danger hover:bg-danger/10 hover:text-danger"
+                onClick={() => settleBet(bet.id, "pralaimeta")}
+              >
+                <X className="size-4" aria-hidden="true" />
+                Pralaimėta
+              </Button>
+            </>
+          )}
         </div>
       ) : (
         <div className="flex items-center justify-between border-t border-border pt-2.5">

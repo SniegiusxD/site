@@ -1,4 +1,5 @@
 import type { Bookmaker, Signal, Sport } from "./types"
+import { extractPickName } from "./bet-grader"
 
 /** Raw opportunity from Flask /api/opportunities */
 export interface BackendOpportunity {
@@ -6,7 +7,8 @@ export interface BackendOpportunity {
   bookmaker: string
   type?: string
   game_signature?: string
-  teams?: { home?: string; away?: string }
+  game_key?: string
+  teams?: { home?: string; away?: string; player1?: string; player2?: string }
   starts_at?: string
   pick?: string
   soft_odds: number
@@ -95,6 +97,15 @@ export function mapOpportunity(opp: BackendOpportunity, bankroll = 1247): Signal
   const stake = Math.min(50, Math.max(3, Math.round(bankroll * kellyFrac)))
   const sharpOdds =
     opp.sharp_odds ?? (opp.pinnacle_true_prob ? 1 / opp.pinnacle_true_prob : undefined)
+  const betDescription = buildBetDescription(opp)
+  const marketType = opp.type ?? "moneyline"
+  const homeName =
+    opp.teams?.home ?? opp.teams?.player1 ?? undefined
+  const awayName =
+    opp.teams?.away ?? opp.teams?.player2 ?? undefined
+  const pickName =
+    extractPickName(betDescription, marketType) ??
+    (marketType === "moneyline" ? betDescription.replace(/\s*moneyline\s*$/i, "").trim() : undefined)
 
   return {
     id: makeId(opp),
@@ -103,7 +114,7 @@ export function mapOpportunity(opp: BackendOpportunity, bankroll = 1247): Signal
     // instead of being mislabelled as BASKETBALL.
     sport: SPORT_MAP[opp.sport] ?? SPORT_MAP[(opp.sport ?? "").toUpperCase()] ?? "OTHER",
     match: opp.game_signature ?? "Unknown",
-    betDescription: buildBetDescription(opp),
+    betDescription,
     bookmaker: normalizeBookmaker(opp.bookmaker),
     odds: opp.soft_odds,
     stake,
@@ -115,6 +126,11 @@ export function mapOpportunity(opp: BackendOpportunity, bankroll = 1247): Signal
     rationale: buildRationale(opp, edgePct, sharpOdds),
     sharpOdds,
     sharpBook: "Pinnacle",
+    marketType,
+    pickName: pickName || undefined,
+    gameKey: opp.game_key,
+    homeName,
+    awayName,
   }
 }
 
