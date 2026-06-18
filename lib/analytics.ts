@@ -9,6 +9,18 @@ const SPORT_LABEL: Record<Sport, string> = {
   BASKETBALL: "Krepšinis",
   BASEBALL: "Beisbolas",
   SOCCER: "Futbolas",
+  FOOTBALL: "Futbolas",
+  ICE_HOCKEY: "Ledo ritulys",
+  HANDBALL: "Rankinis",
+  VOLLEYBALL: "Tinklinis",
+  RUGBY_LEAGUE: "Regbis",
+  RUGBY: "Regbis",
+  BOXING: "Boksas",
+  MMA: "MMA",
+  CRICKET: "Kriketas",
+  AMERICAN_FOOTBALL: "Amer. futbolas",
+  TABLE_TENNIS: "Stalo tenisas",
+  OTHER: "Sportas",
 }
 
 /** A settled wager — the common shape used for all analytics math. */

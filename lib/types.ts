@@ -7,6 +7,20 @@ export type Sport =
   | "SOCCER"
   | "NBA"
   | "MLB"
+  // Sports unlocked in the aggregator backend (R3a). Backend emits these
+  // uppercased keys; without them they all fell through to BASKETBALL.
+  | "FOOTBALL"
+  | "ICE_HOCKEY"
+  | "HANDBALL"
+  | "VOLLEYBALL"
+  | "RUGBY_LEAGUE"
+  | "RUGBY"
+  | "BOXING"
+  | "MMA"
+  | "CRICKET"
+  | "AMERICAN_FOOTBALL"
+  | "TABLE_TENNIS"
+  | "OTHER"
 
 export type BetStatus = "laukia" | "laimeta" | "pralaimeta" | "grazinta"
 

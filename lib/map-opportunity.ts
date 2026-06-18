@@ -30,11 +30,23 @@ const SPORT_MAP: Record<string, Sport> = {
   SOCCER: "SOCCER",
   NBA: "NBA",
   MLB: "MLB",
-  MMA: "BASKETBALL",
+  // R3a: aggregator-unlocked sports — map to their own Sport instead of
+  // falling through to BASKETBALL.
+  MMA: "MMA",
+  FOOTBALL: "FOOTBALL",
+  ICE_HOCKEY: "ICE_HOCKEY",
+  HANDBALL: "HANDBALL",
+  VOLLEYBALL: "VOLLEYBALL",
+  RUGBY_LEAGUE: "RUGBY_LEAGUE",
+  RUGBY: "RUGBY",
+  BOXING: "BOXING",
+  CRICKET: "CRICKET",
+  AMERICAN_FOOTBALL: "AMERICAN_FOOTBALL",
+  TABLE_TENNIS: "TABLE_TENNIS",
   baseball_mlb: "BASEBALL",
   basketball_nba: "NBA",
   basketball_wnba: "BASKETBALL",
-  americanfootball_nfl: "BASKETBALL",
+  americanfootball_nfl: "AMERICAN_FOOTBALL",
 }
 
 function normalizeBookmaker(raw: string): Bookmaker {
@@ -87,7 +99,9 @@ export function mapOpportunity(opp: BackendOpportunity, bankroll = 1247): Signal
   return {
     id: makeId(opp),
     category: "AGGREGATOR",
-    sport: SPORT_MAP[opp.sport] ?? "BASKETBALL",
+    // R3a: case-insensitive map; unknown sports get a neutral OTHER chip
+    // instead of being mislabelled as BASKETBALL.
+    sport: SPORT_MAP[opp.sport] ?? SPORT_MAP[(opp.sport ?? "").toUpperCase()] ?? "OTHER",
     match: opp.game_signature ?? "Unknown",
     betDescription: buildBetDescription(opp),
     bookmaker: normalizeBookmaker(opp.bookmaker),
