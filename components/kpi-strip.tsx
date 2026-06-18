@@ -64,6 +64,14 @@ export function KpiStrip() {
     [activeBets],
   )
 
+  // KPI bug fix: "Atviri signalai" must count only LIVE aggregator signals.
+  // `signals` also contains ~10 demo signals from mock-data.ts (NBA/PLAYER/MLB
+  // tabs), which made the card show 10 while Agregatorius showed 0.
+  const liveSignalCount = useMemo(
+    () => signals.filter((s) => s.category === "AGGREGATOR").length,
+    [signals],
+  )
+
   return (
     <div className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <KpiCard
@@ -80,8 +88,8 @@ export function KpiStrip() {
       />
       <KpiCard
         label="Atviri signalai"
-        value={String(signals.length)}
-        hint={`${pendingCount} laukia`}
+        value={String(liveSignalCount)}
+        hint={`${pendingCount} statymai laukia`}
       />
       <KpiCard
         label="Sėkmės %"
