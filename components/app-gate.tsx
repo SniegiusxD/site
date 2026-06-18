@@ -31,6 +31,15 @@ export function AppGate() {
 
   function handleFunnelComplete(result: FunnelResult) {
     setFunnel(result)
+    // Persist the onboarding bankroll so the portfolio store (and stake sizing)
+    // start from the user's chosen value. Same key the settings page edits.
+    try {
+      if (Number.isFinite(result.bankroll) && result.bankroll > 0) {
+        window.localStorage.setItem("userBankroll", String(result.bankroll))
+      }
+    } catch {
+      // localStorage unavailable — fall back to the default bankroll.
+    }
     // Already-authed returning users skip straight into the app.
     setStage(authed ? "app" : "auth")
   }

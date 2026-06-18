@@ -1,21 +1,36 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Switch } from "@/components/ui/switch"
 import { eur } from "@/lib/format"
-import { BANKROLL, FLAT_STAKE } from "@/lib/mock-data"
+import { FLAT_STAKE } from "@/lib/mock-data"
 import { usePortfolio } from "@/lib/portfolio-store"
 
 const BOOKMAKERS = ["7BET", "TopSport", "Pinnacle"]
 
 export function NustatymaiSection() {
-  const { bankroll } = usePortfolio()
+  const { bankroll, baseBankroll, setBankroll } = usePortfolio()
   const [autoRefresh, setAutoRefresh] = useState(true)
   const [notifications, setNotifications] = useState(true)
   const [kelly, setKelly] = useState(false)
   const [lang, setLang] = useState<"LT" | "EN">("LT")
   const [books, setBooks] = useState<string[]>(["7BET", "TopSport"])
   const [edge, setEdge] = useState(2)
+
+  // Local draft of the bankroll input, synced from the persisted value.
+  const [bankrollDraft, setBankrollDraft] = useState<string>(String(baseBankroll))
+  useEffect(() => {
+    setBankrollDraft(String(baseBankroll))
+  }, [baseBankroll])
+
+  const commitBankroll = () => {
+    const parsed = Number(bankrollDraft)
+    if (Number.isFinite(parsed) && parsed > 0) {
+      setBankroll(parsed)
+    } else {
+      setBankrollDraft(String(baseBankroll)) // reset invalid input
+    }
+  }
 
   const toggleBook = (b: string) =>
     setBooks((prev) =>
@@ -25,8 +40,36 @@ export function NustatymaiSection() {
   return (
     <section aria-label="Nustatymai" className="flex flex-col gap-3">
       <Card title="Bankrolas">
+        <div className="flex items-center justify-between gap-4 border-b border-border py-2">
+          <label
+            htmlFor="bankroll-input"
+            className="text-sm text-muted-foreground"
+          >
+            Pradinis bankrolas
+          </label>
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm text-muted-foreground">€</span>
+            <input
+              id="bankroll-input"
+              type="number"
+              min={1}
+              step={10}
+              inputMode="decimal"
+              value={bankrollDraft}
+              onChange={(e) => setBankrollDraft(e.target.value)}
+              onBlur={commitBankroll}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+              }}
+              className="w-28 rounded-lg border border-border bg-secondary px-2 py-1 text-right font-mono text-sm font-semibold tabular-nums focus:border-primary focus:outline-none"
+              aria-label="Pradinis bankrolas eurais"
+            />
+          </div>
+        </div>
+        <p className="mb-2 mt-1 text-[12px] text-muted-foreground">
+          Statymų dydžiai perskaičiuojami pagal tavo bankrolą.
+        </p>
         <Row label="Dabartinis bankrolas" value={eur(bankroll)} />
-        <Row label="Pradinis bankrolas" value={eur(BANKROLL)} />
         <Row label="Fiksuotas statymas" value={eur(FLAT_STAKE)} />
       </Card>
 
