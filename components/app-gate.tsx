@@ -7,6 +7,7 @@ import { AuthScreen } from "@/components/onboarding/auth-screen"
 import { IntroFunnel, type FunnelResult } from "@/components/onboarding/intro-funnel"
 import { OnboardingFlow } from "@/components/onboarding/onboarding-flow"
 import { authClient } from "@/lib/auth-client"
+import { AuthUiProvider } from "@/lib/auth-ui-context"
 
 type Stage = "intro" | "auth" | "config" | "app"
 
@@ -66,7 +67,8 @@ export function AppGate() {
   }
 
   return (
-    <AnimatePresence mode="wait">
+    <AuthUiProvider openSignIn={() => setStage("auth")}>
+      <AnimatePresence mode="wait">
       {stage === "intro" && (
         <motion.div key="intro" {...fade}>
           <IntroFunnel onComplete={handleFunnelComplete} />
@@ -107,6 +109,7 @@ export function AppGate() {
           <AppShell />
         </motion.div>
       )}
-    </AnimatePresence>
+      </AnimatePresence>
+    </AuthUiProvider>
   )
 }

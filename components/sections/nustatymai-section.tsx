@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { LogOut, Loader2 } from "lucide-react"
+import { LogOut, Loader2, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { authClient } from "@/lib/auth-client"
+import { useAuthUi } from "@/lib/auth-ui-context"
 import { displayUsername } from "@/lib/display-user"
 import { eur } from "@/lib/format"
 import { FLAT_STAKE } from "@/lib/mock-data"
@@ -14,7 +15,8 @@ const BOOKMAKERS = ["7BET", "TopSport", "Pinnacle"]
 
 export function NustatymaiSection() {
   const { bankroll, baseBankroll, setBankroll, isLoggedIn } = usePortfolio()
-  const { data: session } = authClient.useSession()
+  const { data: session, isPending } = authClient.useSession()
+  const { openSignIn } = useAuthUi()
   const [signingOut, setSigningOut] = useState(false)
   const [autoRefresh, setAutoRefresh] = useState(true)
   const [notifications, setNotifications] = useState(true)
@@ -57,7 +59,9 @@ export function NustatymaiSection() {
   return (
     <section aria-label="Nustatymai" className="flex flex-col gap-3">
       <Card title="Paskyra">
-        {isLoggedIn && userLabel ? (
+        {isPending ? (
+          <p className="text-sm text-muted-foreground">Tikrinama sesija…</p>
+        ) : isLoggedIn && userLabel ? (
           <>
             <Row label="Prisijungta kaip" value={`@${userLabel}`} />
             <p className="mb-3 text-[12px] text-muted-foreground">
@@ -67,7 +71,7 @@ export function NustatymaiSection() {
             <Button
               type="button"
               variant="outline"
-              className="w-full"
+              className="w-full gap-2"
               disabled={signingOut}
               onClick={() => void handleSignOut()}
             >
@@ -80,10 +84,21 @@ export function NustatymaiSection() {
             </Button>
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Neprisijungta — statymai saugomi tik šiame naršyklės lange. Prisijunk
-            per pradinį ekraną, kad istorija būtų debesyje.
-          </p>
+          <>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Dabar esi <b>svečias</b> — statymai išsaugomi tik šiame naršyklės
+              lange. Prisijunk, kad istorija būtų debesyje.
+            </p>
+            <Button
+              type="button"
+              variant="default"
+              className="w-full gap-2"
+              onClick={openSignIn}
+            >
+              <LogIn className="size-4" aria-hidden="true" />
+              Prisijungti / registruotis
+            </Button>
+          </>
         )}
       </Card>
 
