@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import { ensureBetsSchema } from '@/lib/db/ensure-bets-schema'
 import { settlePendingBets } from '@/lib/settle-bets'
@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
  *   curl -s -H "Authorization: Bearer $CRON_SECRET" \
  *     https://<site>/api/cron/settle
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET
   if (!secret) {
     return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 })
@@ -23,9 +23,11 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const debug = req.nextUrl.searchParams.get('debug') === '1'
+
   try {
     await ensureBetsSchema()
-    const summary = await settlePendingBets()
+    const summary = await settlePendingBets({ debug })
     return NextResponse.json({ ok: true, ...summary })
   } catch (e) {
     return NextResponse.json(

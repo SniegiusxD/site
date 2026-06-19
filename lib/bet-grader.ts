@@ -21,6 +21,7 @@ export type BetForGrading = {
   homeName: string | null
   awayName: string | null
   startsAt: Date | null
+  placedAt?: Date | null
   stake: number
   odds: number
 }
@@ -31,6 +32,17 @@ export type GradeResult = {
 }
 
 const GRACE_MS = 3 * 60 * 60 * 1000 // 3h after scheduled start
+
+/** Kickoff for grace/unresolved — never use "now" when startsAt missing (that blocks forever). */
+function kickoffTime(bet: BetForGrading): Date {
+  if (bet.startsAt) return bet.startsAt
+  if (bet.placedAt) return bet.placedAt
+  return new Date(0)
+}
+
+function pastGrace(bet: BetForGrading): boolean {
+  return Date.now() >= kickoffTime(bet).getTime() + GRACE_MS
+}
 
 function slug(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -337,11 +349,10 @@ async function gradeTennisLine(
   const awayHint = bet.awayName ?? parsed?.away ?? ''
   if (!homeHint && !awayHint) return null
 
-  const start = bet.startsAt ?? new Date()
-  if (Date.now() < start.getTime() + GRACE_MS) return null
+  if (!pastGrace(bet)) return null
 
-  const dates = [yyyymmdd(start)]
-  const prev = new Date(start)
+  const dates = [yyyymmdd(kickoffTime(bet))]
+  const prev = new Date(kickoffTime(bet))
   prev.setUTCDate(prev.getUTCDate() - 1)
   dates.push(yyyymmdd(prev))
 
@@ -386,8 +397,7 @@ async function tryGradeTennisFromFlashscore(
   const awayHint = bet.awayName ?? parsed?.away ?? ''
   if (!homeHint && !awayHint) return null
 
-  const start = bet.startsAt ?? new Date()
-  if (Date.now() < start.getTime() + GRACE_MS) return null
+  if (!pastGrace(bet)) return null
 
   const results = await loadFlashscoreResults()
   const fx = findFlashscoreFixture(results, homeHint, awayHint, namesMatch)
@@ -430,6 +440,48 @@ async function tryGradeTennisFromFlashscore(
 }
 
 
+/** Why a bet could not be graded (admin/cron debug). */
+export async function diagnoseBetBlocker(bet: BetForGrading): Promise<string> {
+  const market = (bet.marketType ?? 'moneyline').toLowerCase()
+  const sportU = bet.sport.toUpperCase()
+
+  if (!pastGrace(bet)) {
+    const ko = kickoffTime(bet)
+    return `waiting_3h_after_kickoff (kickoff ${ko.toISOString()})`
+  }
+
+  if ((market === 'spread' || market === 'total') && bet.line == null) {
+    return 'missing_line'
+  }
+
+  const pickName =
+    bet.pickName ?? extractPickName(bet.betDescription, bet.marketType)
+  if (market === 'moneyline' && !pickName) return 'missing_pick_name'
+
+  const parsed = parseMatchNames(bet.match)
+  const homeHint = bet.homeName ?? parsed?.home ?? ''
+  const awayHint = bet.awayName ?? parsed?.away ?? ''
+  if (!homeHint && !awayHint) return 'missing_player_names'
+
+  if (sportU === 'TABLE_TENNIS') return 'table_tennis_no_source'
+
+  const paths = espnPathsForSport(bet.sport)
+  if (!paths.length && sportU !== 'TENNIS') {
+    return `no_espn_feed_for_${sportU}`
+  }
+
+  if (sportU === 'TENNIS') {
+    const fs = await loadFlashscoreResults()
+    if (!fs.length) return 'flashscore_fetch_empty'
+    const fx = findFlashscoreFixture(fs, homeHint, awayHint, namesMatch)
+    if (!fx) return 'no_flashscore_match (check name spelling / match age)'
+    return 'flashscore_found_but_market_not_graded'
+  }
+
+  return 'no_espn_match'
+}
+
+
 export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | null> {
   const market = (bet.marketType ?? 'moneyline').toLowerCase()
   // Tennis totals/spreads: ESPN tennis scoreboard has no game-count totals → manual.
@@ -457,11 +509,10 @@ export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | nul
     bet.pickName ?? extractPickName(bet.betDescription, bet.marketType)
   if (market === 'moneyline' && !pickName) return null
 
-  const start = bet.startsAt ?? new Date()
-  if (Date.now() < start.getTime() + GRACE_MS) return null
+  if (!pastGrace(bet)) return null
 
-  const dates = [yyyymmdd(start)]
-  const prev = new Date(start)
+  const dates = [yyyymmdd(kickoffTime(bet))]
+  const prev = new Date(kickoffTime(bet))
   prev.setUTCDate(prev.getUTCDate() - 1)
   dates.push(yyyymmdd(prev))
 

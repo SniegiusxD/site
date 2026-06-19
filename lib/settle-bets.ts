@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { userBet } from '@/lib/db/schema'
-import { tryGradeBet } from '@/lib/bet-grader'
+import { tryGradeBet, diagnoseBetBlocker } from '@/lib/bet-grader'
 
 /**
  * Backend settlement (#40). Grades pending user_bet rows from public score
@@ -22,9 +22,13 @@ export type SettleSummary = {
   unresolved: number
   stillPending: number
   unresolvedBets: Array<{ id: string; sport: string; match: string; marketType: string }>
+  pendingDebug?: Array<{ match: string; sport: string; marketType: string; reason: string }>
 }
 
-export async function settlePendingBets(opts?: { userId?: string }): Promise<SettleSummary> {
+export async function settlePendingBets(opts?: {
+  userId?: string
+  debug?: boolean
+}): Promise<SettleSummary> {
   const where = opts?.userId
     ? and(eq(userBet.status, 'laukia'), eq(userBet.userId, opts.userId))
     : eq(userBet.status, 'laukia')
@@ -37,6 +41,7 @@ export async function settlePendingBets(opts?: { userId?: string }): Promise<Set
     unresolved: 0,
     stillPending: 0,
     unresolvedBets: [],
+    pendingDebug: opts?.debug ? [] : undefined,
   }
 
   const now = Date.now()
@@ -53,6 +58,7 @@ export async function settlePendingBets(opts?: { userId?: string }): Promise<Set
       homeName: row.homeName,
       awayName: row.awayName,
       startsAt: row.startsAt,
+      placedAt: row.placedAt,
       stake: row.stake,
       odds: row.odds,
     })
@@ -67,7 +73,8 @@ export async function settlePendingBets(opts?: { userId?: string }): Promise<Set
     }
 
     // Not gradable yet. If well past kickoff, mark unresolved (no manual grade).
-    const start = row.startsAt ? row.startsAt.getTime() : null
+    const start =
+      row.startsAt?.getTime() ?? row.placedAt?.getTime() ?? null
     if (start != null && now > start + UNRESOLVED_AFTER_MS) {
       await db
         .update(userBet)
@@ -82,6 +89,28 @@ export async function settlePendingBets(opts?: { userId?: string }): Promise<Set
       })
     } else {
       summary.stillPending += 1
+      if (opts?.debug && summary.pendingDebug) {
+        summary.pendingDebug.push({
+          match: row.match,
+          sport: row.sport,
+          marketType: row.marketType,
+          reason: await diagnoseBetBlocker({
+            id: row.id,
+            sport: row.sport,
+            match: row.match,
+            betDescription: row.betDescription,
+            marketType: row.marketType,
+            pickName: row.pickName,
+            line: row.line,
+            homeName: row.homeName,
+            awayName: row.awayName,
+            startsAt: row.startsAt,
+            placedAt: row.placedAt,
+            stake: row.stake,
+            odds: row.odds,
+          }),
+        })
+      }
     }
   }
 
