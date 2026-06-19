@@ -110,7 +110,6 @@ function Kpi({
 export function ClvPanel() {
   const { stats, isLoading, error } = useClv()
   const [visibleRecent, setVisibleRecent] = useState(RECENT_COLLAPSED)
-  const [visibleSports, setVisibleSports] = useState(SPORT_COLLAPSED)
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
@@ -133,8 +132,6 @@ export function ClvPanel() {
           stats={stats}
           visibleRecent={visibleRecent}
           setVisibleRecent={setVisibleRecent}
-          visibleSports={visibleSports}
-          setVisibleSports={setVisibleSports}
         />
       )}
     </div>
@@ -142,9 +139,13 @@ export function ClvPanel() {
 }
 
 const RECENT_COLLAPSED = 5
-const SPORT_COLLAPSED = 3
 const PAGE_STEP = 10
 const ROLLING_WINDOW = 5
+
+/** Most CLV-rated sports first (tennis was hidden when list was A–Z + cap 3). */
+function sportsByClvCount(stats: ClvStats) {
+  return [...stats.by_sport].sort((a, b) => b.n - a.n)
+}
 
 /**
  * #30 CLV chart: one bar per closed bet (CLV %), oldest→newest, with a
@@ -229,14 +230,10 @@ function ClvBody({
   stats,
   visibleRecent,
   setVisibleRecent,
-  visibleSports,
-  setVisibleSports,
 }: {
   stats: ClvStats
   visibleRecent: number
   setVisibleRecent: (v: number) => void
-  visibleSports: number
-  setVisibleSports: (v: number) => void
 }) {
   if (stats.total === 0) {
     return (
@@ -260,12 +257,11 @@ function ClvBody({
         ? "pos"
         : "neg"
 
-  const sports = stats.by_sport.slice(0, visibleSports)
+  const sports = sportsByClvCount(stats)
   const ratedRows = stats.recent_closed.length
     ? stats.recent_closed
     : stats.recent.filter((r) => r.status === "closed" && r.clv_pct != null)
   const recent = ratedRows.slice(0, visibleRecent)
-  const hasMoreSports = stats.by_sport.length > visibleSports
   const hasMoreRecent = ratedRows.length > visibleRecent
   const showRecentScroll = visibleRecent > RECENT_COLLAPSED
 
@@ -387,33 +383,8 @@ function ClvBody({
         </div>
       </div>
 
-      {(hasMoreSports || hasMoreRecent) && (
+      {(hasMoreRecent) && (
         <div className="flex flex-col gap-2">
-          {hasMoreSports && (
-            <button
-              type="button"
-              onClick={() =>
-                setVisibleSports(
-                  visibleSports >= stats.by_sport.length
-                    ? SPORT_COLLAPSED
-                    : visibleSports + PAGE_STEP,
-                )
-              }
-              className="flex items-center justify-center gap-1 rounded-lg border border-border bg-secondary/30 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground"
-            >
-              {visibleSports >= stats.by_sport.length ? (
-                <>
-                  <ChevronUp className="size-3.5" aria-hidden="true" />
-                  Mažiau sportų
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="size-3.5" aria-hidden="true" />
-                  Daugiau sportų ({stats.by_sport.length - visibleSports} liko)
-                </>
-              )}
-            </button>
-          )}
           {hasMoreRecent && (
             <button
               type="button"
