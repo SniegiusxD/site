@@ -24,9 +24,23 @@ export function AppGate() {
     }
   }, [authed, isPending, stage])
 
+  // Signed out while in app → back to login
+  useEffect(() => {
+    if (!isPending && !authed && stage === "app") {
+      setStage("auth")
+    }
+  }, [authed, isPending, stage])
+
   // If the session resolves to authed while sitting on the auth screen, advance.
   useEffect(() => {
-    if (authed && stage === "auth") setStage("config")
+    if (!authed || stage !== "auth") return
+    try {
+      setStage(
+        window.localStorage.getItem("onboardingComplete") === "1" ? "app" : "config",
+      )
+    } catch {
+      setStage("config")
+    }
   }, [authed, stage])
 
   function handleFunnelComplete(result: FunnelResult) {
@@ -70,7 +84,16 @@ export function AppGate() {
 
       {stage === "config" && !isPending && (
         <motion.div key="config" {...fade}>
-          <OnboardingFlow onComplete={() => setStage("app")} />
+          <OnboardingFlow
+            onComplete={() => {
+              try {
+                window.localStorage.setItem("onboardingComplete", "1")
+              } catch {
+                // ignore
+              }
+              setStage("app")
+            }}
+          />
         </motion.div>
       )}
 

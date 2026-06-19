@@ -1,7 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { LogOut, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
+import { authClient } from "@/lib/auth-client"
+import { displayUsername } from "@/lib/display-user"
 import { eur } from "@/lib/format"
 import { FLAT_STAKE } from "@/lib/mock-data"
 import { usePortfolio } from "@/lib/portfolio-store"
@@ -9,7 +13,9 @@ import { usePortfolio } from "@/lib/portfolio-store"
 const BOOKMAKERS = ["7BET", "TopSport", "Pinnacle"]
 
 export function NustatymaiSection() {
-  const { bankroll, baseBankroll, setBankroll } = usePortfolio()
+  const { bankroll, baseBankroll, setBankroll, isLoggedIn } = usePortfolio()
+  const { data: session } = authClient.useSession()
+  const [signingOut, setSigningOut] = useState(false)
   const [autoRefresh, setAutoRefresh] = useState(true)
   const [notifications, setNotifications] = useState(true)
   const [kelly, setKelly] = useState(false)
@@ -37,8 +43,50 @@ export function NustatymaiSection() {
       prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b],
     )
 
+  const userLabel = session?.user ? displayUsername(session.user) : null
+
+  async function handleSignOut() {
+    setSigningOut(true)
+    try {
+      await authClient.signOut()
+    } finally {
+      setSigningOut(false)
+    }
+  }
+
   return (
     <section aria-label="Nustatymai" className="flex flex-col gap-3">
+      <Card title="Paskyra">
+        {isLoggedIn && userLabel ? (
+          <>
+            <Row label="Prisijungta kaip" value={`@${userLabel}`} />
+            <p className="mb-3 text-[12px] text-muted-foreground">
+              Statymai ir istorija saugomi šioje paskyroje. Naudok tą patį
+              vardą kituose įrenginiuose.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={signingOut}
+              onClick={() => void handleSignOut()}
+            >
+              {signingOut ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <LogOut className="size-4" aria-hidden="true" />
+              )}
+              Atsijungti
+            </Button>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Neprisijungta — statymai saugomi tik šiame naršyklės lange. Prisijunk
+            per pradinį ekraną, kad istorija būtų debesyje.
+          </p>
+        )}
+      </Card>
+
       <Card title="Bankrolas">
         <div className="flex items-center justify-between gap-4 border-b border-border py-2">
           <label
