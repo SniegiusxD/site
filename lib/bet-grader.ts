@@ -2,7 +2,13 @@
  * Auto-settle pending bets using ESPN public scoreboards.
  * Moneyline: winner. Spread/total: final scores vs line. BTTS: both scored.
  * Tennis game spread/total (#33b): sum ESPN linescores per set (ATP/WTA only).
+ * Tennis ITF/Challenger (#39): Flashscore results fallback when ESPN misses.
  */
+
+import {
+  findFlashscoreFixture,
+  loadFlashscoreResults,
+} from '@/lib/flashscore-results'
 
 export type BetForGrading = {
   id: string
@@ -30,12 +36,25 @@ function slug(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]/g, '')
 }
 
+/** Significant name tokens (tennis Flashscore uses "Last F." vs full names). */
+function nameTokens(s: string): string[] {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length >= 3)
+}
+
 function namesMatch(a: string, b: string): boolean {
   if (!a || !b) return false
   const sa = slug(a)
   const sb = slug(b)
   if (sa.length < 3 || sb.length < 3) return sa === sb
-  return sa.includes(sb) || sb.includes(sa)
+  if (sa.includes(sb) || sb.includes(sa)) return true
+  // Tennis / Flashscore: match on shared surname token (e.g. Kitahara ↔ Kitahara Y.)
+  const ta = nameTokens(a)
+  const tb = nameTokens(b)
+  return ta.some((t) => tb.some((u) => t.includes(u) || u.includes(t)))
 }
 
 export function extractPickName(betDescription: string, marketType: string): string | null {
@@ -357,6 +376,60 @@ async function gradeTennisLine(
 }
 
 
+/** #39 — grade tennis from Flashscore when ESPN has no match (ITF/Challenger). */
+async function tryGradeTennisFromFlashscore(
+  bet: BetForGrading,
+  market: string,
+): Promise<GradeResult | null> {
+  const parsed = parseMatchNames(bet.match)
+  const homeHint = bet.homeName ?? parsed?.home ?? ''
+  const awayHint = bet.awayName ?? parsed?.away ?? ''
+  if (!homeHint && !awayHint) return null
+
+  const start = bet.startsAt ?? new Date()
+  if (Date.now() < start.getTime() + GRACE_MS) return null
+
+  const results = await loadFlashscoreResults()
+  const fx = findFlashscoreFixture(results, homeHint, awayHint, namesMatch)
+  if (!fx) return null
+
+  const pickName =
+    bet.pickName ?? extractPickName(bet.betDescription, bet.marketType)
+  const descLower = bet.betDescription.toLowerCase()
+
+  if (market === 'moneyline') {
+    if (!pickName) return null
+    const pickIsHome =
+      namesMatch(pickName, fx.homeName) || namesMatch(pickName, homeHint)
+    const pickIsAway =
+      namesMatch(pickName, fx.awayName) || namesMatch(pickName, awayHint)
+    if (!pickIsHome && !pickIsAway) return null
+    const won = pickIsHome ? fx.homeWon : !fx.homeWon
+    return settle(won, bet)
+  }
+
+  if ((market === 'spread' || market === 'total') && bet.line == null) return null
+
+  if (market === 'total') {
+    const isOver = descLower.includes('daugiau') || descLower.includes('over')
+    const out = gradeTotal(fx.homeGames + fx.awayGames, isOver, bet.line as number)
+    return settle(out, bet)
+  }
+
+  if (market === 'spread') {
+    const pickIsHome =
+      namesMatch(pickName ?? '', fx.homeName) || namesMatch(pickName ?? '', homeHint)
+    const pickIsAway =
+      namesMatch(pickName ?? '', fx.awayName) || namesMatch(pickName ?? '', awayHint)
+    if (!pickIsHome && !pickIsAway) return null
+    const out = gradeSpread(fx.homeGames, fx.awayGames, pickIsHome, bet.line as number)
+    return settle(out, bet)
+  }
+
+  return null
+}
+
+
 export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | null> {
   const market = (bet.marketType ?? 'moneyline').toLowerCase()
   // Tennis totals/spreads: ESPN tennis scoreboard has no game-count totals → manual.
@@ -364,7 +437,9 @@ export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | nul
   const isTennis = sportU === 'TENNIS' || sportU === 'TABLE_TENNIS'
   if (isTennis && (market === 'spread' || market === 'total')) {
     if (sportU !== 'TENNIS') return null // table tennis: no ESPN linescores
-    return gradeTennisLine(bet, market)
+    const espn = await gradeTennisLine(bet, market)
+    if (espn) return espn
+    return tryGradeTennisFromFlashscore(bet, market)
   }
   if (isTennis && market !== 'moneyline') {
     return null
@@ -441,5 +516,12 @@ export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | nul
       }
     }
   }
+
+  // #39 Flashscore fallback for tennis moneyline (ITF/Challenger ESPN gaps)
+  if (sportU === 'TENNIS' && market === 'moneyline') {
+    const fb = await tryGradeTennisFromFlashscore(bet, market)
+    if (fb) return fb
+  }
+
   return null
 }

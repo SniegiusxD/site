@@ -51,12 +51,24 @@ Expected JSON:
   (Neišspręsta) + `console.warn` in Vercel logs. Customers never grade these by hand.
 - `neisspresta` counts as void (stake back, profit 0) in ROI analytics.
 
-## 4. Still pending on friend (#39)
+## 4. Tennis results (#39 — Flashscore)
 
-ITF/Challenger tennis and obscure soccer leagues aren't on ESPN. When the friend
-delivers a LiveScore/Flashscore **results** scraper, add it as a second source in
-the grader chain (ESPN → friend results → neisspresta). See
-`SCRAPER_HANDOFF_FOR_FRIEND.md` § Type C in the backend repo.
+ITF/Challenger tennis isn't on ESPN. The VPS runs `run_flashscore_results.py` every
+15 min and writes `odds_output/tennis_results.json`. The site grader tries ESPN first,
+then `GET /api/tennis-results` on the VPS.
+
+**VPS cron (add alongside odds-runner):**
+
+```cron
+*/15 * * * * cd /opt/odds-bot && ./venv/bin/python run_flashscore_results.py --once >> /var/log/flashscore-results.log 2>&1
+```
+
+**Optional Vercel env:** `TENNIS_RESULTS_URL=http://95.179.153.249:5001/api/tennis-results`
+(default if unset — same as opportunities API host).
+
+**Flashscore token:** set `FLASHSCORE_FSIGN` on VPS if `SW9D1eZo` starts returning 403.
+
+## 5. Still pending on other sports
 
 ## Security
 
