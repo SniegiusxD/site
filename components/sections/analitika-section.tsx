@@ -80,12 +80,12 @@ function Kpi({
 }
 
 export function AnalitikaSection() {
-  const { activeBets } = usePortfolio()
+  const { activeBets, baseBankroll } = usePortfolio()
 
   // Real numbers: every figure is derived from the user's own settled bets.
   const a = useMemo(
-    () => computeAnalytics(settledFromActive(activeBets)),
-    [activeBets],
+    () => computeAnalytics(settledFromActive(activeBets), baseBankroll),
+    [activeBets, baseBankroll],
   )
 
   const distColors = [

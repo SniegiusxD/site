@@ -156,6 +156,7 @@ function ClvChart({ closed }: { closed: ClvRow[] }) {
   // recent_closed is newest-first; chart reads best oldest→newest.
   const rows = [...closed]
     .filter((r) => r.clv_pct != null)
+    .filter((r) => Math.abs(r.clv_pct as number) <= 1.0)
     .reverse()
   if (rows.length < 2) return null
 

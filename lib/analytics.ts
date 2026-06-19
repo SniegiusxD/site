@@ -82,7 +82,10 @@ export interface Analytics {
 }
 
 /** Compute every analytics figure from real settled bets. */
-export function computeAnalytics(bets: SettledBet[]): Analytics {
+export function computeAnalytics(
+  bets: SettledBet[],
+  startingBankroll = STARTING_BANKROLL,
+): Analytics {
   const decided = bets.filter((b) => b.status !== "grazinta")
   const wins = bets.filter((b) => b.status === "laimeta").length
   const losses = bets.filter((b) => b.status === "pralaimeta").length
@@ -101,8 +104,8 @@ export function computeAnalytics(bets: SettledBet[]): Analytics {
   for (const b of [...bets].sort((a, z) => a.date.localeCompare(z.date))) {
     byDate.set(b.date, (byDate.get(b.date) ?? 0) + b.profit)
   }
-  let running = STARTING_BANKROLL
-  const equityCurve = [{ day: "Pradžia", value: STARTING_BANKROLL }]
+  let running = startingBankroll
+  const equityCurve = [{ day: "Pradžia", value: startingBankroll }]
   for (const [date, delta] of byDate) {
     running += delta
     equityCurve.push({ day: date.slice(5), value: Math.round(running) })

@@ -690,11 +690,10 @@ export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | nul
   dates.push(yyyymmdd(prev))
 
   const paths = espnPathsForSport(bet.sport)
-  if (!paths.length) return null
-
   const descLower = bet.betDescription.toLowerCase()
 
-  for (const path of paths) {
+  if (paths.length) {
+    for (const path of paths) {
     for (const date of dates) {
       let events: EspnEvent[]
       try {
@@ -738,6 +737,7 @@ export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | nul
           return settle(isYes ? bothScored : !bothScored, bet)
         }
       }
+    }
     }
   }
 
