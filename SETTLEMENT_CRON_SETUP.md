@@ -68,7 +68,53 @@ then `GET /api/tennis-results` on the VPS.
 
 **Flashscore token:** set `FLASHSCORE_FSIGN` on VPS if `SW9D1eZo` starts returning 403.
 
-## 5. Still pending on other sports
+## 5. Multisport results (Phase 4 — Flashscore volleyball/basketball/hockey/cricket)
+
+Volleyball, obscure (non-NBA) basketball, ice hockey and cricket aren't reliably
+on ESPN. The VPS runs `run_flashscore_multisport.py` every 15 min and writes
+`odds_output/multisport_results.json`. The site grader tries ESPN first, then
+`GET /api/multisport-results` on the VPS.
+
+**VPS cron:**
+
+```cron
+*/15 * * * * cd /opt/odds-bot && ./venv/bin/python run_flashscore_multisport.py --once >> /var/log/flashscore-multisport.log 2>&1
+```
+
+**Optional Vercel env:** `MULTISPORT_RESULTS_URL=http://95.179.153.249:5001/api/multisport-results`
+(default if unset). Reuses `FLASHSCORE_FSIGN` on VPS.
+
+Coverage: volleyball (ML = sets won; total = combined set points if line saved),
+basketball/ice_hockey (ML/spread/total from final score), cricket (ML winner only).
+
+## 6. MLB player props (Phase 5/7 — ESPN box scores)
+
+MLB player props (hits, HR, total bases, RBIs, strikeouts) settle from ESPN
+box-score stats. The VPS runs `run_mlb_boxscore.py` every 30 min and writes
+`odds_output/mlb_player_stats.json`. The site grader fetches `GET /api/mlb-stats`.
+
+**VPS cron:**
+
+```cron
+*/30 * * * * cd /opt/odds-bot && ./venv/bin/python run_mlb_boxscore.py --once >> /var/log/mlb-boxscore.log 2>&1
+```
+
+**Optional Vercel env:** `MLB_STATS_URL=http://95.179.153.249:5001/api/mlb-stats`
+(default if unset).
+
+## 7. Full VPS crontab reference
+
+```cron
+*/5  * * * * cd /opt/odds-bot && ./venv/bin/python odds_runner.py --once >> /var/log/odds-runner.log 2>&1
+*/15 * * * * cd /opt/odds-bot && ./venv/bin/python run_flashscore_results.py --once >> /var/log/flashscore-results.log 2>&1
+*/15 * * * * cd /opt/odds-bot && ./venv/bin/python run_flashscore_multisport.py --once >> /var/log/flashscore-multisport.log 2>&1
+*/30 * * * * cd /opt/odds-bot && ./venv/bin/python run_mlb_boxscore.py --once >> /var/log/mlb-boxscore.log 2>&1
+*/15 * * * * curl -fsS -H "Authorization: Bearer YOUR_CRON_SECRET_HERE" https://predictions-dashboard-two.vercel.app/api/cron/settle >> /var/log/bet-settle.log 2>&1
+```
+
+**Debug blocker reasons:** add `?debug=1` to the settle URL to see why bets stay
+pending (e.g. `missing_line`, `no_multisport_match`, `mlb_stats_fetch_empty`,
+`prop_missing_player_name`, `cricket_line_unsupported`).
 
 ## Security
 

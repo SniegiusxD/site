@@ -9,6 +9,15 @@ import {
   findFlashscoreFixture,
   loadFlashscoreResults,
 } from '@/lib/flashscore-results'
+import {
+  findMultisportFixture,
+  loadMultisportResults,
+} from '@/lib/flashscore-multisport'
+import {
+  findPlayerStat,
+  loadMlbStats,
+  MLB_MARKET_TO_STAT,
+} from '@/lib/mlb-stats'
 
 export type BetForGrading = {
   id: string
@@ -440,6 +449,133 @@ async function tryGradeTennisFromFlashscore(
 }
 
 
+/** Map our Sport enum → Flashscore multisport key (or null if not covered). */
+function multisportKey(sport: string): string | null {
+  const s = sport.toUpperCase()
+  if (s === 'VOLLEYBALL') return 'volleyball'
+  if (s === 'ICE_HOCKEY') return 'hockey'
+  if (s === 'CRICKET') return 'cricket'
+  // Non-NBA basketball (Euroleague, etc.) — ESPN often lacks these.
+  if (s === 'BASKETBALL') return 'basketball'
+  return null
+}
+
+/**
+ * Phase 7 — grade volleyball / obscure-basketball / hockey / cricket from
+ * Flashscore when ESPN has no match. Moneyline + spread + total.
+ * Cricket only supports moneyline (winner-only; no reliable run line).
+ */
+async function tryGradeFromMultisport(
+  bet: BetForGrading,
+  market: string,
+): Promise<GradeResult | null> {
+  const key = multisportKey(bet.sport)
+  if (!key) return null
+  if (!pastGrace(bet)) return null
+
+  const parsed = parseMatchNames(bet.match)
+  const homeHint = bet.homeName ?? parsed?.home ?? ''
+  const awayHint = bet.awayName ?? parsed?.away ?? ''
+  if (!homeHint && !awayHint) return null
+
+  const bySport = await loadMultisportResults()
+  const results = bySport[key] ?? []
+  if (!results.length) return null
+
+  const fx = findMultisportFixture(results, homeHint, awayHint, namesMatch)
+  if (!fx) return null
+
+  const pickName = bet.pickName ?? extractPickName(bet.betDescription, bet.marketType)
+  const descLower = bet.betDescription.toLowerCase()
+
+  if (market === 'moneyline') {
+    if (!pickName) return null
+    const pickIsHome = namesMatch(pickName, fx.homeName) || namesMatch(pickName, homeHint)
+    const pickIsAway = namesMatch(pickName, fx.awayName) || namesMatch(pickName, awayHint)
+    if (!pickIsHome && !pickIsAway) return null
+    const won = pickIsHome ? fx.homeWon : !fx.homeWon
+    return settle(won, bet)
+  }
+
+  // spread / total need numeric scores
+  if (!fx.hasScores || bet.line == null) return null
+  if (key === 'cricket') return null // no reliable run line — moneyline only
+
+  if (market === 'total') {
+    const isOver = descLower.includes('daugiau') || descLower.includes('over')
+    const out = gradeTotal(fx.homeScore + fx.awayScore, isOver, bet.line)
+    return settle(out, bet)
+  }
+
+  if (market === 'spread') {
+    const pickIsHome = namesMatch(pickName ?? '', fx.homeName) || namesMatch(pickName ?? '', homeHint)
+    const pickIsAway = namesMatch(pickName ?? '', fx.awayName) || namesMatch(pickName ?? '', awayHint)
+    if (!pickIsHome && !pickIsAway) return null
+    const out = gradeSpread(fx.homeScore, fx.awayScore, pickIsHome, bet.line)
+    return settle(out, bet)
+  }
+
+  return null
+}
+
+/**
+ * Phase 7 — grade an MLB player prop from ESPN box-score stats.
+ * Compares the player's actual stat (hits / HR / TB / RBI / K) to the line.
+ */
+async function tryGradeMlbProp(bet: BetForGrading): Promise<GradeResult | null> {
+  if (bet.line == null) return null
+  if (!pastGrace(bet)) return null
+
+  // Determine market + player. Backend prop bets carry pickName as the player
+  // when available; market is encoded in betDescription / pickName.
+  const market = propMarketFromBet(bet)
+  if (!market || !MLB_MARKET_TO_STAT[market]) return null
+  const player = propPlayerFromBet(bet)
+  if (!player) return null
+
+  const players = await loadMlbStats()
+  if (!players.length) return null
+
+  const found = findPlayerStat(players, player, market, namesMatch)
+  if (!found) return null
+
+  // Over/under side from description ("Daugiau"/"over" = over).
+  const descLower = bet.betDescription.toLowerCase()
+  const isOver = descLower.includes('daugiau') || descLower.includes('over')
+  const out = gradeTotal(found.value, isOver, bet.line)
+  return settle(out, bet)
+}
+
+/** Pull the MLB prop market key from a bet (description or pickName). */
+function propMarketFromBet(bet: BetForGrading): string | null {
+  const hay = `${bet.betDescription} ${bet.pickName ?? ''}`.toLowerCase()
+  if (/strikeout|striks|k's|\bk\b/.test(hay)) return 'pitcher_strikeouts'
+  if (/home run|homerun|\bhr\b/.test(hay)) return 'batter_home_runs'
+  if (/total base/.test(hay)) return 'batter_total_bases'
+  if (/\brbi/.test(hay)) return 'batter_rbis'
+  if (/\bhit/.test(hay)) return 'batter_hits'
+  return null
+}
+
+/**
+ * Extract the player name from a prop bet. Backend prop descriptions look like
+ * "Pete Alonso: Over 1.5 (batter hits)" — take the part before the colon.
+ */
+function propPlayerFromBet(bet: BetForGrading): string | null {
+  if (bet.pickName && /[a-z]/i.test(bet.pickName) && !/^(over|under|daugiau|mažiau|maziau)/i.test(bet.pickName.trim())) {
+    // pickName may already be the player
+    const colon = bet.pickName.split(':')[0].trim()
+    if (colon.split(/\s+/).length >= 2) return colon
+  }
+  const desc = bet.betDescription
+  const colonIdx = desc.indexOf(':')
+  if (colonIdx > 0) {
+    const candidate = desc.slice(0, colonIdx).trim()
+    if (candidate.split(/\s+/).length >= 2) return candidate
+  }
+  return null
+}
+
 /** Why a bet could not be graded (admin/cron debug). */
 export async function diagnoseBetBlocker(bet: BetForGrading): Promise<string> {
   const market = (bet.marketType ?? 'moneyline').toLowerCase()
@@ -448,6 +584,21 @@ export async function diagnoseBetBlocker(bet: BetForGrading): Promise<string> {
   if (!pastGrace(bet)) {
     const ko = kickoffTime(bet)
     return `waiting_3h_after_kickoff (kickoff ${ko.toISOString()})`
+  }
+
+  // Player props (Phase 7) — MLB via ESPN box scores.
+  if (market === 'prop') {
+    if (sportU !== 'BASEBALL' && sportU !== 'MLB') return `prop_no_source_for_${sportU}`
+    if (bet.line == null) return 'missing_line'
+    const mkt = propMarketFromBet(bet)
+    if (!mkt) return 'prop_unknown_market'
+    const player = propPlayerFromBet(bet)
+    if (!player) return 'prop_missing_player_name'
+    const players = await loadMlbStats()
+    if (!players.length) return 'mlb_stats_fetch_empty'
+    const found = findPlayerStat(players, player, mkt, namesMatch)
+    if (!found) return 'no_mlb_stat_for_player (check name / game finished)'
+    return 'mlb_stat_found_but_not_graded'
   }
 
   if ((market === 'spread' || market === 'total') && bet.line == null) {
@@ -465,11 +616,6 @@ export async function diagnoseBetBlocker(bet: BetForGrading): Promise<string> {
 
   if (sportU === 'TABLE_TENNIS') return 'table_tennis_no_source'
 
-  const paths = espnPathsForSport(bet.sport)
-  if (!paths.length && sportU !== 'TENNIS') {
-    return `no_espn_feed_for_${sportU}`
-  }
-
   if (sportU === 'TENNIS') {
     const fs = await loadFlashscoreResults()
     if (!fs.length) return 'flashscore_fetch_empty'
@@ -478,12 +624,39 @@ export async function diagnoseBetBlocker(bet: BetForGrading): Promise<string> {
     return 'flashscore_found_but_market_not_graded'
   }
 
+  // Phase 7 — sports covered by Flashscore multisport fallback.
+  const msKey = multisportKey(bet.sport)
+  const paths = espnPathsForSport(bet.sport)
+  if (msKey) {
+    const bySport = await loadMultisportResults()
+    const results = bySport[msKey] ?? []
+    if (!results.length && !paths.length) return `multisport_fetch_empty_${sportU}`
+    const fx = findMultisportFixture(results, homeHint, awayHint, namesMatch)
+    if (!fx && !paths.length) return 'no_multisport_match (check name / match age)'
+    if (fx && msKey === 'cricket' && market !== 'moneyline') return 'cricket_line_unsupported'
+    if (fx && !fx.hasScores && market !== 'moneyline') return 'multisport_scores_missing'
+    if (fx) return 'multisport_found_but_market_not_graded'
+  }
+
+  if (!paths.length && sportU !== 'TENNIS') {
+    return `no_espn_feed_for_${sportU}`
+  }
+
   return 'no_espn_match'
 }
 
 
 export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | null> {
   const market = (bet.marketType ?? 'moneyline').toLowerCase()
+  // Player props (Phase 7): MLB via ESPN box scores. Other sports' props have
+  // no public stat source yet → stay pending.
+  if (market === 'prop') {
+    const sportU0 = bet.sport.toUpperCase()
+    if (sportU0 === 'BASEBALL' || sportU0 === 'MLB') {
+      return tryGradeMlbProp(bet)
+    }
+    return null
+  }
   // Tennis totals/spreads: ESPN tennis scoreboard has no game-count totals → manual.
   const sportU = bet.sport.toUpperCase()
   const isTennis = sportU === 'TENNIS' || sportU === 'TABLE_TENNIS'
@@ -573,6 +746,11 @@ export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | nul
     const fb = await tryGradeTennisFromFlashscore(bet, market)
     if (fb) return fb
   }
+
+  // Phase 7 — Flashscore multisport fallback (volleyball / obscure basketball /
+  // hockey / cricket) when ESPN had no usable match.
+  const multi = await tryGradeFromMultisport(bet, market)
+  if (multi) return multi
 
   return null
 }

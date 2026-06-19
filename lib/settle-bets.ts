@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { userBet } from '@/lib/db/schema'
 import { tryGradeBet, diagnoseBetBlocker } from '@/lib/bet-grader'
+import { parseLineFromDescription } from '@/lib/map-opportunity'
 
 /**
  * Backend settlement (#40). Grades pending user_bet rows from public score
@@ -47,6 +48,21 @@ export async function settlePendingBets(opts?: {
   const now = Date.now()
 
   for (const row of pending) {
+    // Phase 6 backfill: spread/total/prop rows placed before explicit-line
+    // support may have line=NULL. Recover it from the description so the grader
+    // doesn't block on `missing_line`. Persist it so it's only parsed once.
+    let line = row.line
+    if (
+      line == null &&
+      (row.marketType === 'spread' || row.marketType === 'total' || row.marketType === 'prop')
+    ) {
+      const parsed = parseLineFromDescription(row.betDescription)
+      if (parsed.line != null) {
+        line = parsed.line
+        await db.update(userBet).set({ line }).where(eq(userBet.id, row.id))
+      }
+    }
+
     const result = await tryGradeBet({
       id: row.id,
       sport: row.sport,
@@ -54,7 +70,7 @@ export async function settlePendingBets(opts?: {
       betDescription: row.betDescription,
       marketType: row.marketType,
       pickName: row.pickName,
-      line: row.line,
+      line,
       homeName: row.homeName,
       awayName: row.awayName,
       startsAt: row.startsAt,
@@ -101,7 +117,7 @@ export async function settlePendingBets(opts?: {
             betDescription: row.betDescription,
             marketType: row.marketType,
             pickName: row.pickName,
-            line: row.line,
+            line,
             homeName: row.homeName,
             awayName: row.awayName,
             startsAt: row.startsAt,

@@ -81,6 +81,50 @@ function buildRationale(opp: BackendOpportunity, edgePct: number, sharpOdds?: nu
   return opp.description ?? ""
 }
 
+/**
+ * Parse a betting line (and over/under side for totals) from a Lithuanian
+ * description when the backend did not send an explicit `line`.
+ *
+ * Handles:
+ *   "Suminis: Daugiau 173.5"      → { line: 173.5, side: "over" }
+ *   "Mažiau 0.5"                  → { line: 0.5,   side: "under" }
+ *   "Handikapas: Team -4.5"       → { line: -4.5 }
+ *   "Team (-13)"                  → { line: -13 }  (line in parentheses)
+ *   "Samuel Basallo: Mažiau 0.5"  → { line: 0.5,   side: "under" } (prop)
+ *
+ * "Daugiau"/"Virš" = Over, "Mažiau" = Under.
+ */
+export function parseLineFromDescription(
+  description: string,
+): { line?: number; side?: "over" | "under" } {
+  if (!description) return {}
+  const lower = description.toLowerCase()
+  let side: "over" | "under" | undefined
+  if (/\b(daugiau|vir[sš]|over)\b/.test(lower)) side = "over"
+  else if (/\b(ma[zž]iau|under)\b/.test(lower)) side = "under"
+
+  // Prefer a number inside parentheses, e.g. "Team (-13)" or "(+4.5)"
+  const paren = description.match(/\(\s*([+-]?\d+(?:[.,]\d+)?)\s*\)/)
+  if (paren) {
+    return { line: Number(paren[1].replace(",", ".").replace("+", "")), side }
+  }
+
+  // A number immediately after the over/under keyword, e.g. "Over 1.5 (...)"
+  const afterSide = description.match(
+    /(?:daugiau|vir[sš]|over|ma[zž]iau|under)\s*([+-]?\d+(?:[.,]\d+)?)/i,
+  )
+  if (afterSide) {
+    return { line: Number(afterSide[1].replace(",", ".").replace("+", "")), side }
+  }
+
+  // Otherwise the last signed/decimal number in the string
+  const m = description.match(/([+-]?\d+(?:[.,]\d+)?)\s*$/)
+  if (m) {
+    return { line: Number(m[1].replace(",", ".").replace("+", "")), side }
+  }
+  return { side }
+}
+
 /** Backend `kelly_fraction` is already quarter-Kelly (see edge_detector.py). */
 export function mapOpportunity(opp: BackendOpportunity, bankroll = 1247): Signal {
   const edgePct = (opp.edge ?? 0) * 100
@@ -98,12 +142,12 @@ export function mapOpportunity(opp: BackendOpportunity, bankroll = 1247): Signal
   const pickName =
     extractPickName(betDescription, marketType) ??
     (marketType === "moneyline" ? betDescription.replace(/\s*moneyline\s*$/i, "").trim() : undefined)
-  // Line for spread/total: backend sends opp.line, else parse from description
-  // ("Suminis: Daugiau 210.5", "Handikapas: Team -4.5"). Last signed number.
+  // Line for spread/total/prop: backend sends opp.line; otherwise parse it
+  // (and the over/under side) from the Lithuanian description.
   let line: number | undefined = opp.line ?? undefined
-  if (line == null && (marketType === "spread" || marketType === "total")) {
-    const m = betDescription.match(/(-?\+?\d+(?:\.\d+)?)\s*$/)
-    if (m) line = Number(m[1].replace("+", ""))
+  if (line == null && (marketType === "spread" || marketType === "total" || marketType === "prop")) {
+    const parsed = parseLineFromDescription(betDescription)
+    if (parsed.line != null) line = parsed.line
   }
 
   return {
