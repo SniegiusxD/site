@@ -18,6 +18,7 @@ import {
   loadMlbStats,
   MLB_MARKET_TO_STAT,
 } from '@/lib/mlb-stats'
+import { namesMatch } from '@/lib/name-matcher'
 
 export type BetForGrading = {
   id: string
@@ -51,31 +52,6 @@ function kickoffTime(bet: BetForGrading): Date {
 
 function pastGrace(bet: BetForGrading): boolean {
   return Date.now() >= kickoffTime(bet).getTime() + GRACE_MS
-}
-
-function slug(s: string) {
-  return s.toLowerCase().replace(/[^a-z0-9]/g, '')
-}
-
-/** Significant name tokens (tennis Flashscore uses "Last F." vs full names). */
-function nameTokens(s: string): string[] {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter((t) => t.length >= 3)
-}
-
-function namesMatch(a: string, b: string): boolean {
-  if (!a || !b) return false
-  const sa = slug(a)
-  const sb = slug(b)
-  if (sa.length < 3 || sb.length < 3) return sa === sb
-  if (sa.includes(sb) || sb.includes(sa)) return true
-  // Tennis / Flashscore: match on shared surname token (e.g. Kitahara ↔ Kitahara Y.)
-  const ta = nameTokens(a)
-  const tb = nameTokens(b)
-  return ta.some((t) => tb.some((u) => t.includes(u) || u.includes(t)))
 }
 
 export function extractPickName(betDescription: string, marketType: string): string | null {
@@ -272,6 +248,15 @@ function yyyymmdd(d: Date): string {
   return `${y}${m}${day}`
 }
 
+function scoreLookupDates(bet: BetForGrading): string[] {
+  const kickoff = kickoffTime(bet)
+  const prev = new Date(kickoff)
+  prev.setUTCDate(prev.getUTCDate() - 1)
+  const next = new Date(kickoff)
+  next.setUTCDate(next.getUTCDate() + 1)
+  return [kickoff, prev, next].map(yyyymmdd)
+}
+
 function settle(outcome: boolean | null, bet: BetForGrading): GradeResult {
   if (outcome === null) return { status: 'grazinta', profit: 0 } // push → stake back
   return outcome
@@ -360,10 +345,7 @@ async function gradeTennisLine(
 
   if (!pastGrace(bet)) return null
 
-  const dates = [yyyymmdd(kickoffTime(bet))]
-  const prev = new Date(kickoffTime(bet))
-  prev.setUTCDate(prev.getUTCDate() - 1)
-  dates.push(yyyymmdd(prev))
+  const dates = scoreLookupDates(bet)
 
   const descLower = bet.betDescription.toLowerCase()
   for (const path of ['tennis/atp/scoreboard', 'tennis/wta/scoreboard']) {
@@ -409,7 +391,7 @@ async function tryGradeTennisFromFlashscore(
   if (!pastGrace(bet)) return null
 
   const results = await loadFlashscoreResults()
-  const fx = findFlashscoreFixture(results, homeHint, awayHint, namesMatch)
+  const fx = findFlashscoreFixture(results, homeHint, awayHint, namesMatch, kickoffTime(bet))
   if (!fx) return null
 
   const pickName =
@@ -482,7 +464,7 @@ async function tryGradeFromMultisport(
   const results = bySport[key] ?? []
   if (!results.length) return null
 
-  const fx = findMultisportFixture(results, homeHint, awayHint, namesMatch)
+  const fx = findMultisportFixture(results, homeHint, awayHint, namesMatch, kickoffTime(bet))
   if (!fx) return null
 
   const pickName = bet.pickName ?? extractPickName(bet.betDescription, bet.marketType)
@@ -614,35 +596,36 @@ export async function diagnoseBetBlocker(bet: BetForGrading): Promise<string> {
   const awayHint = bet.awayName ?? parsed?.away ?? ''
   if (!homeHint && !awayHint) return 'missing_player_names'
 
-  if (sportU === 'TABLE_TENNIS') return 'table_tennis_no_source'
+  if (sportU === 'TABLE_TENNIS') return 'espn_unsupported; flashscore_unsupported_table_tennis'
 
   if (sportU === 'TENNIS') {
     const fs = await loadFlashscoreResults()
-    if (!fs.length) return 'flashscore_fetch_empty'
-    const fx = findFlashscoreFixture(fs, homeHint, awayHint, namesMatch)
-    if (!fx) return 'no_flashscore_match (check name spelling / match age)'
-    return 'flashscore_found_but_market_not_graded'
+    if (!fs.length) return 'espn_no_match_or_unfinished; flashscore_tennis_fetch_empty'
+    const fx = findFlashscoreFixture(fs, homeHint, awayHint, namesMatch, kickoffTime(bet))
+    if (!fx) return 'espn_no_match_or_unfinished; flashscore_tennis_no_match_or_outside_date_window'
+    return 'espn_no_match_or_unfinished; flashscore_tennis_found_but_market_not_graded'
   }
 
   // Phase 7 — sports covered by Flashscore multisport fallback.
   const msKey = multisportKey(bet.sport)
   const paths = espnPathsForSport(bet.sport)
   if (msKey) {
+    const espnReason = paths.length ? 'espn_no_match_or_unfinished' : 'espn_unsupported'
     const bySport = await loadMultisportResults()
     const results = bySport[msKey] ?? []
-    if (!results.length && !paths.length) return `multisport_fetch_empty_${sportU}`
-    const fx = findMultisportFixture(results, homeHint, awayHint, namesMatch)
-    if (!fx && !paths.length) return 'no_multisport_match (check name / match age)'
-    if (fx && msKey === 'cricket' && market !== 'moneyline') return 'cricket_line_unsupported'
-    if (fx && !fx.hasScores && market !== 'moneyline') return 'multisport_scores_missing'
-    if (fx) return 'multisport_found_but_market_not_graded'
+    if (!results.length) return `${espnReason}; flashscore_multisport_fetch_empty_${msKey}`
+    const fx = findMultisportFixture(results, homeHint, awayHint, namesMatch, kickoffTime(bet))
+    if (!fx) return `${espnReason}; flashscore_multisport_no_match_or_outside_date_window_${msKey}`
+    if (fx && msKey === 'cricket' && market !== 'moneyline') return `${espnReason}; flashscore_multisport_cricket_line_unsupported`
+    if (fx && !fx.hasScores && market !== 'moneyline') return `${espnReason}; flashscore_multisport_scores_missing_${msKey}`
+    if (fx) return `${espnReason}; flashscore_multisport_found_but_market_not_graded_${msKey}`
   }
 
   if (!paths.length && sportU !== 'TENNIS') {
     return `no_espn_feed_for_${sportU}`
   }
 
-  return 'no_espn_match'
+  return 'espn_no_match_or_unfinished'
 }
 
 
@@ -684,10 +667,7 @@ export async function tryGradeBet(bet: BetForGrading): Promise<GradeResult | nul
 
   if (!pastGrace(bet)) return null
 
-  const dates = [yyyymmdd(kickoffTime(bet))]
-  const prev = new Date(kickoffTime(bet))
-  prev.setUTCDate(prev.getUTCDate() - 1)
-  dates.push(yyyymmdd(prev))
+  const dates = scoreLookupDates(bet)
 
   const paths = espnPathsForSport(bet.sport)
   const descLower = bet.betDescription.toLowerCase()

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { tryGradeBet } from '@/lib/bet-grader'
 import {
   findMultisportFixture,
   loadMultisportResults,
@@ -11,15 +12,19 @@ import {
   clearMlbStatsCache,
   type MlbPlayerStats,
 } from '@/lib/mlb-stats'
+import { namesMatch, normalizeName } from '@/lib/name-matcher'
 
-// Simple namesMatch mirroring bet-grader's behaviour for tests.
-function namesMatch(a: string, b: string): boolean {
-  if (!a || !b) return false
-  const sa = a.toLowerCase().replace(/[^a-z0-9]/g, '')
-  const sb = b.toLowerCase().replace(/[^a-z0-9]/g, '')
-  if (sa.length < 3 || sb.length < 3) return sa === sb
-  return sa.includes(sb) || sb.includes(sa)
-}
+describe('name normalization and aliases', () => {
+  it('strips accents, women markers, club abbreviations, punctuation and age groups', () => {
+    expect(normalizeName('Žalgiris Kaunas (W), BC U20')).toBe('zalgiris kaunas')
+    expect(namesMatch('FC Bayern München Women U20', 'Bayern Munich')).toBe(true)
+  })
+
+  it('applies team and player aliases before fuzzy matching', () => {
+    expect(namesMatch('Crvena Zvezda mts', 'Red Star Belgrade')).toBe(true)
+    expect(namesMatch('Sascha Zverev', 'Alexander Zverev')).toBe(true)
+  })
+})
 
 describe('findMultisportFixture (Phase 7)', () => {
   const volleyball: MultisportResult[] = [
@@ -50,6 +55,74 @@ describe('findMultisportFixture (Phase 7)', () => {
   it('returns null when no name match', () => {
     const fx = findMultisportFixture(volleyball, 'Brazil', 'Italy', namesMatch)
     expect(fx).toBeNull()
+  })
+
+  it('keeps Flashscore matching inside kickoff day +/- 1', () => {
+    const oldResult = [{ ...volleyball[0], start_date: '2026-06-16' }]
+    const fx = findMultisportFixture(
+      oldResult,
+      'Czech Republic W',
+      'USA W',
+      namesMatch,
+      new Date('2026-06-19T18:00:00Z'),
+    )
+    expect(fx).toBeNull()
+  })
+})
+
+describe('tryGradeBet fallback order', () => {
+  beforeEach(() => clearMultisportCache())
+  afterEach(() => vi.restoreAllMocks())
+
+  it('tries ESPN first, then Flashscore multisport for covered sports', async () => {
+    const urls: string[] = []
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      urls.push(url)
+      if (url.includes('site.api.espn.com')) {
+        return { ok: true, json: async () => ({ events: [] }) }
+      }
+      if (url.includes('/api/multisport-results')) {
+        return {
+          ok: true,
+          json: async () => ({
+            results: {
+              basketball: [{
+                sport: 'BASKETBALL',
+                source: 'flashscore',
+                status: 'finished',
+                start_date: '2026-06-19',
+                teams: { home: 'Red Star Belgrade', away: 'Partizan Belgrade' },
+                winner: 'home',
+                home_score: 88,
+                away_score: 80,
+              }],
+            },
+          }),
+        }
+      }
+      return { ok: false, json: async () => ({}) }
+    }) as unknown as typeof fetch)
+
+    const result = await tryGradeBet({
+      id: 'bet-1',
+      sport: 'BASKETBALL',
+      match: 'Crvena Zvezda mts vs Partizan Mozzart Bet',
+      betDescription: 'Crvena Zvezda mts moneyline',
+      marketType: 'moneyline',
+      pickName: 'Crvena Zvezda mts',
+      line: null,
+      homeName: 'Crvena Zvezda mts',
+      awayName: 'Partizan Mozzart Bet',
+      startsAt: new Date('2026-06-19T18:00:00Z'),
+      placedAt: new Date('2026-06-19T12:00:00Z'),
+      stake: 10,
+      odds: 1.8,
+    })
+
+    expect(result).toEqual({ status: 'laimeta', profit: 8 })
+    expect(urls[0]).toContain('site.api.espn.com')
+    expect(urls.findIndex((u) => u.includes('/api/multisport-results'))).toBeGreaterThan(0)
   })
 })
 

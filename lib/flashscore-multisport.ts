@@ -81,6 +81,16 @@ export type OrientedMultisport = {
   hasScores: boolean
 }
 
+function dateInKickoffWindow(startDate: string | undefined, kickoff?: Date | null): boolean {
+  if (!kickoff) return true
+  if (!startDate) return false
+  const parsed = new Date(startDate)
+  if (Number.isNaN(parsed.getTime())) return false
+  const eventDay = Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), parsed.getUTCDate())
+  const kickoffDay = Date.UTC(kickoff.getUTCFullYear(), kickoff.getUTCMonth(), kickoff.getUTCDate())
+  return Math.abs(eventDay - kickoffDay) <= 24 * 60 * 60 * 1000
+}
+
 /**
  * Find a finished multisport match oriented to our home/away hints.
  *
@@ -92,8 +102,10 @@ export function findMultisportFixture(
   homeHint: string,
   awayHint: string,
   namesMatch: (a: string, b: string) => boolean,
+  kickoff?: Date | null,
 ): OrientedMultisport | null {
   for (const r of results) {
+    if (!dateInKickoffWindow(r.start_date, kickoff)) continue
     const h = r.teams?.home
     const a = r.teams?.away
     if (!h || !a || !r.winner) continue

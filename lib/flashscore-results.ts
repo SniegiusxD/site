@@ -70,6 +70,16 @@ export type OrientedFlashscore = {
   homeWon: boolean
 }
 
+function dateInKickoffWindow(startDate: string | undefined, kickoff?: Date | null): boolean {
+  if (!kickoff) return true
+  if (!startDate) return false
+  const parsed = new Date(startDate)
+  if (Number.isNaN(parsed.getTime())) return false
+  const eventDay = Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), parsed.getUTCDate())
+  const kickoffDay = Date.UTC(kickoff.getUTCFullYear(), kickoff.getUTCMonth(), kickoff.getUTCDate())
+  return Math.abs(eventDay - kickoffDay) <= 24 * 60 * 60 * 1000
+}
+
 /**
  * Find a finished Flashscore match oriented to our home/away hints.
  */
@@ -78,8 +88,10 @@ export function findFlashscoreFixture(
   homeHint: string,
   awayHint: string,
   namesMatch: (a: string, b: string) => boolean,
+  kickoff?: Date | null,
 ): OrientedFlashscore | null {
   for (const r of results) {
+    if (!dateInKickoffWindow(r.start_date, kickoff)) continue
     const p1 = r.players.player1
     const p2 = r.players.player2
     if (!p1 || !p2 || !r.winner) continue

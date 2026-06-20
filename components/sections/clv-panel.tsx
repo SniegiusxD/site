@@ -197,10 +197,15 @@ function ClvChart({ closed }: { closed: ClvRow[] }) {
             <Tooltip
               contentStyle={CHART_TOOLTIP}
               cursor={{ fill: "oklch(1 0 0 / 5%)" }}
-              formatter={(value: number | string, name: string) => [
-                `${Number(value) >= 0 ? "+" : ""}${value}%`,
-                name === "rolling" ? `Slankusis vid. (${ROLLING_WINDOW})` : "CLV",
-              ]}
+              formatter={(value, name) => {
+                if (value == null) return ["—", ""]
+                const label =
+                  name === "rolling" ? `Slankusis vid. (${ROLLING_WINDOW})` : "CLV"
+                return [
+                  `${Number(value) >= 0 ? "+" : ""}${value}%`,
+                  label,
+                ]
+              }}
               labelFormatter={(_l, payload) =>
                 payload?.[0]?.payload?.label ?? ""
               }

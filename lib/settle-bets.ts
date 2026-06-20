@@ -22,7 +22,11 @@ export type SettleSummary = {
   graded: number
   unresolved: number
   stillPending: number
-  unresolvedBets: Array<{ id: string; sport: string; match: string; marketType: string }>
+  pendingCount: number
+  gradedCount: number
+  unresolvedCount: number
+  topBlockerReasons: Array<{ reason: string; count: number }>
+  unresolvedBets: Array<{ id: string; sport: string; match: string; marketType: string; reason: string }>
   pendingDebug?: Array<{ match: string; sport: string; marketType: string; reason: string }>
 }
 
@@ -41,11 +45,20 @@ export async function settlePendingBets(opts?: {
     graded: 0,
     unresolved: 0,
     stillPending: 0,
+    pendingCount: 0,
+    gradedCount: 0,
+    unresolvedCount: 0,
+    topBlockerReasons: [],
     unresolvedBets: [],
     pendingDebug: opts?.debug ? [] : undefined,
   }
 
   const now = Date.now()
+  const blockerCounts = new Map<string, number>()
+
+  const addBlocker = (reason: string) => {
+    blockerCounts.set(reason, (blockerCounts.get(reason) ?? 0) + 1)
+  }
 
   for (const row of pending) {
     // Phase 6 backfill: spread/total/prop rows placed before explicit-line
@@ -88,6 +101,23 @@ export async function settlePendingBets(opts?: {
       continue
     }
 
+    const blockerReason = await diagnoseBetBlocker({
+      id: row.id,
+      sport: row.sport,
+      match: row.match,
+      betDescription: row.betDescription,
+      marketType: row.marketType,
+      pickName: row.pickName,
+      line,
+      homeName: row.homeName,
+      awayName: row.awayName,
+      startsAt: row.startsAt,
+      placedAt: row.placedAt,
+      stake: row.stake,
+      odds: row.odds,
+    })
+    addBlocker(blockerReason)
+
     // Not gradable yet. If well past kickoff, mark unresolved (no manual grade).
     const start =
       row.startsAt?.getTime() ?? row.placedAt?.getTime() ?? null
@@ -102,6 +132,7 @@ export async function settlePendingBets(opts?: {
         sport: row.sport,
         match: row.match,
         marketType: row.marketType,
+        reason: blockerReason,
       })
     } else {
       summary.stillPending += 1
@@ -110,31 +141,35 @@ export async function settlePendingBets(opts?: {
           match: row.match,
           sport: row.sport,
           marketType: row.marketType,
-          reason: await diagnoseBetBlocker({
-            id: row.id,
-            sport: row.sport,
-            match: row.match,
-            betDescription: row.betDescription,
-            marketType: row.marketType,
-            pickName: row.pickName,
-            line,
-            homeName: row.homeName,
-            awayName: row.awayName,
-            startsAt: row.startsAt,
-            placedAt: row.placedAt,
-            stake: row.stake,
-            odds: row.odds,
-          }),
+          reason: blockerReason,
         })
       }
     }
   }
 
+  summary.pendingCount = summary.stillPending
+  summary.gradedCount = summary.graded
+  summary.unresolvedCount = summary.unresolved
+  summary.topBlockerReasons = [...blockerCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([reason, count]) => ({ reason, count }))
+
+  console.log(
+    '[settle] daily summary',
+    JSON.stringify({
+      pendingCount: summary.pendingCount,
+      gradedCount: summary.gradedCount,
+      unresolvedCount: summary.unresolvedCount,
+      topBlockerReasons: summary.topBlockerReasons,
+    }),
+  )
+
   if (summary.unresolved > 0) {
     // Admin alert: surfaced in cron logs (journalctl) — NOT shown to customers.
     console.warn(
       `[settle] ${summary.unresolved} bets unresolved >24h (need score source / friend #39):`,
-      summary.unresolvedBets.map((b) => `${b.sport}:${b.match} (${b.marketType})`).join(' | '),
+      summary.unresolvedBets.map((b) => `${b.sport}:${b.match} (${b.marketType}) ${b.reason}`).join(' | '),
     )
   }
 

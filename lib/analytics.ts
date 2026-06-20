@@ -59,7 +59,7 @@ export function historyAsSettled(history: HistoryBet[]): SettledBet[] {
     bookmaker: h.bookmaker,
     odds: h.odds,
     stake: h.stake,
-    status: h.status,
+    status: h.status === "neisspresta" ? "grazinta" : h.status,
     profit: h.profit,
   }))
 }
