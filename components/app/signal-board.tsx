@@ -251,7 +251,7 @@ export function SignalBoard({ initial }: { initial: LiveBoard }) {
         )}
         {status?.sharpAvailable && stale && (
           <Notice>
-            Paskutinis skenavimas buvo {agoLabel(status.cycleAt, now)}. Kainos galėjo pasikeisti.
+            Paskutinis skenavimas {clockLabel(status.cycleAt)}, {agoLabel(status.cycleAt, now)} Kainos galėjo pasikeisti.
           </Notice>
         )}
         {loadError && <Notice>{loadError}</Notice>}
