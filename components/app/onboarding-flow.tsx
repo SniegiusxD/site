@@ -199,14 +199,16 @@ function BankrollStep({ prefs, text, onText }: { prefs: Preferences; text: strin
       <label htmlFor={inputId} className="sr-only">
         Bankrollas eurais
       </label>
-      <div className="mt-10 flex items-baseline gap-3 border-b-2 border-rail pb-2 transition-colors focus-within:border-chalk">
+      <div className="mt-10 flex cursor-text items-baseline gap-3 border-b-2 border-rail pb-2 transition-colors focus-within:border-chalk">
         <input
           id={inputId}
           inputMode="decimal"
           autoComplete="off"
           value={text}
           onChange={(event) => onText(event.target.value.replace(/[^\d\s.,]/g, ''))}
-          className="w-full min-w-0 bg-transparent font-display text-[4.5rem] leading-none font-extrabold outline-none sm:text-[6rem]"
+          // Width follows the digits so the euro sign sits right after the number.
+          style={{ width: `${Math.max(1, text.length) * 0.62 + 0.2}em` }}
+          className="max-w-full min-w-0 bg-transparent font-display text-[4.5rem] leading-none font-extrabold outline-none sm:text-[6rem]"
         />
         <span className="font-display text-5xl font-extrabold text-haze">€</span>
       </div>
