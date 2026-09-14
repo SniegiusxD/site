@@ -24,6 +24,24 @@ export const metadata: Metadata = {
   title: `${brand.name}: kur Lietuvos kontoros moka daugiau, nei verta`,
   description: brand.description,
   icons: { icon: '/icon.svg' },
+  // Absolute URLs for the share image. Replace with the real domain once registered.
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : 'http://localhost:3100',
+  ),
+  openGraph: {
+    type: 'website',
+    locale: 'lt_LT',
+    siteName: brand.name,
+    title: `${brand.name}: kur Lietuvos kontoros moka daugiau, nei verta`,
+    description: brand.description,
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: `${brand.name}: signalai su visų kontorų kainomis` }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/og.png'],
+  },
 }
 
 export const viewport: Viewport = {
