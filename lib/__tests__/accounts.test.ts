@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { parseBankrollChange } from '@/lib/bankroll'
 import { ltPlural } from '@/lib/format-lt'
-import { DEFAULT_PREFERENCES, parsePreferences, suggestedStake } from '@/lib/preferences'
+import { DEFAULT_PREFERENCES, parsePreferences, parseSettings, suggestedStake } from '@/lib/preferences'
 import { accessFrom, trialEndFrom } from '@/lib/subscription'
 
 const NOW = new Date('2026-09-14T12:00:00Z')
@@ -63,6 +64,37 @@ describe('parsePreferences', () => {
   it('ignores empty limits', () => {
     const result = parsePreferences({ ...valid, bookLimits: { '7BET': '', Betsson: null } })
     expect(result.ok && result.value.bookLimits).toEqual({})
+  })
+})
+
+describe('parseSettings', () => {
+  it('validates settings without a bankroll', () => {
+    const { bankroll: _bankroll, ...settings } = DEFAULT_PREFERENCES
+    const result = parseSettings(settings)
+    expect(result.ok).toBe(true)
+    expect(result.ok && 'bankroll' in result.value).toBe(false)
+  })
+})
+
+describe('parseBankrollChange', () => {
+  it('signs withdrawals negative and rounds to cents', () => {
+    expect(parseBankrollChange({ kind: 'deposit', amount: 100.456 }, 500)).toMatchObject({ ok: true, signedAmount: 100.46 })
+    expect(parseBankrollChange({ kind: 'withdrawal', amount: 50 }, 500)).toMatchObject({ ok: true, signedAmount: -50 })
+  })
+
+  it('refuses to withdraw more than the bankroll holds', () => {
+    expect(parseBankrollChange({ kind: 'withdrawal', amount: 600 }, 500).ok).toBe(false)
+  })
+
+  it('rejects zero, negative and unknown kinds', () => {
+    expect(parseBankrollChange({ kind: 'deposit', amount: 0 }, 500).ok).toBe(false)
+    expect(parseBankrollChange({ kind: 'deposit', amount: -5 }, 500).ok).toBe(false)
+    expect(parseBankrollChange({ kind: 'bonus', amount: 5 }, 500).ok).toBe(false)
+  })
+
+  it('trims notes and drops empty ones', () => {
+    const result = parseBankrollChange({ kind: 'deposit', amount: 20, note: '   ' }, 0)
+    expect(result.ok && result.value.note).toBe(null)
   })
 })
 

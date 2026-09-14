@@ -27,19 +27,32 @@ export const DEFAULT_PREFERENCES: Preferences = {
 
 export const KELLY_CHOICES = [0.125, 0.25, 0.5] as const
 
+export type Settings = Omit<Preferences, 'bankroll'>
+
 type Result = { ok: true; value: Preferences } | { ok: false; error: string }
+type SettingsResult = { ok: true; value: Settings } | { ok: false; error: string }
 
 const isNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
 
-/** Validates untrusted preference input. Error messages are shown to the user. */
+/** Validates onboarding input: settings plus the starting bankroll. */
 export function parsePreferences(input: unknown): Result {
   if (!input || typeof input !== 'object') return { ok: false, error: 'Trūksta nustatymų.' }
-  const raw = input as Record<string, unknown>
-
-  const bankroll = raw.bankroll
+  const bankroll = (input as Record<string, unknown>).bankroll
   if (!isNumber(bankroll) || bankroll < 10 || bankroll > 1_000_000) {
     return { ok: false, error: 'Bankrollas turi būti nuo 10 iki 1 000 000 €.' }
   }
+  const settings = parseSettings(input)
+  if (!settings.ok) return settings
+  return { ok: true, value: { bankroll: Math.round(bankroll * 100) / 100, ...settings.value } }
+}
+
+/**
+ * Validates signal settings without the bankroll (which changes only through
+ * the ledger). Error messages are shown to the user.
+ */
+export function parseSettings(input: unknown): SettingsResult {
+  if (!input || typeof input !== 'object') return { ok: false, error: 'Trūksta nustatymų.' }
+  const raw = input as Record<string, unknown>
 
   const books = Array.isArray(raw.books) ? raw.books.filter((b): b is BookName => BOOKS.includes(b as BookName)) : []
   const uniqueBooks = [...new Set(books)]
@@ -80,7 +93,6 @@ export function parsePreferences(input: unknown): Result {
   return {
     ok: true,
     value: {
-      bankroll: Math.round(bankroll * 100) / 100,
       books: BOOKS.filter((book) => uniqueBooks.includes(book)),
       minEdge,
       minOdds,
