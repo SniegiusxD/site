@@ -1,46 +1,34 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono, Hanken_Grotesk } from 'next/font/google'
+import { Big_Shoulders, Schibsted_Grotesk } from 'next/font/google'
+import { brand } from '@/lib/brand'
 import './globals.css'
 
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
+// latin-ext carries ą č ę ė į š ų ū ž. Without it Lithuanian text silently
+// falls back to a different typeface mid-word.
+// The opsz axis lets headlines use the condensed display cut automatically.
+const display = Big_Shoulders({
+  variable: '--font-display-face',
+  subsets: ['latin', 'latin-ext'],
+  axes: ['opsz'],
+  display: 'swap',
 })
-const hanken = Hanken_Grotesk({
-  variable: '--font-hanken',
-  subsets: ['latin'],
-  weight: ['400', '600', '700', '800'],
+
+const text = Schibsted_Grotesk({
+  variable: '--font-text-face',
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
-  title: 'SportsBetting AI · Signalai',
-  description:
-    'Sporto statymų signalai, vertės galimybės ir portfelio valdymas su DI prognozėmis.',
-  generator: 'v0.app',
-  icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
-  },
+  title: `${brand.name}: kur Lietuvos kontoros moka daugiau, nei verta`,
+  description: brand.description,
+  icons: { icon: '/icon.svg' },
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'dark',
-  themeColor: '#1a1a1f',
+  colorScheme: 'light',
+  themeColor: '#EEF1F4',
 }
 
 export default function RootLayout({
@@ -49,11 +37,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html
-      lang="lt"
-      className={`${geistSans.variable} ${geistMono.variable} ${hanken.variable} bg-background`}
-    >
-      <body className="bg-background font-sans antialiased">
+    <html lang="lt" className={`${display.variable} ${text.variable}`}>
+      <body className="bg-background text-foreground font-sans antialiased">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
