@@ -1,3 +1,6 @@
+'use client'
+
+import { motion } from 'framer-motion'
 import { formatEdge, formatInteger } from '@/lib/format-lt'
 
 // Fixture-level mean CLV by entry edge, 3,693 surfaced bets with a captured
@@ -6,111 +9,161 @@ import { formatEdge, formatInteger } from '@/lib/format-lt'
 // `sure` = the 95% fixture-clustered range excludes zero.
 // Static until the site reads these from the database.
 const BOOKS = ['7BET', 'TopSport', 'Betsson'] as const
+const BANDS = ['0–4 %', '4–8 %', '8–15 %', 'virš 15 %'] as const
 
-const BANDS: Array<{ label: string; cells: Array<{ clv: number; sure: boolean }> }> = [
-  {
-    label: '0–4 %',
-    cells: [
-      { clv: -0.0001, sure: false },
-      { clv: 0.0047, sure: false },
-      { clv: 0.0162, sure: false },
-    ],
-  },
-  {
-    label: '4–8 %',
-    cells: [
-      { clv: 0.0135, sure: true },
-      { clv: 0.028, sure: true },
-      { clv: 0.0379, sure: true },
-    ],
-  },
-  {
-    label: '8–15 %',
-    cells: [
-      { clv: 0.0435, sure: true },
-      { clv: 0.0402, sure: false },
-      { clv: 0.0668, sure: true },
-    ],
-  },
-  {
-    label: 'Virš 15 %',
-    cells: [
-      { clv: 0.1204, sure: true },
-      { clv: 0.0918, sure: false },
-      { clv: 0.2154, sure: true },
-    ],
-  },
-]
+const CLV: Record<(typeof BOOKS)[number], Array<{ clv: number; sure: boolean }>> = {
+  '7BET': [
+    { clv: -0.0001, sure: false },
+    { clv: 0.0135, sure: true },
+    { clv: 0.0435, sure: true },
+    { clv: 0.1204, sure: true },
+  ],
+  TopSport: [
+    { clv: 0.0047, sure: false },
+    { clv: 0.028, sure: true },
+    { clv: 0.0402, sure: false },
+    { clv: 0.0918, sure: false },
+  ],
+  Betsson: [
+    { clv: 0.0162, sure: false },
+    { clv: 0.0379, sure: true },
+    { clv: 0.0668, sure: true },
+    { clv: 0.2154, sure: true },
+  ],
+}
 
 const TOTAL_BETS = 3693
+const MAX_CLV = 0.22
+const EASE = [0.22, 1, 0.36, 1] as const
+
+function clvLabel(value: number) {
+  return Math.abs(value) < 0.0005 ? '0,0 %' : formatEdge(value)
+}
 
 export function Proof() {
   return (
-    <section id="rezultatai" className="scroll-mt-20 border-t border-line bg-chalk-deep">
-      <div className="mx-auto max-w-[76rem] px-5 py-20 sm:px-8 lg:py-28">
-        <div className="grid gap-12 lg:grid-cols-[1fr_1.15fr] lg:gap-20">
+    <section id="rezultatai" className="scroll-mt-16 border-t border-rail">
+      <div className="mx-auto max-w-[80rem] px-5 py-24 sm:px-8 lg:py-32">
+        <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
           <div className="max-w-[34rem]">
-            <h2 className="text-[2.75rem] sm:text-[3.5rem]">Ką rodo mūsų pačių duomenys</h2>
-            <p className="mt-6">
-              Ilgalaikio pelno skelbti dar per anksti. Todėl rodom tai, ką galima išmatuoti jau
-              dabar: ar kontoroje rasta kaina buvo geresnė už paskutinę Pinnacle kainą prieš
-              rungtynes. Tai vadinama CLV. Teigiamas CLV reiškia, kad rinka vėliau pasislinko
-              tavo pusėn.
+            <h2 className="text-[3rem] sm:text-[4rem]">Ką rodo mūsų pačių duomenys</h2>
+            <p className="mt-6 text-haze">
+              Ilgalaikio pelno skelbti dar per anksti, o išgalvotų atsiliepimų nerašom. Todėl
+              rodom tai, ką galima išmatuoti jau dabar: ar signalo kaina buvo geresnė už
+              paskutinę Pinnacle kainą prieš rungtynes. Tai vadinama CLV.
             </p>
-            <p className="mt-4">
+            <p className="mt-4 text-haze">
               Visose trijose kontorose kuo didesnė vertė signalo metu, tuo didesnis CLV. Taip ir
               turi būti, jei skirtumai tikri.
             </p>
-            <p className="mt-4 text-mist">
-              Ne viskas veikia: mažiausios 7BET vertės uždarymo kainos neįveikia. Suvestų
-              statymų rezultatas kol kas +0,4&nbsp;% per 592 rungtynes, per maža imtis, kad ką
-              nors įrodytų.
+            <p className="mt-4 text-haze">
+              Ne viskas veikia vienodai: mažiausios 7BET vertės uždarymo kainos neįveikia.
+              Suvestų statymų rezultatas kol kas +0,4&nbsp;% per 592 rungtynes. Tai per maža
+              imtis, kad ką nors įrodytų.
             </p>
           </div>
 
           <div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[20rem] border-collapse text-left">
-                <caption className="pb-4 text-left font-medium">
-                  Vidutinis CLV pagal vertę signalo metu
-                </caption>
-                <thead>
-                  <tr className="border-b-2 border-ink text-[0.9rem] text-mist">
-                    <th scope="col" className="py-3 pr-3 font-medium">
-                      Vertė
+            <p className="font-medium">Vidutinis CLV pagal vertę signalo metu</p>
+
+            {/* Phones: one horizontal bar list per book. */}
+            <div aria-hidden className="mt-8 space-y-8 sm:hidden">
+              {BOOKS.map((book) => (
+                <div key={book}>
+                  <p className="font-medium">{book}</p>
+                  <div className="mt-3 space-y-2.5">
+                    {CLV[book].map((cell, index) => (
+                      <div
+                        key={BANDS[index]}
+                        className="grid grid-cols-[4.5rem_1fr_3.75rem] items-center gap-3 text-[0.85rem]"
+                      >
+                        <span className="text-haze">{BANDS[index]}</span>
+                        <span className="h-2.5 overflow-hidden rounded-full bg-rail">
+                          <motion.span
+                            initial={{ width: 0 }}
+                            whileInView={{ width: `${Math.max(0, cell.clv / MAX_CLV) * 100}%` }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.8, ease: EASE, delay: index * 0.06 }}
+                            className={`block h-full rounded-full ${cell.sure ? 'bg-chalk' : 'bg-haze-dim'}`}
+                          />
+                        </span>
+                        <span className={`text-right ${cell.sure ? 'font-semibold' : 'text-haze-dim'}`}>
+                          {clvLabel(cell.clv)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Wider screens: four columns per book. */}
+            <div aria-hidden className="mt-8 hidden grid-cols-3 gap-8 sm:grid">
+              {BOOKS.map((book) => (
+                <div key={book}>
+                  <div className="flex h-72 items-end gap-1.5 border-b border-rail-strong sm:gap-2.5">
+                    {CLV[book].map((cell, index) => {
+                      const height = Math.max(0, cell.clv / MAX_CLV) * 100
+                      return (
+                        <div key={BANDS[index]} className="flex h-full flex-1 flex-col justify-end">
+                          <span
+                            className={`mb-1.5 text-center text-[0.7rem] tnum sm:text-[0.8rem] ${
+                              cell.sure ? 'font-semibold text-chalk' : 'text-haze-dim'
+                            }`}
+                          >
+                            {clvLabel(cell.clv)}
+                          </span>
+                          <motion.span
+                            initial={{ height: 0 }}
+                            whileInView={{ height: `${height}%` }}
+                            viewport={{ once: true, margin: '-15% 0px' }}
+                            transition={{ duration: 0.9, ease: EASE, delay: index * 0.08 }}
+                            className={`block rounded-t-md ${
+                              cell.sure ? 'bg-chalk' : 'bg-transparent shadow-[inset_0_0_0_1.5px_var(--haze-dim)]'
+                            }`}
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <p className="mt-3 text-center font-medium">{book}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="sr-only">
+            <table>
+              <caption>Vidutinis CLV pagal vertę signalo metu</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Vertė</th>
+                  {BOOKS.map((book) => (
+                    <th key={book} scope="col">
+                      {book}
                     </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {BANDS.map((band, index) => (
+                  <tr key={band}>
+                    <th scope="row">{band}</th>
                     {BOOKS.map((book) => (
-                      <th key={book} scope="col" className="py-3 pl-3 text-right font-medium">
-                        {book}
-                      </th>
+                      <td key={book}>
+                        {clvLabel(CLV[book][index].clv)}
+                        {CLV[book][index].sure ? '' : ' (dar gali būti atsitiktinis)'}
+                      </td>
                     ))}
                   </tr>
-                </thead>
-                <tbody>
-                  {BANDS.map((band) => (
-                    <tr key={band.label} className="border-b border-line">
-                      <th scope="row" className="py-4 pr-3 font-medium">
-                        {band.label}
-                      </th>
-                      {band.cells.map((cell, index) => (
-                        <td
-                          key={BOOKS[index]}
-                          className={`py-4 pl-3 text-right font-display text-[1.6rem] tnum sm:text-3xl ${
-                            cell.sure ? 'font-bold text-ink' : 'font-semibold text-mist'
-                          }`}
-                        >
-                          {Math.abs(cell.clv) < 0.0005 ? '0,0 %' : formatEdge(cell.clv)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
             </div>
-            <p className="mt-4 text-[0.9rem] text-mist">
-              Juodai: skirtumas nuo nulio patikimas (95&nbsp;%). Pilkai: dar gali būti atsitiktinis.
-              Iš viso {formatInteger(TOTAL_BETS)} statymai su užfiksuota uždarymo kaina, 2026 m.
-              rugsėjo 1–13 d.
+
+            <p className="mt-6 text-[0.9rem] text-haze">
+              Vertės grupės signalo metu: {BANDS.join(', ')}. Ryškus: skirtumas nuo nulio patikimas
+              (95&nbsp;%). Blankus: dar gali būti atsitiktinis. Iš viso {formatInteger(TOTAL_BETS)}{' '}
+              statymai su užfiksuota uždarymo kaina, 2026 m. rugsėjo 1–13 d.
             </p>
           </div>
         </div>

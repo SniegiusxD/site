@@ -1,36 +1,70 @@
+'use client'
+
+import { motion, useReducedMotion } from 'framer-motion'
 import Link from 'next/link'
-import { PriceRail } from './price-rail'
+import { LiveBoard } from './live-board'
+
+const EASE = [0.22, 1, 0.36, 1] as const
 
 export function Hero() {
+  const reduced = useReducedMotion()
+  const rise = (delay: number) =>
+    reduced
+      ? {}
+      : {
+          initial: { opacity: 0, y: 24 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.9, ease: EASE, delay },
+        }
+
   return (
-    <section>
-      <div className="mx-auto grid max-w-[76rem] items-center gap-12 px-5 pt-14 pb-20 sm:px-8 lg:grid-cols-[1fr_1.05fr] lg:gap-16 lg:pt-20 lg:pb-28">
+    <section className="relative overflow-hidden">
+      {/* Floodlight wash from above the stand: the only decorative light on the page. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 -top-40 h-[42rem] bg-[radial-gradient(60%_50%_at_70%_0%,rgb(255_210_63/0.10),transparent_70%)]"
+      />
+      <div className="relative mx-auto grid max-w-[80rem] items-center gap-14 px-5 pt-32 pb-24 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 lg:pt-40 lg:pb-32">
         <div className="max-w-[36rem]">
-          <h1 className="text-[3.5rem] sm:text-[4.75rem] lg:text-[5.5rem]">
-            Matyk, kuri kontora moka daugiau, nei verta
-          </h1>
-          <p className="mt-7 text-[1.15rem] leading-relaxed text-ink/80">
-            Lyginam 7BET, TopSport ir Betsson koeficientus su Pinnacle kaina be maržos. Kai
-            skirtumas tavo naudai, parodom visų trijų kontorų kainas, siūlomą sumą ir statymo
-            pavadinimą, kurį nukopijuoji ir įklijuoji paieškoje.
-          </p>
-          <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
-            <Link
-              href="/app"
-              className="rounded-[4px] bg-ink px-6 py-3.5 text-[1.05rem] font-medium text-chalk hover:bg-slate"
-            >
-              Susikurti paskyrą
-            </Link>
-            <a
-              href="#kaip-veikia"
-              className="text-[1.05rem] underline decoration-line decoration-2 underline-offset-[6px] hover:decoration-ink"
-            >
-              Kaip tai veikia
-            </a>
-          </div>
+          <motion.h1
+            {...rise(0)}
+            className="text-[3.6rem] sm:text-[5rem] lg:text-[5.6rem] xl:text-[6.25rem]"
+          >
+            Kai kontora suklysta, tu tai matai pirmas
+          </motion.h1>
+          <motion.p {...rise(0.12)} className="mt-7 text-[1.15rem] leading-relaxed text-haze">
+            Visą parą lyginam 7BET, TopSport ir Betsson koeficientus su Pinnacle kaina be maržos.
+            Kai Lietuvos kontora už statymą moka daugiau, nei jis vertas, gauni signalą: visų
+            kontorų kainas, siūlomą sumą ir statymo pavadinimą, kurį įklijuoji paieškoje.
+          </motion.p>
+          <motion.div {...rise(0.22)} className="mt-10">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
+              <Link
+                href="/registracija"
+                className="rounded-xl bg-chalk px-6 py-4 text-[1.05rem] font-semibold text-night transition-transform duration-200 hover:bg-white active:scale-[0.97]"
+              >
+                Išbandyti 7 dienas nemokamai
+              </Link>
+              <a
+                href="#kaip-veikia"
+                className="text-[1.05rem] text-chalk underline decoration-rail-strong decoration-2 underline-offset-[6px] transition-colors hover:decoration-chalk"
+              >
+                Kaip tai veikia
+              </a>
+            </div>
+            <p className="mt-4 text-[0.9rem] text-haze-dim">
+              Kortelės nereikia. Po bandymo 25 € per mėnesį, atšaukti gali bet kada.
+            </p>
+          </motion.div>
         </div>
 
-        <PriceRail />
+        <motion.div
+          initial={reduced ? false : { opacity: 0, y: 40, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 1.1, ease: EASE, delay: 0.18 }}
+        >
+          <LiveBoard />
+        </motion.div>
       </div>
     </section>
   )

@@ -34,6 +34,17 @@ export function formatEuro(value: number, fractionDigits = 0): string {
   return `${formatted} €`
 }
 
+/** Lithuanian noun form for a count: 1 signalas, 2 signalai, 10 signalų. */
+export function ltPlural(count: number, one: string, few: string, many: string): string {
+  const n = Math.abs(Math.trunc(count))
+  const lastTwo = n % 100
+  const last = n % 10
+  if (lastTwo >= 11 && lastTwo <= 19) return many
+  if (last === 1) return one
+  if (last === 0) return many
+  return few
+}
+
 /** Edge of a book price against a fair (margin-free) price. */
 export function edgeOf(bookOdds: number, fairOdds: number): number {
   return bookOdds / fairOdds - 1

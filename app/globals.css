@@ -5,69 +5,74 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Palette (see planning/SITE_REDESIGN_PLAN_2026-09-14.md)
- *   Chalk       page ground, cool pale grey-blue
- *   Ink         text on Chalk
- *   Slate       instrument panels (price rail, bet sheet, footer)
- *   Floodlight  the gap: where a book price clears the fair price. Nothing else.
- *   Pitch       realised profit only
- *   Brick       realised loss only
+ * Palette v2: a floodlit match at night (planning/SITE_REDESIGN_PLAN_2026-09-14.md)
+ *   Night       page ground, deep navy (never neutral black)
+ *   Stand       raised surfaces
+ *   Rail        lines and second raise
+ *   Chalk       text
+ *   Haze        secondary text
+ *   Floodlight  the price gap: where a book pays more than the fair price. Nothing else.
+ *   Pitch       won bets, positive CLV
+ *   Brick       lost bets, negative CLV
  */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  --chalk: #eef1f4;
-  --chalk-deep: #e2e7ed;
-  --ink: #101828;
-  --mist: #566175;
-  --line: #d3d9e1;
-  --slate: #1c2636;
-  --slate-raised: #253247;
-  --slate-line: #34435b;
-  --slate-text: #c9d2de;
+  --night: #0a1020;
+  --night-deep: #070b17;
+  --stand: #111a2e;
+  --stand-hover: #16223a;
+  --rail: #1e2a44;
+  --rail-strong: #2b3a5c;
+  --chalk: #eef2f7;
+  --haze: #8d98ad;
+  --haze-dim: #5f6b82;
   --floodlight: #ffd23f;
-  --pitch: #1f9d6a;
-  --brick: #d64550;
+  --floodlight-soft: rgb(255 210 63 / 0.14);
+  --pitch: #3ddc97;
+  --pitch-soft: rgb(61 220 151 / 0.14);
+  --brick: #ff6464;
+  --brick-soft: rgb(255 100 100 / 0.14);
 
-  /* shadcn token names, kept so existing components still render. */
-  --background: var(--chalk);
-  --foreground: var(--ink);
-  --card: #f7f9fb;
-  --card-foreground: var(--ink);
-  --popover: #fbfcfd;
-  --popover-foreground: var(--ink);
-  --primary: var(--ink);
-  --primary-foreground: var(--chalk);
-  --secondary: var(--chalk-deep);
-  --secondary-foreground: var(--ink);
-  --muted: var(--chalk-deep);
-  --muted-foreground: var(--mist);
-  --accent: var(--floodlight);
-  --accent-foreground: var(--ink);
+  /* shadcn token names, so shadcn primitives render in the palette. */
+  --background: var(--night);
+  --foreground: var(--chalk);
+  --card: var(--stand);
+  --card-foreground: var(--chalk);
+  --popover: var(--stand);
+  --popover-foreground: var(--chalk);
+  --primary: var(--chalk);
+  --primary-foreground: var(--night);
+  --secondary: var(--rail);
+  --secondary-foreground: var(--chalk);
+  --muted: var(--stand);
+  --muted-foreground: var(--haze);
+  --accent: var(--stand-hover);
+  --accent-foreground: var(--chalk);
   --destructive: var(--brick);
-  --border: var(--line);
-  --input: var(--line);
-  --ring: var(--ink);
+  --border: var(--rail);
+  --input: var(--rail);
+  --ring: var(--chalk);
   --success: var(--pitch);
-  --success-foreground: #ffffff;
-  --warning: #d9921a;
-  --warning-foreground: var(--ink);
+  --success-foreground: var(--night);
+  --warning: #f5a524;
+  --warning-foreground: var(--night);
   --danger: var(--brick);
-  --danger-foreground: #ffffff;
-  --chart-1: var(--ink);
+  --danger-foreground: var(--night);
+  --chart-1: var(--chalk);
   --chart-2: var(--pitch);
   --chart-3: var(--floodlight);
   --chart-4: var(--brick);
-  --chart-5: var(--mist);
-  --radius: 0.375rem;
-  --sidebar: var(--chalk-deep);
-  --sidebar-foreground: var(--ink);
-  --sidebar-primary: var(--ink);
-  --sidebar-primary-foreground: var(--chalk);
-  --sidebar-accent: var(--chalk);
-  --sidebar-accent-foreground: var(--ink);
-  --sidebar-border: var(--line);
-  --sidebar-ring: var(--ink);
+  --chart-5: var(--haze);
+  --radius: 0.625rem;
+  --sidebar: var(--night-deep);
+  --sidebar-foreground: var(--chalk);
+  --sidebar-primary: var(--chalk);
+  --sidebar-primary-foreground: var(--night);
+  --sidebar-accent: var(--stand);
+  --sidebar-accent-foreground: var(--chalk);
+  --sidebar-border: var(--rail);
+  --sidebar-ring: var(--chalk);
 }
 
 @theme inline {
@@ -75,18 +80,21 @@
   --font-display: var(--font-display-face), 'Arial Narrow', sans-serif;
   --font-heading: var(--font-display-face), 'Arial Narrow', sans-serif;
 
+  --color-night: var(--night);
+  --color-night-deep: var(--night-deep);
+  --color-stand: var(--stand);
+  --color-stand-hover: var(--stand-hover);
+  --color-rail: var(--rail);
+  --color-rail-strong: var(--rail-strong);
   --color-chalk: var(--chalk);
-  --color-chalk-deep: var(--chalk-deep);
-  --color-ink: var(--ink);
-  --color-mist: var(--mist);
-  --color-line: var(--line);
-  --color-slate: var(--slate);
-  --color-slate-raised: var(--slate-raised);
-  --color-slate-line: var(--slate-line);
-  --color-slate-text: var(--slate-text);
+  --color-haze: var(--haze);
+  --color-haze-dim: var(--haze-dim);
   --color-floodlight: var(--floodlight);
+  --color-floodlight-soft: var(--floodlight-soft);
   --color-pitch: var(--pitch);
+  --color-pitch-soft: var(--pitch-soft);
   --color-brick: var(--brick);
+  --color-brick-soft: var(--brick-soft);
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -132,6 +140,9 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
 }
 
 @layer base {
@@ -141,6 +152,7 @@
   html {
     @apply font-sans;
     -webkit-text-size-adjust: 100%;
+    background: var(--night);
   }
   body {
     @apply bg-background text-foreground;
@@ -152,8 +164,8 @@
   h3 {
     font-family: var(--font-display);
     font-weight: 800;
-    letter-spacing: -0.01em;
-    line-height: 1;
+    letter-spacing: -0.005em;
+    line-height: 0.98;
     text-wrap: balance;
   }
   p {
@@ -161,19 +173,39 @@
   }
   ::selection {
     background: var(--floodlight);
-    color: var(--ink);
+    color: var(--night);
   }
   :focus-visible {
-    outline: 2px solid currentColor;
+    outline: 2px solid var(--chalk);
     outline-offset: 3px;
-    border-radius: 2px;
+    border-radius: 4px;
+  }
+  button,
+  [role='button'] {
+    cursor: pointer;
   }
 }
 
 @layer utilities {
-  /* Prices and figures line up column by column. */
+  /* Prices and figures. Tabular spacing only in the display face: in the text
+     face tabular figures stretch the decimal comma ("1 , 80"). */
   .tnum {
+    font-variant-numeric: lining-nums;
+  }
+  .tnum.font-display,
+  .font-display .tnum {
     font-variant-numeric: tabular-nums lining-nums;
+  }
+  /* Thin hairline that reads on the navy ground without looking grey. */
+  .hairline {
+    box-shadow: inset 0 0 0 1px var(--rail);
+  }
+  /* The one lift used for floating panels (board, sheets, popovers). */
+  .lift {
+    box-shadow:
+      0 0 0 1px rgb(238 242 247 / 0.06),
+      0 1px 0 0 rgb(238 242 247 / 0.05) inset,
+      0 30px 80px -30px rgb(0 0 0 / 0.75);
   }
 }
 

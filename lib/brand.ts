@@ -1,10 +1,11 @@
 /**
- * The brand in one place. "Spraga" is a working name (the gap, the loophole:
- * where a bookmaker prices worse than the market). Change it here and nowhere
- * else. The domain stays null until one is registered.
+ * The brand in one place. The name is a PLACEHOLDER: the owner rejected
+ * "Spraga" on 2026-09-14 and will pick the real name later. Change it here and
+ * nowhere else. The domain stays null until one is registered (GitHub Student
+ * Pack domains only).
  */
 export const brand = {
-  name: 'Spraga',
+  name: 'Kraštas',
   domain: null as string | null,
   description:
     'Lyginam 7BET, TopSport ir Betsson koeficientus su Pinnacle ir parodom, kur kontora moka daugiau, nei verta.',
