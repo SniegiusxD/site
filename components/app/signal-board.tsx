@@ -318,8 +318,16 @@ export function SignalBoard({ initial }: { initial: LiveBoard }) {
         {selectedRow ? (
           <SignalDetail key={`${selectedRow.signal.id}-${selectedRow.price.book}`} signal={selectedRow.signal} price={selectedRow.price} now={now} />
         ) : (
-          <div className="grid h-full place-items-center px-10 text-center text-haze">
-            Pasirink signalą sąraše.
+          <div className="grid h-full place-items-center px-10 text-center">
+            <div className="max-w-[26rem]">
+              <p className="font-display text-3xl font-bold">
+                {rows.open.length ? 'Pasirink signalą sąraše' : 'Čia matysi signalo kainas'}
+              </p>
+              <p className="mt-3 text-haze">
+                Visų kontorų koeficientus, tikrąją kainą, siūlomą sumą ir statymo pavadinimą, kurį nukopijuoji
+                savo kontoros paieškai.
+              </p>
+            </div>
           </div>
         )}
       </section>

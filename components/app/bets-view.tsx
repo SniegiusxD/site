@@ -8,6 +8,7 @@ import { formatEuro, formatOdds, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { kickoffLabel, ltNumbers } from '@/lib/live-view'
 import type { ActiveBet, BetStatus } from '@/lib/types'
+import { ProfitCalendar } from './profit-calendar'
 
 const STATUS: Record<BetStatus, { label: string; tone: string }> = {
   laukia: { label: 'Laukia', tone: 'bg-rail text-haze' },
@@ -93,6 +94,8 @@ export function BetsView() {
           <span className="font-sans text-base font-normal text-haze">{formatEuro(summary.pendingStake)}</span>
         </Stat>
       </dl>
+
+      {bets && bets.length > 0 && <ProfitCalendar bets={bets} />}
 
       {error && <p role="alert" className="mt-6 rounded-xl bg-brick-soft px-4 py-3 text-brick">{error}</p>}
 
