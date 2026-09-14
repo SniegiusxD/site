@@ -46,6 +46,35 @@ export function ensureAppSchema(): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS bankroll_entry_user_idx
         ON bankroll_entry ("userId", "createdAt" DESC);
+
+      -- Telegram alerts. Mirrored by aggregator scripts/setup_telegram_bot_db.py,
+      -- which grants the VM bot service access; keep the two in step.
+      CREATE TABLE IF NOT EXISTS telegram_account (
+        "userId" TEXT PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,
+        "chatId" BIGINT UNIQUE,
+        username TEXT,
+        "linkedAt" TIMESTAMPTZ,
+        enabled BOOLEAN NOT NULL DEFAULT TRUE,
+        "minEdge" DOUBLE PRECISION NOT NULL DEFAULT 0.02,
+        "maxHoursToStart" INTEGER NOT NULL DEFAULT 24,
+        books TEXT[] NOT NULL DEFAULT ARRAY['7BET','TopSport','Betsson'],
+        "quietStart" SMALLINT CHECK ("quietStart" BETWEEN 0 AND 23),
+        "quietEnd" SMALLINT CHECK ("quietEnd" BETWEEN 0 AND 23),
+        "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS telegram_link_token (
+        token TEXT PRIMARY KEY,
+        "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+        "expiresAt" TIMESTAMPTZ NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS telegram_sent (
+        "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+        "signalId" TEXT NOT NULL,
+        "sentAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY ("userId", "signalId")
+      );
     `)
   })().catch((error) => {
     // Let the next request retry instead of caching a failed migration.

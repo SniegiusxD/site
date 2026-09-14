@@ -1,7 +1,7 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
-import { Check, LogOut, Send } from 'lucide-react'
+import { Check, LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useId, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
@@ -13,6 +13,7 @@ import { PRICE_EUR_PER_MONTH } from '@/lib/subscription'
 import { useAccount } from './account-provider'
 import { BankrollDialog } from './bankroll-dialog'
 import { ChipGroup } from './chip-group'
+import { TelegramCard } from './telegram-card'
 
 const KELLY_LABEL: Record<(typeof KELLY_CHOICES)[number], string> = { 0.125: '⅛ Kelly', 0.25: '¼ Kelly', 0.5: '½ Kelly' }
 
@@ -164,13 +165,8 @@ export function ProfileView() {
         </div>
       </Section>
 
-      <Section title="Telegram pranešimai">
-        <div className="flex items-start gap-3">
-          <Send className="mt-1 size-5 shrink-0 text-haze" aria-hidden />
-          <p className="text-haze">
-            Signalai į Telegram su tavo filtrais ir tylos valandomis. Prijungimas ruošiamas, apie tai pranešim.
-          </p>
-        </div>
+      <Section title="Telegram pranešimai" id="telegram">
+        <TelegramCard />
       </Section>
 
       <Section title="Paskyra">
@@ -191,9 +187,9 @@ export function ProfileView() {
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, id, children }: { title: string; id?: string; children: React.ReactNode }) {
   return (
-    <section className="mt-6 rounded-2xl bg-stand p-5 hairline sm:p-7">
+    <section id={id} className="mt-6 scroll-mt-20 rounded-2xl bg-stand p-5 hairline sm:p-7">
       <h2 className="mb-5 text-[1.6rem]">{title}</h2>
       {children}
     </section>
