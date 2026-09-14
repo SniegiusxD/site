@@ -84,7 +84,7 @@ export function Proof() {
                             whileInView={{ width: `${Math.max(0, cell.clv / MAX_CLV) * 100}%` }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.8, ease: EASE, delay: index * 0.06 }}
-                            className={`block h-full rounded-full ${cell.sure ? 'bg-chalk' : 'bg-haze-dim'}`}
+                            className={`block h-full rounded-full ${cell.sure ? 'bg-chalk' : 'bg-steel'}`}
                           />
                         </span>
                         <span className={`text-right ${cell.sure ? 'font-semibold' : 'text-haze-dim'}`}>
@@ -119,7 +119,7 @@ export function Proof() {
                             viewport={{ once: true, margin: '-15% 0px' }}
                             transition={{ duration: 0.9, ease: EASE, delay: index * 0.08 }}
                             className={`block rounded-t-md ${
-                              cell.sure ? 'bg-chalk' : 'bg-transparent shadow-[inset_0_0_0_1.5px_var(--haze-dim)]'
+                              cell.sure ? 'bg-chalk' : 'bg-transparent shadow-[inset_0_0_0_1.5px_var(--steel)]'
                             }`}
                           />
                         </div>

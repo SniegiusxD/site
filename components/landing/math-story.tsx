@@ -152,7 +152,7 @@ function MarginVisual() {
           <motion.div
             animate={{ width: `${width}%` }}
             transition={{ duration: 0.9, ease: EASE }}
-            className="grid place-items-center rounded-r-lg bg-haze-dim text-[0.9rem] font-semibold text-chalk"
+            className="grid place-items-center rounded-r-lg bg-steel text-[0.9rem] font-semibold text-chalk"
           >
             Mažiau
           </motion.div>

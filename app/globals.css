@@ -26,7 +26,10 @@
   --rail-strong: #2b3a5c;
   --chalk: #eef2f7;
   --haze: #8d98ad;
-  --haze-dim: #5f6b82;
+  /* Quieter text; still 4.9:1 on the lightest panel (#16223a). */
+  --haze-dim: #8390a6;
+  /* Non-text greys: bar bases, outlines. Not for text (fails contrast). */
+  --steel: #5f6b82;
   --floodlight: #ffd23f;
   --floodlight-soft: rgb(255 210 63 / 0.14);
   --pitch: #3ddc97;
@@ -89,6 +92,7 @@
   --color-chalk: var(--chalk);
   --color-haze: var(--haze);
   --color-haze-dim: var(--haze-dim);
+  --color-steel: var(--steel);
   --color-floodlight: var(--floodlight);
   --color-floodlight-soft: var(--floodlight-soft);
   --color-pitch: var(--pitch);

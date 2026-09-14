@@ -89,7 +89,7 @@ export function LiveBoard() {
               aria-pressed={on}
               onClick={() => toggleBook(book)}
               className={`inline-flex items-center gap-2 rounded-full py-1 pr-3 pl-1 text-[0.9rem] font-medium transition-[background-color,color,opacity] duration-200 ${
-                on ? 'bg-rail text-chalk' : 'bg-transparent text-haze-dim opacity-70 hover:opacity-100'
+                on ? 'bg-rail text-chalk' : 'bg-transparent text-haze hover:text-chalk'
               }`}
             >
               <BookMark book={book} size="sm" />
@@ -193,7 +193,7 @@ function SignalDetail({ signal }: { signal: LandingSignal }) {
               <span className="text-[0.9rem] text-haze">{row.book}</span>
               <span aria-hidden className="relative h-2.5 rounded-full bg-rail">
                 <span
-                  className="absolute inset-y-0 left-0 rounded-l-full bg-haze-dim"
+                  className="absolute inset-y-0 left-0 rounded-l-full bg-steel"
                   style={{ width: `${Math.min(rowAt, fairAt)}%` }}
                 />
                 {clears && (

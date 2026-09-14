@@ -94,7 +94,7 @@ function AllBooksTile() {
                 <span className="text-[0.95rem]">{price.book}</span>
                 <span aria-hidden className="relative h-3 rounded-full bg-rail">
                   <span
-                    className="absolute inset-y-0 left-0 rounded-l-full bg-haze-dim"
+                    className="absolute inset-y-0 left-0 rounded-l-full bg-steel"
                     style={{ width: `${Math.min(at(price.odds), fairAt)}%` }}
                   />
                   {clears && (
@@ -157,7 +157,7 @@ function FilterTile() {
                 })
               }
               className={`inline-flex items-center gap-2 rounded-full py-1 pr-3.5 pl-1 font-medium transition-[background-color,color,opacity] duration-200 ${
-                on ? 'bg-rail text-chalk' : 'text-haze-dim opacity-70 hover:opacity-100'
+                on ? 'bg-rail text-chalk' : 'text-haze hover:text-chalk'
               }`}
             >
               <BookMark book={book} size="sm" />

@@ -135,7 +135,7 @@ export function SignalBoard({ initial }: { initial: LiveBoard }) {
   const stale = status ? isStale(status.cycleAt, now) : false
 
   return (
-    <div className="lg:grid lg:h-dvh lg:grid-cols-[minmax(0,27rem)_minmax(0,1fr)]">
+    <main className="lg:grid lg:h-dvh lg:grid-cols-[minmax(0,27rem)_minmax(0,1fr)]">
       <section aria-label="Signalų sąrašas" className="flex min-h-0 flex-col lg:border-r lg:border-rail">
         <div className="border-b border-rail px-4 pt-5 pb-4 sm:px-6">
           <div className="flex items-center justify-between gap-3">
@@ -184,7 +184,7 @@ export function SignalBoard({ initial }: { initial: LiveBoard }) {
                   type="button"
                   aria-pressed={on}
                   onClick={() => toggleBook(book)}
-                  className={`inline-flex items-center gap-2 rounded-full py-1 pr-3 pl-1 text-[0.9rem] font-medium transition-[background-color,color,opacity] ${on ? 'bg-rail text-chalk' : 'text-haze-dim opacity-70 hover:opacity-100'}`}
+                  className={`inline-flex items-center gap-2 rounded-full py-1 pr-3 pl-1 text-[0.9rem] font-medium transition-[background-color,color,opacity] ${on ? 'bg-rail text-chalk' : 'text-haze hover:text-chalk'}`}
                 >
                   <BookMark book={book} size="sm" />
                   {book}
@@ -355,7 +355,7 @@ export function SignalBoard({ initial }: { initial: LiveBoard }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </main>
   )
 }
 

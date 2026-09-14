@@ -1,4 +1,12 @@
-/** Lithuanian number formats: decimal comma, space before %, euro after the amount. */
+/**
+ * Lithuanian number formats: decimal comma, space before %, euro after the amount.
+ *
+ * Grouping spaces are normalised to U+00A0 as a precaution: Node and browsers can
+ * ship different ICU data, and a server/client text difference breaks hydration.
+ * (Checked 2026-09-14: Node ICU 78.3 and Chromium both use U+00A0 for lt-LT.)
+ */
+const NBSP = '\u00A0'
+const normaliseSpaces = (text: string) => text.replace(/[\u00A0\u202F\u2009 ]/g, NBSP)
 
 const oddsFormat = new Intl.NumberFormat('lt-LT', {
   minimumFractionDigits: 2,
@@ -19,11 +27,11 @@ export function formatOdds(value: number): string {
 
 /** A fraction (0.049) as a signed percentage ("+4,9 %"). */
 export function formatEdge(fraction: number): string {
-  return `${edgeFormat.format(fraction * 100)} %`
+  return `${edgeFormat.format(fraction * 100)}${NBSP}%`
 }
 
 export function formatInteger(value: number): string {
-  return integerFormat.format(value)
+  return normaliseSpaces(integerFormat.format(value))
 }
 
 export function formatEuro(value: number, fractionDigits = 0): string {
@@ -31,7 +39,7 @@ export function formatEuro(value: number, fractionDigits = 0): string {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   }).format(value)
-  return `${formatted} €`
+  return `${normaliseSpaces(formatted)}${NBSP}€`
 }
 
 /** Lithuanian noun form for a count: 1 signalas, 2 signalai, 10 signalų. */

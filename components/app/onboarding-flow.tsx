@@ -98,7 +98,7 @@ export function OnboardingFlow({ initial }: { initial: Preferences }) {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <main className="flex min-h-dvh flex-col">
       <header className="mx-auto flex w-full max-w-[44rem] items-center justify-between gap-4 px-5 pt-6 sm:px-8">
         <Link href="/" className="font-display text-[1.6rem] leading-none font-extrabold">
           {brand.name}
@@ -175,7 +175,7 @@ export function OnboardingFlow({ initial }: { initial: Preferences }) {
           </button>
         </div>
       </form>
-    </div>
+    </main>
   )
 }
 

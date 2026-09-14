@@ -153,7 +153,7 @@ export function SignalDetail({
                   <BookMark book={row.book} size="sm" />
                   <span className="text-[0.95rem]">{row.book}</span>
                   <span aria-hidden className="relative h-2.5 rounded-full bg-rail">
-                    <span className="absolute inset-y-0 left-0 rounded-l-full bg-haze-dim" style={{ width: `${Math.min(rowAt, fairAt)}%` }} />
+                    <span className="absolute inset-y-0 left-0 rounded-l-full bg-steel" style={{ width: `${Math.min(rowAt, fairAt)}%` }} />
                     {clears && (
                       <motion.span
                         initial={reduced ? false : { width: 0 }}

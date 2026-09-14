@@ -26,17 +26,15 @@ export function Hero() {
       />
       <div className="relative mx-auto grid max-w-[80rem] items-center gap-14 px-5 pt-32 pb-24 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 lg:pt-40 lg:pb-32">
         <div className="max-w-[36rem]">
-          <motion.h1
-            {...rise(0)}
-            className="text-[3.6rem] sm:text-[5rem] lg:text-[5.6rem] xl:text-[6.25rem]"
-          >
+          {/* The headline is the largest paint: it renders at once, never from opacity 0. */}
+          <h1 className="text-[3.6rem] sm:text-[5rem] lg:text-[5.6rem] xl:text-[6.25rem]">
             Kai kontora suklysta, tu tai matai pirmas
-          </motion.h1>
-          <motion.p {...rise(0.12)} className="mt-7 text-[1.15rem] leading-relaxed text-haze">
+          </h1>
+          <p className="mt-7 text-[1.15rem] leading-relaxed text-haze">
             Visą parą lyginam 7BET, TopSport ir Betsson koeficientus su Pinnacle kaina be maržos.
             Kai Lietuvos kontora už statymą moka daugiau, nei jis vertas, gauni signalą: visų
             kontorų kainas, siūlomą sumą ir statymo pavadinimą, kurį įklijuoji paieškoje.
-          </motion.p>
+          </p>
           <motion.div {...rise(0.22)} className="mt-10">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
               <Link

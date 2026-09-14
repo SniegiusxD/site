@@ -10,13 +10,15 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <div className="flex flex-col px-5 py-6 sm:px-10">
-        <Link href="/" className="font-display text-[1.7rem] leading-none font-extrabold">
-          {brand.name}
-        </Link>
+        <header>
+          <Link href="/" className="font-display text-[1.7rem] leading-none font-extrabold">
+            {brand.name}
+          </Link>
+        </header>
         <main className="flex flex-1 items-center justify-center py-12">
           <div className="w-full max-w-[25rem]">{children}</div>
         </main>
-        <p className="text-[0.85rem] text-haze-dim">Tik nuo 18 metų. Lošimas gali sukelti priklausomybę.</p>
+        <footer className="text-[0.85rem] text-haze-dim">Tik nuo 18 metų. Lošimas gali sukelti priklausomybę.</footer>
       </div>
       <aside className="relative hidden overflow-hidden border-l border-rail bg-night-deep lg:flex lg:items-center lg:justify-center lg:p-12">
         <div
