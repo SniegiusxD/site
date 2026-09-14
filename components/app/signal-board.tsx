@@ -15,6 +15,7 @@ import {
   boardRows,
   clockLabel,
   isStale,
+  ltSelection,
   sportsIn,
   timeUntilLabel,
 } from '@/lib/live-view'
@@ -132,7 +133,7 @@ export function SignalBoard({ initial }: { initial: LiveBoard }) {
   }
 
   const status = board.status
-  const stale = status ? isStale(status.cycleAt, now) : false
+  const stale = status ? isStale(status.publishedAt, now) : false
 
   return (
     <main className="lg:grid lg:h-dvh lg:grid-cols-[minmax(0,27rem)_minmax(0,1fr)]">
@@ -172,7 +173,7 @@ export function SignalBoard({ initial }: { initial: LiveBoard }) {
             </div>
           </div>
           <p className="mt-1 text-[0.9rem] text-haze">
-            {status ? `Atnaujinta ${agoLabel(status.cycleAt, now)} (${clockLabel(status.cycleAt)})` : 'Laukiam pirmo skenavimo'}
+            {status ? `Atnaujinta ${agoLabel(status.publishedAt, now)} (${clockLabel(status.publishedAt)})` : 'Laukiam pirmo skenavimo'}
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Kontoros">
@@ -245,13 +246,13 @@ export function SignalBoard({ initial }: { initial: LiveBoard }) {
 
         {status && !status.sharpAvailable && (
           <Notice>
-            Pinnacle šiuo metu nepasiekiamas, todėl kainos neatnaujinamos nuo {clockLabel(status.cycleAt)}. Prieš statydamas
+            Pinnacle šiuo metu nepasiekiamas, todėl kainos neatnaujinamos nuo {clockLabel(status.publishedAt)}. Prieš statydamas
             patikrink koeficientą kontoroje.
           </Notice>
         )}
         {status?.sharpAvailable && stale && (
           <Notice>
-            Paskutinis skenavimas {clockLabel(status.cycleAt)}, {agoLabel(status.cycleAt, now)} Kainos galėjo pasikeisti.
+            Paskutinis skenavimas {clockLabel(status.publishedAt)}, {agoLabel(status.publishedAt, now)} Kainos galėjo pasikeisti.
           </Notice>
         )}
         {loadError && <Notice>{loadError}</Notice>}
@@ -374,7 +375,9 @@ function SignalRow({ row, now, active, onSelect }: { row: BoardRow; now: Date; a
         <BookMark book={price.book} />
         <span className="min-w-0">
           <span className="block truncate font-medium">{price.eventName}</span>
-          <span className="block truncate text-[0.9rem] text-haze">
+          {/* Several lines of one match are separate signals: the bet itself tells them apart. */}
+          <span className="block truncate text-[0.9rem] text-chalk/85">{ltSelection(price.selectionLabel)}</span>
+          <span className="block truncate text-[0.85rem] text-haze">
             {sportName(signal.sport)}, {open ? timeUntilLabel(signal.startsAt, now) : signal.status === 'started' ? 'prasidėjo' : 'užsidarė'}
           </span>
         </span>

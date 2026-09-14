@@ -108,6 +108,19 @@ export function ltNumbers(text: string): string {
   return text.replace(/(\d)\.(\d)/g, '$1,$2').replace(/(^|[\s(])-(\d)/g, '$1−$2')
 }
 
+/**
+ * A bet label for display: a few English market words the runner still emits
+ * become Lithuanian, then numbers get Lithuanian decimals. Grading keeps the
+ * raw label.
+ */
+export function ltSelection(text: string): string {
+  return ltNumbers(
+    text
+      .replace(/\s+regulation moneyline\b/i, ' laimės per pagrindinį laiką')
+      .replace(/\s+moneyline\b/i, ' laimės'),
+  )
+}
+
 /** A scan older than this is shown as stale. The runner cycles every ~30 minutes. */
 export const STALE_AFTER_MINUTES = 75
 

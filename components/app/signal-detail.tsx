@@ -9,7 +9,7 @@ import { CopyButton } from '@/components/landing/copy-button'
 import { formatEdge, formatEuro, formatOdds } from '@/lib/format-lt'
 import { BOOKS } from '@/lib/landing-signals'
 import type { LivePrice, LiveSignal } from '@/lib/live-signals'
-import { clockLabel, kickoffLabel, ltNumbers, timeUntilLabel } from '@/lib/live-view'
+import { clockLabel, kickoffLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
 import { suggestedStake } from '@/lib/preferences'
 import { sportName } from '@/lib/sports-lt'
 import { trackBet } from '@/lib/track-bet'
@@ -74,8 +74,7 @@ export function SignalDetail({
 
   return (
     <article className="mx-auto max-w-[46rem] px-4 pt-4 pb-32 sm:px-8 lg:pt-8 lg:pb-12">
-      <div className="flex items-center justify-between gap-3">
-        <p className="flex items-center gap-2.5 text-[0.95rem] text-haze">
+      <div className="flex items-center gap-2.5 text-[0.95rem] text-haze">
           {onClose && (
             <button
               type="button"
@@ -87,9 +86,10 @@ export function SignalDetail({
             </button>
           )}
           <BookMark book={price.book} size="sm" />
+        <p className="min-w-0">
           {sportName(signal.sport)}, {kickoffLabel(signal.startsAt)}
+          {open && <span className="text-haze-dim">, {timeUntilLabel(signal.startsAt, now)}</span>}
         </p>
-        <p className="text-[0.9rem] text-haze">{open ? timeUntilLabel(signal.startsAt, now) : ''}</p>
       </div>
 
       <div className="mt-5 flex items-start justify-between gap-3">
@@ -120,7 +120,7 @@ export function SignalDetail({
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[0.9rem] text-haze">Statymas {price.book}</p>
-            <p className="mt-1 text-[1.2rem] font-medium">{ltNumbers(price.selectionLabel)}</p>
+            <p className="mt-1 text-[1.2rem] font-medium">{ltSelection(price.selectionLabel)}</p>
           </div>
           <div className="text-right">
             <p className={`font-display text-5xl leading-none font-bold tnum ${open ? 'text-floodlight' : 'text-haze-dim line-through'}`}>

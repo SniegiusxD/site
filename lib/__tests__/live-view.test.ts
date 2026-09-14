@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { LiveSignal } from '@/lib/live-signals'
-import { agoLabel, boardRows, isStale, kickoffLabel, ltNumbers, playablePrice, timeUntilLabel } from '@/lib/live-view'
+import { agoLabel, boardRows, isStale, kickoffLabel, ltNumbers, ltSelection, playablePrice, timeUntilLabel } from '@/lib/live-view'
 
 const NOW = new Date('2026-09-14T16:00:00Z')
 
@@ -84,6 +84,12 @@ describe('labels', () => {
   it('uses Lithuanian decimals and minus signs', () => {
     expect(ltNumbers('Handikapas: Rio Breogan -16.5')).toBe('Handikapas: Rio Breogan −16,5')
     expect(ltNumbers('Suminis: Daugiau 171.5')).toBe('Suminis: Daugiau 171,5')
+  })
+
+  it('turns leftover English market words into Lithuanian', () => {
+    expect(ltSelection('Mountfield HK regulation moneyline')).toBe('Mountfield HK laimės per pagrindinį laiką')
+    expect(ltSelection('Soles Mexicali moneyline')).toBe('Soles Mexicali laimės')
+    expect(ltSelection('Handikapas: Soles Mexicali -2.5')).toBe('Handikapas: Soles Mexicali −2,5')
   })
 
   it('marks old scans as stale', () => {

@@ -41,7 +41,10 @@ export type LiveSignal = {
 }
 
 export type RunnerStatus = {
+  /** When the scan cycle started. */
   cycleAt: string
+  /** When this cycle's signals were written, about 20 minutes after the start. */
+  publishedAt: string
   sharpAvailable: boolean
   publishedCount: number
   events: { pinnacle: number | null; sevenbet: number | null; topsport: number | null; betsson: number | null }
@@ -114,6 +117,7 @@ export async function loadLiveBoard(): Promise<LiveBoard> {
     const status: RunnerStatus | null = statusRow
       ? {
           cycleAt: iso(statusRow.cycle_at)!,
+          publishedAt: iso(statusRow.updated_at ?? statusRow.cycle_at)!,
           sharpAvailable: statusRow.sharp_available,
           publishedCount: statusRow.published_count,
           events: {

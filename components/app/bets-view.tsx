@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
 import { formatEuro, formatOdds, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
-import { kickoffLabel, ltNumbers } from '@/lib/live-view'
+import { kickoffLabel, ltSelection } from '@/lib/live-view'
 import type { ActiveBet, BetStatus } from '@/lib/types'
 import { ProfitCalendar } from './profit-calendar'
 
@@ -149,7 +149,7 @@ function BetList({ title, bets }: { title: string; bets: ActiveBet[] }) {
               <div className="min-w-0">
                 <p className="truncate font-medium">{bet.match.replace(' vs ', ' – ')}</p>
                 <p className="truncate text-[0.9rem] text-haze">
-                  {ltNumbers(bet.betDescription)}
+                  {ltSelection(bet.betDescription)}
                   {bet.startsAt ? `, ${kickoffLabel(bet.startsAt)}` : ''}
                 </p>
                 <p className="mt-1 text-[0.85rem] text-haze-dim">
