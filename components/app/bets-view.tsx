@@ -26,6 +26,7 @@ import { sportName } from '@/lib/sports-lt'
 import type { ActiveBet, BetStatus } from '@/lib/types'
 import { ChipGroup } from './chip-group'
 import { ProfitCalendar } from './profit-calendar'
+import { Segmented } from './segmented'
 import { ValueChart, signedEuro } from './value-chart'
 
 const STATUS: Record<BetStatus, { label: string; tone: string }> = {
@@ -198,38 +199,6 @@ export function BetsView() {
         </div>
       )}
     </main>
-  )
-}
-
-function Segmented<T extends string>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string
-  options: Array<{ value: T; label: string }>
-  value: T
-  onChange: (value: T) => void
-}) {
-  return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-xl bg-stand p-1 hairline">
-      {options.map((option) => {
-        const on = option.value === value
-        return (
-          <button
-            key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={on}
-            onClick={() => onChange(option.value)}
-            className={`rounded-lg px-3.5 py-1.5 text-[0.95rem] font-medium transition-colors ${on ? 'bg-chalk text-night' : 'text-haze hover:text-chalk'}`}
-          >
-            {option.label}
-          </button>
-        )
-      })}
-    </div>
   )
 }
 

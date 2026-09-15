@@ -1,7 +1,7 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
-import { Activity, LogOut, ReceiptText, UserRound } from 'lucide-react'
+import { Activity, LogOut, ReceiptText, Trophy, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
@@ -14,6 +14,7 @@ import { BankrollDialog } from './bankroll-dialog'
 const NAV = [
   { href: '/signalai', label: 'Signalai', icon: Activity },
   { href: '/statymai', label: 'Statymai', icon: ReceiptText },
+  { href: '/topas', label: 'Topas', icon: Trophy },
   { href: '/profilis', label: 'Profilis', icon: UserRound },
 ]
 
@@ -120,7 +121,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Phone bottom navigation */}
       <nav
         aria-label="Programėlė"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-rail bg-night/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-rail bg-night/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
       >
         {NAV.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href)

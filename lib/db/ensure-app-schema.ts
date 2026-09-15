@@ -22,7 +22,14 @@ export function ensureAppSchema(): Promise<void> {
         ADD COLUMN IF NOT EXISTS "kellyFraction" DOUBLE PRECISION NOT NULL DEFAULT 0.25,
         ADD COLUMN IF NOT EXISTS "bookLimits" JSONB NOT NULL DEFAULT '{}'::jsonb,
         ADD COLUMN IF NOT EXISTS "onboardedAt" TIMESTAMPTZ,
-        ADD COLUMN IF NOT EXISTS "dailyBets" INTEGER NOT NULL DEFAULT 10;
+        ADD COLUMN IF NOT EXISTS "dailyBets" INTEGER NOT NULL DEFAULT 10,
+        ADD COLUMN IF NOT EXISTS "topOptIn" BOOLEAN NOT NULL DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS "topName" TEXT;
+
+      -- Topas: members shown by nickname only after they switch it on.
+      -- Nicknames are unique regardless of case.
+      CREATE UNIQUE INDEX IF NOT EXISTS user_settings_top_name_idx
+        ON user_settings (lower("topName")) WHERE "topName" IS NOT NULL;
 
       CREATE TABLE IF NOT EXISTS subscription (
         "userId" TEXT PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,

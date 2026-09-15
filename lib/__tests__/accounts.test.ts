@@ -95,6 +95,17 @@ describe('parseBankrollChange', () => {
     expect(parseBankrollChange({ kind: 'withdrawal', amount: 600 }, 500).ok).toBe(false)
   })
 
+  it('sets the bankroll to an exact amount as an adjustment for the difference', () => {
+    expect(parseBankrollChange({ kind: 'set', amount: 1000 }, 500)).toMatchObject({
+      ok: true,
+      value: { kind: 'adjustment', amount: 1000 },
+      signedAmount: 500,
+    })
+    expect(parseBankrollChange({ kind: 'set', amount: 300 }, 512.34)).toMatchObject({ ok: true, signedAmount: -212.34 })
+    expect(parseBankrollChange({ kind: 'set', amount: 500 }, 500).ok).toBe(false)
+    expect(parseBankrollChange({ kind: 'set', amount: 5 }, 500).ok).toBe(false)
+  })
+
   it('rejects zero, negative and unknown kinds', () => {
     expect(parseBankrollChange({ kind: 'deposit', amount: 0 }, 500).ok).toBe(false)
     expect(parseBankrollChange({ kind: 'deposit', amount: -5 }, 500).ok).toBe(false)

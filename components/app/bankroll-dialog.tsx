@@ -11,7 +11,19 @@ import { formatEuro } from '@/lib/format-lt'
 import { useAccount } from './account-provider'
 
 const EASE = [0.22, 1, 0.36, 1] as const
-const QUICK = [50, 100, 250]
+type Mode = 'deposit' | 'withdrawal' | 'set'
+const MODES: Array<{ value: Mode; label: string }> = [
+  { value: 'deposit', label: 'Įnešiau' },
+  { value: 'withdrawal', label: 'Išsiėmiau' },
+  { value: 'set', label: 'Nustatyti' },
+]
+// Amounts to add or take out; whole bankrolls when setting it.
+const QUICK: Record<Mode, number[]> = { deposit: [50, 100, 250], withdrawal: [50, 100, 250], set: [300, 500, 1000, 2000] }
+const SUBMIT: Record<Mode, string> = {
+  deposit: 'Pridėti prie bankrollo',
+  withdrawal: 'Atimti iš bankrollo',
+  set: 'Nustatyti bankrollą',
+}
 const KIND_LABEL: Record<BankrollEntry['kind'], string> = {
   start: 'Pradinis',
   deposit: 'Įnešta',
@@ -24,7 +36,7 @@ const dateFormat = new Intl.DateTimeFormat('lt-LT', { timeZone: 'Europe/Vilnius'
 export function BankrollDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const reduced = useReducedMotion()
   const { account, setAccount } = useAccount()
-  const [kind, setKind] = useState<'deposit' | 'withdrawal'>('deposit')
+  const [kind, setKind] = useState<Mode>('deposit')
   const [amountText, setAmountText] = useState('')
   const [entries, setEntries] = useState<BankrollEntry[] | null>(null)
   const [pending, setPending] = useState(false)
@@ -74,9 +86,13 @@ export function BankrollDialog({ open, onClose }: { open: boolean; onClose: () =
         preferences: { ...account.preferences, bankroll: body.bankroll.current },
       })
       setAmountText('')
-      toast.success(kind === 'deposit' ? `Pridėta ${formatEuro(amount, 2)}` : `Atimta ${formatEuro(amount, 2)}`, {
-        description: `Bankrollas dabar ${formatEuro(body.bankroll.current, 2)}`,
-      })
+      if (kind === 'set') {
+        toast.success(`Bankrollas nustatytas: ${formatEuro(body.bankroll.current, 2)}`)
+      } else {
+        toast.success(kind === 'deposit' ? `Pridėta ${formatEuro(amount, 2)}` : `Atimta ${formatEuro(amount, 2)}`, {
+          description: `Bankrollas dabar ${formatEuro(body.bankroll.current, 2)}`,
+        })
+      }
     } catch {
       setError('Nepavyko pasiekti serverio.')
     } finally {
@@ -129,23 +145,27 @@ export function BankrollDialog({ open, onClose }: { open: boolean; onClose: () =
             </div>
 
             <form onSubmit={submit} className="mt-7">
-              <div role="radiogroup" aria-label="Veiksmas" className="grid grid-cols-2 gap-1.5 rounded-xl bg-night/60 p-1.5">
-                {(['deposit', 'withdrawal'] as const).map((value) => (
+              <div role="radiogroup" aria-label="Veiksmas" className="grid grid-cols-3 gap-1.5 rounded-xl bg-night/60 p-1.5">
+                {MODES.map(({ value, label }) => (
                   <button
                     key={value}
                     type="button"
                     role="radio"
                     aria-checked={kind === value}
-                    onClick={() => setKind(value)}
+                    onClick={() => {
+                      setKind(value)
+                      setAmountText('')
+                      setError(null)
+                    }}
                     className={`rounded-lg py-2.5 font-medium transition-colors ${kind === value ? 'bg-chalk text-night' : 'text-haze hover:text-chalk'}`}
                   >
-                    {value === 'deposit' ? 'Įnešiau' : 'Išsiėmiau'}
+                    {label}
                   </button>
                 ))}
               </div>
 
               <label htmlFor={amountId} className="mt-5 block text-[0.95rem] font-medium">
-                Suma
+                {kind === 'set' ? 'Naujas bankrollas' : 'Suma'}
               </label>
               <div className="relative mt-2">
                 <input
@@ -159,17 +179,24 @@ export function BankrollDialog({ open, onClose }: { open: boolean; onClose: () =
                 <span className="pointer-events-none absolute inset-y-0 right-4 grid place-items-center text-xl text-haze">€</span>
               </div>
               <div className="mt-3 flex gap-2">
-                {QUICK.map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setAmountText(String(value))}
-                    className="flex-1 rounded-lg bg-rail py-2 text-[0.95rem] font-medium text-haze transition-colors hover:text-chalk"
-                  >
-                    {value} €
-                  </button>
-                ))}
+                {QUICK[kind].map((value) => {
+                  const chosen = amountText === String(value)
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-pressed={chosen}
+                      onClick={() => setAmountText(String(value))}
+                      className={`flex-1 rounded-lg py-2 text-[0.95rem] font-medium transition-colors ${
+                        chosen ? 'bg-chalk text-night' : 'bg-rail text-haze hover:text-chalk'
+                      }`}
+                    >
+                      {formatEuro(value)}
+                    </button>
+                  )
+                })}
               </div>
+              {kind === 'set' && <p className="mt-3 text-[0.9rem] text-haze">Skirtumas bus įrašytas į istoriją kaip pakoregavimas.</p>}
 
               {error && (
                 <p role="alert" className="mt-4 rounded-xl bg-brick-soft px-4 py-3 text-brick">
@@ -183,7 +210,7 @@ export function BankrollDialog({ open, onClose }: { open: boolean; onClose: () =
                 className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-chalk font-semibold text-night transition-transform hover:bg-white active:scale-[0.98] disabled:opacity-70"
               >
                 {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
-                {kind === 'deposit' ? 'Pridėti prie bankrollo' : 'Atimti iš bankrollo'}
+                {SUBMIT[kind]}
               </button>
             </form>
 
