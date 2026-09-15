@@ -4,6 +4,7 @@ import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Loader2, X } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import type { BankrollEntry } from '@/lib/account-store'
 import { formatEuro } from '@/lib/format-lt'
 import { useAccount } from './account-provider'
@@ -72,6 +73,9 @@ export function BankrollDialog({ open, onClose }: { open: boolean; onClose: () =
         preferences: { ...account.preferences, bankroll: body.bankroll.current },
       })
       setAmountText('')
+      toast.success(kind === 'deposit' ? `Pridėta ${formatEuro(amount, 2)}` : `Atimta ${formatEuro(amount, 2)}`, {
+        description: `Bankrollas dabar ${formatEuro(body.bankroll.current, 2)}`,
+      })
     } catch {
       setError('Nepavyko pasiekti serverio.')
     } finally {

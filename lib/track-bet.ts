@@ -1,4 +1,5 @@
 import type { LivePrice, LiveSignal } from '@/lib/live-signals'
+import type { ActiveBet } from '@/lib/types'
 
 /** Markets the existing auto-settlement (lib/bet-grader.ts) can grade. */
 export const GRADABLE_MARKETS = new Set(['moneyline', 'spread', 'total'])
@@ -33,6 +34,8 @@ export function betPayload(signal: LiveSignal, price: LivePrice, stake: number) 
     awayName: away,
     gameKey: signal.id,
     startsAt: signal.startsAt,
+    entryFairProb: signal.fairProb,
+    eventKey: signal.eventKey,
   }
 }
 
@@ -40,15 +43,18 @@ export async function trackBet(
   signal: LiveSignal,
   price: LivePrice,
   stake: number,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true; bet: ActiveBet } | { ok: false; error: string }> {
   try {
     const response = await fetch('/api/bets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(betPayload(signal, price, stake)),
     })
-    if (!response.ok) return { ok: false, error: 'Nepavyko pažymėti statymo. Bandyk dar kartą.' }
-    return { ok: true }
+    const body = await response.json().catch(() => null)
+    if (!response.ok || !body?.bet) {
+      return { ok: false, error: body?.error ?? 'Nepavyko pažymėti statymo. Bandyk dar kartą.' }
+    }
+    return { ok: true, bet: body.bet as ActiveBet }
   } catch {
     return { ok: false, error: 'Nepavyko pasiekti serverio. Patikrink ryšį.' }
   }

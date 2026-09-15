@@ -95,4 +95,8 @@ export const userBet = pgTable('user_bet', {
   profit: doublePrecision('profit'),
   placedAt: timestamp('placedAt', { withTimezone: true }).notNull().defaultNow(),
   settledAt: timestamp('settledAt', { withTimezone: true }),
+  entryFairProb: doublePrecision('entryFairProb'),
+  eventKey: text('eventKey'),
+  closingFairProb: doublePrecision('closingFairProb'),
+  closingCapturedAt: timestamp('closingCapturedAt', { withTimezone: true }),
 })

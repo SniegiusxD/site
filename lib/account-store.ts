@@ -45,12 +45,13 @@ type SettingsRow = {
   kellyFraction: number
   bookLimits: Partial<Record<BookName, number>> | null
   onboardedAt: Date | null
+  dailyBets: number
 }
 
 async function readSettings(q: Queryable, userId: string): Promise<SettingsRow | null> {
   const { rows } = await q.query<SettingsRow>(
     `SELECT "baseBankroll", books, "minEdge", "minOdds", "maxOdds", "maxHoursToStart",
-            "kellyFraction", "bookLimits", "onboardedAt"
+            "kellyFraction", "bookLimits", "onboardedAt", "dailyBets"
        FROM user_settings WHERE "userId" = $1`,
     [userId],
   )
@@ -130,9 +131,10 @@ async function upsertSettings(q: Queryable, userId: string, settings: Settings, 
   await q.query(
     `INSERT INTO user_settings
        ("userId", books, "minEdge", "minOdds", "maxOdds", "maxHoursToStart", "kellyFraction",
-        "bookLimits", "onboardedAt", "updatedAt")
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, CASE WHEN $9::boolean THEN NOW() END, NOW())
+        "bookLimits", "onboardedAt", "updatedAt", "dailyBets")
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, CASE WHEN $9::boolean THEN NOW() END, NOW(), $10)
      ON CONFLICT ("userId") DO UPDATE SET
+       "dailyBets" = EXCLUDED."dailyBets",
        books = EXCLUDED.books,
        "minEdge" = EXCLUDED."minEdge",
        "minOdds" = EXCLUDED."minOdds",
@@ -152,6 +154,7 @@ async function upsertSettings(q: Queryable, userId: string, settings: Settings, 
       settings.kellyFraction,
       JSON.stringify(settings.bookLimits),
       markOnboarded,
+      settings.dailyBets,
     ],
   )
 }
@@ -178,6 +181,7 @@ export async function loadAccount(userId: string): Promise<Account> {
         maxHoursToStart: settings.maxHoursToStart,
         kellyFraction: settings.kellyFraction,
         bookLimits: settings.bookLimits ?? {},
+        dailyBets: settings.dailyBets ?? DEFAULT_PREFERENCES.dailyBets,
       }
     : { ...DEFAULT_PREFERENCES, bankroll: state.current }
   return { onboarded: Boolean(settings?.onboardedAt), preferences, bankroll, access }

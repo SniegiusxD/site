@@ -24,6 +24,8 @@ function signal(overrides: Partial<LiveSignal> = {}): LiveSignal {
     firstSeenAt: '2026-09-14T15:16:00Z',
     lastSeenAt: '2026-09-14T15:47:00Z',
     closedAt: null,
+    eventKey: '1636213222',
+    closingFairProb: null,
     prices: [
       { book: 'TopSport', odds: 2.49, edge: 0.0142, published: true, eventName: 'Rio Breogan – Rilski Sportist', selectionLabel: 'Handikapas: Rio Breogan -16.5', capturedAt: '2026-09-14T15:47:00Z' },
       { book: 'Betsson', odds: 2.1, edge: -0.14, published: false, eventName: 'Breogan Lugo – Rilski Sportist', selectionLabel: 'Handikapas: Breogan Lugo -16.5', capturedAt: '2026-09-14T15:47:00Z' },

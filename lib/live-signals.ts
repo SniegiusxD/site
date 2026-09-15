@@ -37,6 +37,10 @@ export type LiveSignal = {
   firstSeenAt: string
   lastSeenAt: string
   closedAt: string | null
+  /** Pinnacle event id, shared by every line of the same match. */
+  eventKey: string | null
+  /** Pinnacle's fair probability at the close, once captured. */
+  closingFairProb: number | null
   prices: LivePrice[]
 }
 
@@ -100,6 +104,8 @@ export async function loadLiveBoard(): Promise<LiveBoard> {
         firstSeenAt: iso(row.first_seen_at)!,
         lastSeenAt: iso(row.last_seen_at)!,
         closedAt: iso(row.closed_at),
+        eventKey: row.event_key ?? null,
+        closingFairProb: row.closing_fair_prob ?? null,
         prices: (row.prices as Array<Record<string, unknown>>)
           .filter((price) => BOOKS.includes(price.book as BookName))
           .map((price) => ({

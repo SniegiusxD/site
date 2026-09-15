@@ -8,7 +8,7 @@ import { BookMark } from '@/components/landing/book-mark'
 import { authClient } from '@/lib/auth-client'
 import { formatEuro } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
-import { KELLY_CHOICES } from '@/lib/preferences'
+import { DAILY_BET_CHOICES, KELLY_CHOICES } from '@/lib/preferences'
 import { PRICE_EUR_PER_MONTH } from '@/lib/subscription'
 import { useAccount } from './account-provider'
 import { BankrollDialog } from './bankroll-dialog'
@@ -139,6 +139,14 @@ export function ProfileView() {
       </Section>
 
       <Section title="Sumos ir limitai">
+        <ChipGroup
+          size="md"
+          label="Dienos tikslas: statymų per dieną"
+          options={DAILY_BET_CHOICES.map((value): { value: number; label: string } => ({ value, label: String(value) }))}
+          value={prefs.dailyBets}
+          onChange={(dailyBets) => updateSettings({ dailyBets })}
+        />
+        <div className="mt-6" />
         <ChipGroup
           size="md"
           label="Kelly dalis"

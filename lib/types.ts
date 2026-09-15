@@ -91,6 +91,13 @@ export interface ActiveBet {
   /** line for spread/total markets */
   line?: number
   startsAt?: string
+  placedAtIso?: string
+  /** Pinnacle fair probability when the bet was marked. */
+  entryFairProb?: number | null
+  /** Pinnacle fair probability at the close, once captured. */
+  closingFairProb?: number | null
+  /** Match key shared by every bet on the same match. */
+  eventKey?: string | null
 }
 
 export interface HistoryBet {

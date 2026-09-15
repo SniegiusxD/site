@@ -31,6 +31,8 @@ const signal = (market: string, direction: string | null, line: number | null): 
   firstSeenAt: '2026-09-14T15:16:00Z',
   lastSeenAt: '2026-09-14T15:47:00Z',
   closedAt: null,
+  eventKey: '1636213222',
+  closingFairProb: null,
   prices: [price],
 })
 
@@ -45,6 +47,8 @@ describe('betPayload', () => {
       bookmaker: 'Betsson',
       stake: 12,
       sport: 'BASKETBALL',
+      entryFairProb: 0.47,
+      eventKey: '1636213222',
     })
   })
 

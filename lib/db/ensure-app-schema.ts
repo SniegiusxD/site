@@ -21,7 +21,8 @@ export function ensureAppSchema(): Promise<void> {
         ADD COLUMN IF NOT EXISTS "maxHoursToStart" INTEGER NOT NULL DEFAULT 48,
         ADD COLUMN IF NOT EXISTS "kellyFraction" DOUBLE PRECISION NOT NULL DEFAULT 0.25,
         ADD COLUMN IF NOT EXISTS "bookLimits" JSONB NOT NULL DEFAULT '{}'::jsonb,
-        ADD COLUMN IF NOT EXISTS "onboardedAt" TIMESTAMPTZ;
+        ADD COLUMN IF NOT EXISTS "onboardedAt" TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS "dailyBets" INTEGER NOT NULL DEFAULT 10;
 
       CREATE TABLE IF NOT EXISTS subscription (
         "userId" TEXT PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,

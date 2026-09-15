@@ -12,6 +12,8 @@ export type Preferences = {
   kellyFraction: number
   /** Per-book maximum stake in euros; missing = no limit. */
   bookLimits: Partial<Record<BookName, number>>
+  /** The daily target: how many signals the member plans to bet per day. */
+  dailyBets: number
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -23,9 +25,12 @@ export const DEFAULT_PREFERENCES: Preferences = {
   maxHoursToStart: 48,
   kellyFraction: 0.25,
   bookLimits: {},
+  dailyBets: 10,
 }
 
 export const KELLY_CHOICES = [0.125, 0.25, 0.5] as const
+
+export const DAILY_BET_CHOICES = [5, 10, 20, 40] as const
 
 export type Settings = Omit<Preferences, 'bankroll'>
 
@@ -90,6 +95,12 @@ export function parseSettings(input: unknown): SettingsResult {
     }
   }
 
+  // Older clients and onboarding do not send a target yet: keep the default.
+  const dailyBets = raw.dailyBets ?? DEFAULT_PREFERENCES.dailyBets
+  if (!isNumber(dailyBets) || dailyBets < 1 || dailyBets > 200) {
+    return { ok: false, error: 'Dienos tikslas turi būti nuo 1 iki 200 statymų.' }
+  }
+
   return {
     ok: true,
     value: {
@@ -100,6 +111,7 @@ export function parseSettings(input: unknown): SettingsResult {
       maxHoursToStart: Math.round(maxHoursToStart),
       kellyFraction,
       bookLimits,
+      dailyBets: Math.round(dailyBets),
     },
   }
 }

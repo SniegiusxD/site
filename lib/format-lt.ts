@@ -30,6 +30,15 @@ export function formatEdge(fraction: number): string {
   return `${edgeFormat.format(fraction * 100)}${NBSP}%`
 }
 
+/** A fraction (0.014) as an unsigned percentage ("1,4 %"). */
+export function formatPercent(fraction: number, fractionDigits = 1): string {
+  const formatted = new Intl.NumberFormat('lt-LT', {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(fraction * 100)
+  return `${normaliseSpaces(formatted)}${NBSP}%`
+}
+
 export function formatInteger(value: number): string {
   return normaliseSpaces(integerFormat.format(value))
 }
