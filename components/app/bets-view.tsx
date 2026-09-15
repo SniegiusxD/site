@@ -1,5 +1,6 @@
 'use client'
 
+import NumberFlow from '@number-flow/react'
 import { Check, ChevronDown, Loader2, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -48,6 +49,9 @@ const CLV_CHOICES: Array<{ value: ClvFilter; label: string }> = [
 ]
 
 type StatusTab = 'all' | 'pending' | 'settled'
+
+// Rolling digits when the period or filters change the three numbers.
+const EURO_FLOW = { minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'exceptZero' } as const
 
 const PAGE = 20
 
@@ -234,7 +238,9 @@ function ThreeNumbers({ stats }: { stats: BetStats }) {
       <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-end">
         <div className="col-span-2 sm:col-span-1">
           <p className="text-[0.9rem] text-haze">Rezultatas</p>
-          <p className={`mt-1 font-display text-[3.4rem] leading-none font-bold ${tone(stats.profit)}`}>{signedEuro(stats.profit)}</p>
+          <p className={`mt-1 font-display text-[3.4rem] leading-none font-bold ${tone(stats.profit)}`}>
+            <NumberFlow value={stats.profit} locales="lt-LT" format={EURO_FLOW} suffix=" €" />
+          </p>
           <p className="mt-2 text-[0.85rem] text-haze">
             {stats.settled} {ltPlural(stats.settled, 'užbaigtas statymas', 'užbaigti statymai', 'užbaigtų statymų')}
             {stats.pending > 0 && `, ${stats.pending} laukia`}
@@ -245,7 +251,9 @@ function ThreeNumbers({ stats }: { stats: BetStats }) {
         </span>
         <div>
           <p className="text-[0.9rem] text-haze">Vertė</p>
-          <p className={`mt-1 font-display text-[2.2rem] leading-none font-bold ${tone(stats.value)}`}>{signedEuro(stats.value)}</p>
+          <p className={`mt-1 font-display text-[2.2rem] leading-none font-bold ${tone(stats.value)}`}>
+            <NumberFlow value={stats.value} locales="lt-LT" format={EURO_FLOW} suffix=" €" />
+          </p>
           <p className="mt-2 text-[0.85rem] text-haze">kiek buvo vertos tavo kainos</p>
         </div>
         <span aria-hidden className="hidden pb-8 font-display text-4xl text-haze-dim sm:block">
@@ -253,7 +261,9 @@ function ThreeNumbers({ stats }: { stats: BetStats }) {
         </span>
         <div>
           <p className="text-[0.9rem] text-haze">Sėkmė</p>
-          <p className={`mt-1 font-display text-[2.2rem] leading-none font-bold ${tone(stats.luck)}`}>{signedEuro(stats.luck)}</p>
+          <p className={`mt-1 font-display text-[2.2rem] leading-none font-bold ${tone(stats.luck)}`}>
+            <NumberFlow value={stats.luck} locales="lt-LT" format={EURO_FLOW} suffix=" €" />
+          </p>
           <p className="mt-2 text-[0.85rem] text-haze">likusi, atsitiktinė dalis</p>
         </div>
       </div>

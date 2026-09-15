@@ -208,16 +208,22 @@ function BankrollStep({ prefs, text, onText }: { prefs: Preferences; text: strin
         Bankrollas eurais
       </label>
       <div className="mt-10 flex cursor-text items-baseline gap-3 border-b-2 border-rail pb-2 transition-colors focus-within:border-chalk">
-        <input
-          id={inputId}
-          inputMode="decimal"
-          autoComplete="off"
-          value={text}
-          onChange={(event) => onText(event.target.value.replace(/[^\d\s.,]/g, ''))}
-          // Width follows the digits so the euro sign sits right after the number.
-          style={{ width: `${Math.max(1, text.length) * 0.62 + 0.2}em` }}
-          className="max-w-full min-w-0 bg-transparent font-display text-[4.5rem] leading-none font-extrabold outline-none sm:text-[6rem]"
-        />
+        {/* A hidden copy of the digits sizes the field, so the euro sign sits right after the number. */}
+        <span className="inline-grid max-w-full font-display text-[4.5rem] leading-none font-extrabold sm:text-[6rem]">
+          <span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre">
+            {text || '0'}
+          </span>
+          <input
+            id={inputId}
+            inputMode="decimal"
+            autoComplete="off"
+            value={text}
+            onChange={(event) => onText(event.target.value.replace(/[^\d\s.,]/g, ''))}
+            // size=1 removes the input's built-in ~20-character width, which at this font size filled the row.
+            size={1}
+            className="col-start-1 row-start-1 w-full min-w-0 bg-transparent outline-none"
+          />
+        </span>
         <span className="font-display text-5xl font-extrabold text-haze">€</span>
       </div>
       <div className="mt-5 flex flex-wrap gap-2">

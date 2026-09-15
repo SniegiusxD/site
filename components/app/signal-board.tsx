@@ -1,9 +1,9 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useDragControls } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
-import { AlertTriangle, Bell, Check, ChevronDown, Eye, RefreshCw, SlidersHorizontal, X } from 'lucide-react'
+import { AlertTriangle, ArrowDown, ArrowUp, Bell, Check, ChevronDown, Eye, RefreshCw, SlidersHorizontal, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -40,6 +40,8 @@ const HOUR_CHOICES = [
   { value: 168, label: '7 d.' },
 ]
 const HIDDEN_KEY = 'hidden-signals'
+
+type Pulse = 'new' | 'up' | 'down'
 
 function useIsDesktop() {
   const [desktop, setDesktop] = useState(false)
@@ -104,6 +106,33 @@ export function SignalBoard({ initial, initialBets }: { initial: LiveBoard; init
   const [showHidden, setShowHidden] = useState(false)
   const [selected, setSelected] = useState<BoardRow | null>(null)
   const [hidden, setHidden] = useHiddenSignals(board.signals)
+  const sheetDrag = useDragControls()
+
+  // What changed since the previous poll: new signals glow once, moved prices flash up or down.
+  const [pulses, setPulses] = useState<Map<string, Pulse>>(() => new Map())
+  const previousBoard = useRef<LiveBoard | null>(null)
+  useEffect(() => {
+    const before = previousBoard.current
+    previousBoard.current = board
+    if (!before || before === board) return
+    const oldOdds = new Map(before.signals.flatMap((signal) => signal.prices.map((price) => [`${signal.id}:${price.book}`, price.odds] as const)))
+    const oldIds = new Set(before.signals.map((signal) => signal.id))
+    const next = new Map<string, Pulse>()
+    for (const signal of board.signals) {
+      if (!oldIds.has(signal.id)) {
+        next.set(signal.id, 'new')
+        continue
+      }
+      for (const price of signal.prices) {
+        const old = oldOdds.get(`${signal.id}:${price.book}`)
+        if (old !== undefined && Math.abs(old - price.odds) >= 0.005) next.set(`${signal.id}:${price.book}`, price.odds > old ? 'up' : 'down')
+      }
+    }
+    if (next.size === 0) return
+    setPulses(next)
+    const timer = window.setTimeout(() => setPulses(new Map()), 4000)
+    return () => window.clearTimeout(timer)
+  }, [board])
 
   const refreshBets = useCallback(async () => {
     try {
@@ -238,6 +267,7 @@ export function SignalBoard({ initial, initialBets }: { initial: LiveBoard; init
         tracked={exposure.selection.staked}
         sameMatch={exposure.match.count}
         isHidden={options.isHidden}
+        pulse={pulses.get(row.signal.id) ?? pulses.get(`${row.signal.id}:${row.price.book}`)}
         onSelect={() => setSelected(row)}
         onToggleHidden={row.signal.status === 'open' ? () => (options.isHidden ? unhide(row) : hide(row)) : undefined}
       />
@@ -398,7 +428,9 @@ export function SignalBoard({ initial, initialBets }: { initial: LiveBoard; init
               </p>
             </div>
           ) : (
-            <ul>{visible.map((row) => renderRow(row))}</ul>
+            <ul>
+              <AnimatePresence initial={false}>{visible.map((row) => renderRow(row))}</AnimatePresence>
+            </ul>
           )}
 
           {hiddenRows.length > 0 && (
@@ -418,15 +450,24 @@ export function SignalBoard({ initial, initialBets }: { initial: LiveBoard; init
       {/* Desktop detail */}
       <section aria-label="Signalo informacija" className="hidden min-h-0 overflow-y-auto lg:block">
         {selectedRow ? (
-          <SignalDetail
-            key={`${selectedRow.signal.id}-${selectedRow.price.book}`}
-            signal={selectedRow.signal}
-            price={selectedRow.price}
-            now={now}
-            bets={bets}
-            signalsById={signalsById}
-            onTracked={onTracked}
-          />
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={`${selectedRow.signal.id}-${selectedRow.price.book}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: EASE }}
+            >
+              <SignalDetail
+                signal={selectedRow.signal}
+                price={selectedRow.price}
+                now={now}
+                bets={bets}
+                signalsById={signalsById}
+                onTracked={onTracked}
+              />
+            </motion.div>
+          </AnimatePresence>
         ) : (
           <div className="grid h-full place-items-center px-10 text-center">
             <div className="max-w-[26rem]">
@@ -453,8 +494,23 @@ export function SignalBoard({ initial, initialBets }: { initial: LiveBoard; init
             animate={reduced ? { opacity: 1 } : { y: 0 }}
             exit={reduced ? { opacity: 0 } : { y: '100%' }}
             transition={{ duration: 0.4, ease: EASE }}
+            // Pull the handle down to close; only the handle starts a drag, so the content still scrolls.
+            drag={reduced ? false : 'y'}
+            dragControls={sheetDrag}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.7 }}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 120 || info.velocity.y > 700) setSelected(null)
+            }}
             className="fixed inset-0 z-50 overflow-y-auto bg-night"
           >
+            <div
+              onPointerDown={(event) => sheetDrag.start(event)}
+              className="sticky top-0 z-20 flex h-7 touch-none items-center justify-center bg-night"
+            >
+              <span aria-hidden className="h-1 w-10 rounded-full bg-rail-strong" />
+            </div>
             <SignalDetail
               key={`${selectedRow.signal.id}-${selectedRow.price.book}`}
               signal={selectedRow.signal}
@@ -572,6 +628,7 @@ function SignalRow({
   tracked,
   sameMatch,
   isHidden,
+  pulse,
   onSelect,
   onToggleHidden,
 }: {
@@ -585,13 +642,22 @@ function SignalRow({
   /** Bets on other lines of this match. */
   sameMatch: number
   isHidden?: boolean
+  /** Set for a few seconds after a poll: the signal is new, or this book's price moved. */
+  pulse?: Pulse
   onSelect: () => void
   onToggleHidden?: () => void
 }) {
   const { signal, price } = row
   const open = signal.status === 'open'
   return (
-    <li className="relative border-b border-rail last:border-b-0">
+    <motion.li
+      layout="position"
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3, ease: EASE }}
+      className={`relative border-b border-rail last:border-b-0 ${pulse === 'new' ? 'animate-[row-new_2.6s_ease-out]' : ''}`}
+    >
       <button
         type="button"
         onClick={onSelect}
@@ -608,12 +674,24 @@ function SignalRow({
           <span className="block truncate text-[0.9rem] text-chalk/85">{ltSelection(price.selectionLabel)}</span>
         </span>
         <span className="text-right">
-          <span className="block font-display text-[1.55rem] leading-none font-bold tnum">{formatOdds(price.odds)}</span>
+          <span
+            className={`flex items-center justify-end gap-0.5 font-display text-[1.55rem] leading-none font-bold tnum transition-colors duration-700 ${
+              pulse === 'up' ? 'text-pitch' : pulse === 'down' ? 'text-brick' : ''
+            }`}
+          >
+            {pulse === 'up' && <ArrowUp className="size-4" aria-hidden />}
+            {pulse === 'down' && <ArrowDown className="size-4" aria-hidden />}
+            {pulse === 'up' || pulse === 'down' ? (
+              <span className="sr-only">{pulse === 'up' ? 'Koeficientas pakilo iki' : 'Koeficientas nukrito iki'}</span>
+            ) : null}
+            <NumberFlow value={price.odds} locales="lt-LT" format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
+          </span>
           <span className={`mt-1 block text-[0.9rem] font-semibold ${open ? 'text-floodlight' : 'text-haze-dim line-through'}`}>
             {formatEdge(price.edge)}
           </span>
         </span>
         <span className="col-span-2 col-start-2 mt-2 flex min-w-0 items-center gap-2 pr-8 text-[0.85rem]">
+          {pulse === 'new' && <span className="shrink-0 rounded-full bg-pitch-soft px-1.5 py-0.5 text-[0.75rem] font-semibold text-pitch">Naujas</span>}
           <span className="min-w-0 truncate text-haze">
             {sportName(signal.sport)}, {open ? timeUntilLabel(signal.startsAt, now) : signal.status === 'started' ? 'prasidėjo' : 'užsidarė'}
           </span>
@@ -653,7 +731,7 @@ function SignalRow({
           {isHidden ? <Eye className="size-4" aria-hidden /> : <X className="size-4" aria-hidden />}
         </button>
       )}
-    </li>
+    </motion.li>
   )
 }
 

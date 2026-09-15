@@ -4,6 +4,7 @@ import { Hero } from '@/components/landing/hero'
 import { Journey } from '@/components/landing/journey'
 import { LiveStrip } from '@/components/landing/live-strip'
 import { MathStory } from '@/components/landing/math-story'
+import { OddsTicker } from '@/components/landing/odds-ticker'
 import { Pricing } from '@/components/landing/pricing'
 import { ProductTiles } from '@/components/landing/product-tiles'
 import { Proof } from '@/components/landing/proof'
@@ -22,6 +23,7 @@ export default async function LandingPage() {
       <SiteHeader />
       <main>
         <Hero />
+        <OddsTicker />
         <LiveStrip stats={stats} />
         <MathStory />
         <Journey />
@@ -30,7 +32,7 @@ export default async function LandingPage() {
         <Rights />
         <Pricing />
         <Faq />
-        <FinalCta />
+        <FinalCta stats={stats} />
       </main>
       <SiteFooter />
     </>

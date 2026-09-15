@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import Link from 'next/link'
+import { FloodlightBeams } from './floodlight-beams'
 import { LiveBoard } from './live-board'
 
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -20,11 +21,12 @@ export function Hero() {
 
   return (
     <section className="relative overflow-hidden">
-      {/* Floodlight wash from above the stand: the only decorative light on the page. */}
+      {/* Floodlight wash from above the stand; the WebGL towers draw on top once the page is idle. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 -top-40 h-[42rem] bg-[radial-gradient(60%_50%_at_70%_0%,rgb(255_210_63/0.10),transparent_70%)]"
       />
+      <FloodlightBeams className="absolute inset-x-0 top-0 h-[50rem] w-full [mask-image:linear-gradient(to_bottom,black_50%,transparent)]" />
       <div className="relative mx-auto grid max-w-[80rem] items-center gap-14 px-5 pt-32 pb-24 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 lg:pt-40 lg:pb-32">
         <div className="max-w-[36rem]">
           {/* The headline is the largest paint: it renders at once, never from opacity 0. */}

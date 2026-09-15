@@ -27,8 +27,8 @@ export function SiteHeader() {
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-300 ${
         scrolled
-          ? // Nearly opaque: light cards scroll underneath, and the grey links must stay readable over them.
-            'bg-night/95 shadow-[0_1px_0_0_var(--rail)] backdrop-blur-xl'
+          ? // Opaque: light cards scroll underneath, and the grey links must stay readable over them.
+            'bg-night shadow-[0_1px_0_0_var(--rail)]'
           : 'bg-transparent'
       }`}
     >

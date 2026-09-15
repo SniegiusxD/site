@@ -21,7 +21,7 @@ export function ProductTiles() {
     <section id="funkcijos" className="scroll-mt-16 border-t border-rail bg-night-deep">
       <div className="mx-auto max-w-[80rem] px-5 py-24 sm:px-8 lg:py-32">
         <div className="max-w-[44rem]">
-          <h2 className="text-[3rem] sm:text-[4rem]">Nuo signalo iki statymo be spėliojimo</h2>
+          <h2 className="text-[3rem] sm:text-[4rem]">Kas laukia viduje</h2>
           <p className="mt-6 text-[1.1rem] text-haze">
             Visa tai veikia ir čia. Spaudinėk.
           </p>

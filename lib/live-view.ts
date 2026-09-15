@@ -108,17 +108,32 @@ export function ltNumbers(text: string): string {
   return text.replace(/(\d)\.(\d)/g, '$1,$2').replace(/(^|[\s(])-(\d)/g, '$1−$2')
 }
 
+// The runner appends " (interp.)" when Pinnacle has no price on this exact line
+// and the fair price was interpolated from its neighbouring lines.
+const INTERPOLATED = /\s*\(interp\.\)\s*$/i
+
+export function isInterpolatedLabel(text: string): boolean {
+  return INTERPOLATED.test(text)
+}
+
 /**
- * A bet label for display: a few English market words the runner still emits
+ * A bet label for display: the interpolation tag is dropped (the detail view
+ * explains it in words), a few English market words the runner still emits
  * become Lithuanian, then numbers get Lithuanian decimals. Grading keeps the
  * raw label.
  */
 export function ltSelection(text: string): string {
   return ltNumbers(
     text
+      .replace(INTERPOLATED, '')
       .replace(/\s+regulation moneyline\b/i, ' laimės per pagrindinį laiką')
       .replace(/\s+moneyline\b/i, ' laimės'),
   )
+}
+
+/** "A – B" with the dash tied to the first team, so a wrapped title never starts with a dash. */
+export function eventLabel(name: string): string {
+  return name.replace(/ – /g, `${String.fromCharCode(160)}– `)
 }
 
 /** A scan older than this is shown as stale. The runner cycles every ~30 minutes. */

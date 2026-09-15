@@ -100,7 +100,12 @@ export function LiveBoard() {
         })}
       </div>
 
-      <motion.ul layout className="max-h-[27rem] overflow-y-auto" aria-label="Signalų sąrašas">
+      {/* The fade tells the eye the list scrolls instead of cutting a row in half. */}
+      <motion.ul
+        layout
+        className="max-h-[27rem] overflow-y-auto pb-6 [mask-image:linear-gradient(to_bottom,black_86%,transparent)]"
+        aria-label="Signalų sąrašas"
+      >
         <AnimatePresence initial={false}>
           {visible.map((signal) => {
             const open = signal.id === selectedId

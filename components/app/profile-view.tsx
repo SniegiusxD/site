@@ -3,10 +3,13 @@
 import NumberFlow from '@number-flow/react'
 import { Check, LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useCallback, useId, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
 import { authClient } from '@/lib/auth-client'
-import { formatEuro } from '@/lib/format-lt'
+import { type BetStats, betStats } from '@/lib/bet-value'
+import { formatEdge, formatEuro } from '@/lib/format-lt'
+import type { ActiveBet } from '@/lib/types'
+import { signedEuro } from './value-chart'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { DAILY_BET_CHOICES, KELLY_CHOICES } from '@/lib/preferences'
 import { PRICE_EUR_PER_MONTH } from '@/lib/subscription'
@@ -52,6 +55,8 @@ export function ProfileView() {
       <h1 className="text-[2.4rem] sm:text-[3rem]">Profilis</h1>
       <p className="mt-2 text-haze">Pakeitimai išsaugomi iš karto.</p>
       {saveError && <p role="alert" className="mt-4 rounded-xl bg-brick-soft px-4 py-3 text-brick">{saveError}</p>}
+
+      <ProfileSummary email={email} plan={plan} />
 
       <Section title="Bankrollas">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -192,6 +197,72 @@ export function ProfileView() {
 
       <BankrollDialog open={bankrollOpen} onClose={closeBankroll} />
     </main>
+  )
+}
+
+/** Who the member is and how their bets are going, above the settings. */
+function ProfileSummary({ email, plan }: { email: string; plan: string }) {
+  const [summary, setSummary] = useState<{ stats: BetStats; count: number } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/bets', { cache: 'no-store' })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body) => {
+        if (cancelled || !body) return
+        const bets = body.bets as ActiveBet[]
+        setSummary({ stats: betStats(bets), count: bets.length })
+      })
+      .catch(() => {
+        // The settings below still work; the numbers stay as placeholders.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const stats = summary?.stats
+  const tone = (value: number) => (value > 0.004 ? 'text-pitch' : value < -0.004 ? 'text-brick' : '')
+
+  return (
+    <section aria-label="Tavo suvestinė" className="mt-8 overflow-hidden rounded-2xl bg-stand hairline">
+      <div className="flex items-center gap-4 p-5 sm:p-7">
+        <span
+          aria-hidden
+          className="grid size-14 shrink-0 place-items-center rounded-2xl bg-floodlight-soft font-display text-3xl font-extrabold text-floodlight"
+        >
+          {(email.trim()[0] ?? '?').toUpperCase()}
+        </span>
+        <div className="min-w-0">
+          <p className="truncate text-[1.1rem] font-medium">{email}</p>
+          <p className="mt-0.5 text-[0.95rem] text-haze">{plan}</p>
+        </div>
+      </div>
+      <dl className="grid grid-cols-2 gap-px border-t border-rail bg-rail sm:grid-cols-4">
+        <SummaryStat label="Rezultatas" className={stats ? tone(stats.profit) : ''}>
+          {stats ? signedEuro(stats.profit) : null}
+        </SummaryStat>
+        <SummaryStat label="Grąža">{stats ? (stats.roi === null ? '–' : formatEdge(stats.roi)) : null}</SummaryStat>
+        <SummaryStat label="Vidutinis CLV">{stats ? (stats.clvAverage === null ? '–' : formatEdge(stats.clvAverage)) : null}</SummaryStat>
+        <SummaryStat label="Pažymėti statymai">{summary ? String(summary.count) : null}</SummaryStat>
+      </dl>
+    </section>
+  )
+}
+
+function SummaryStat({ label, className = '', children }: { label: string; className?: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-stand p-4 sm:p-5">
+      <dt className="text-[0.85rem] text-haze">{label}</dt>
+      <dd className={`mt-1.5 font-display text-[1.8rem] leading-none font-bold tnum ${className}`}>
+        {children ?? (
+          <>
+            <span aria-hidden className="inline-block h-7 w-16 animate-pulse rounded-md bg-rail align-middle" />
+            <span className="sr-only">Įkeliama</span>
+          </>
+        )}
+      </dd>
+    </div>
   )
 }
 

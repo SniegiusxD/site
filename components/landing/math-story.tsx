@@ -91,7 +91,7 @@ function Step({
   return (
     <li
       ref={ref}
-      className="flex gap-6 py-10 first:pt-0 lg:min-h-[78vh] lg:pt-8 lg:pb-0 lg:first:pt-8"
+      className="flex gap-6 py-10 first:pt-0 lg:min-h-[62vh] lg:pt-8 lg:pb-0 lg:first:pt-8"
     >
       <span
         aria-hidden

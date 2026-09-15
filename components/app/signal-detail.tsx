@@ -12,7 +12,7 @@ import { type BoardBet, boardStake, type Exposure, exposureFor, toBoardBet } fro
 import { formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/lib/format-lt'
 import { BOOKS } from '@/lib/landing-signals'
 import type { LivePrice, LiveSignal } from '@/lib/live-signals'
-import { clockLabel, kickoffLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
+import { clockLabel, eventLabel, isInterpolatedLabel, kickoffLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
 import { sportName } from '@/lib/sports-lt'
 import { trackBet } from '@/lib/track-bet'
 import { useAccount } from './account-provider'
@@ -106,7 +106,7 @@ export function SignalDetail({
       </div>
 
       <div className="mt-5 flex items-start justify-between gap-3">
-        <h2 className="text-[2.1rem] sm:text-[2.6rem]">{price.eventName}</h2>
+        <h2 className="text-[2.1rem] sm:text-[2.6rem]">{eventLabel(price.eventName)}</h2>
         <CopyButton text={price.eventName} label={`${price.book}: ${price.eventName}`} className="mt-1 shrink-0" />
       </div>
 
@@ -134,8 +134,13 @@ export function SignalDetail({
           <div className="min-w-0">
             <p className="text-[0.9rem] text-haze">Statymas {price.book}</p>
             <p className="mt-1 text-[1.2rem] font-medium">{ltSelection(price.selectionLabel)}</p>
+            {isInterpolatedLabel(price.selectionLabel) && (
+              <p className="mt-2 max-w-[28rem] text-[0.85rem] text-haze">
+                Pinnacle tokios linijos neturi, todėl tikroji kaina apskaičiuota iš gretimų jo linijų.
+              </p>
+            )}
           </div>
-          <div className="text-right">
+          <div className="sm:text-right">
             <p className={`font-display text-5xl leading-none font-bold tnum ${open ? 'text-floodlight' : 'text-haze-dim line-through'}`}>
               {formatEdge(price.edge)}
             </p>
@@ -226,19 +231,25 @@ export function SignalDetail({
             <label htmlFor={stakeId} className="sr-only">
               Statymo suma eurais
             </label>
-            <input
-              id={stakeId}
-              inputMode="numeric"
-              value={stakeText}
-              onChange={(event) => {
-                const digits = event.target.value.replace(/\D/g, '')
-                setStakeText(digits)
-                setStake(Math.min(max, Number(digits || 0)))
-              }}
-              onBlur={() => setStakeValue(stake)}
-              style={{ width: `${Math.max(1, stakeText.length) * 0.62 + 0.3}em` }}
-              className="bg-transparent text-center font-display text-6xl font-bold outline-none"
-            />
+            {/* A hidden copy of the digits sizes the field, so the euro sign sits right after the number. */}
+            <span className="inline-grid font-display text-6xl font-bold">
+              <span aria-hidden className="invisible col-start-1 row-start-1 whitespace-pre">
+                {stakeText || '0'}
+              </span>
+              <input
+                id={stakeId}
+                inputMode="numeric"
+                value={stakeText}
+                onChange={(event) => {
+                  const digits = event.target.value.replace(/\D/g, '')
+                  setStakeText(digits)
+                  setStake(Math.min(max, Number(digits || 0)))
+                }}
+                onBlur={() => setStakeValue(stake)}
+                size={1}
+                className="col-start-1 row-start-1 w-full min-w-0 bg-transparent text-center outline-none"
+              />
+            </span>
             <span className="font-display text-4xl font-bold text-haze">€</span>
           </div>
           <button

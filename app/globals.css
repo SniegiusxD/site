@@ -234,3 +234,33 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Landing ticker: the list holds two copies, so half its width is one seamless loop. */
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* App pages arrive with a short fade. Opacity only: a transform would detach fixed sheets. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* A signal that appeared since the last poll glows once. */
+@keyframes row-new {
+  from {
+    background-color: rgb(61 220 151 / 0.18);
+  }
+  to {
+    background-color: transparent;
+  }
+}

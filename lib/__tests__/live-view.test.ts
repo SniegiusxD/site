@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import type { LiveSignal } from '@/lib/live-signals'
-import { agoLabel, boardRows, isStale, kickoffLabel, ltNumbers, ltSelection, playablePrice, timeUntilLabel } from '@/lib/live-view'
+import {
+  agoLabel,
+  boardRows,
+  eventLabel,
+  isInterpolatedLabel,
+  isStale,
+  kickoffLabel,
+  ltNumbers,
+  ltSelection,
+  playablePrice,
+  timeUntilLabel,
+} from '@/lib/live-view'
 
 const NOW = new Date('2026-09-14T16:00:00Z')
 
@@ -92,6 +103,13 @@ describe('labels', () => {
     expect(ltSelection('Mountfield HK regulation moneyline')).toBe('Mountfield HK laimės per pagrindinį laiką')
     expect(ltSelection('Soles Mexicali moneyline')).toBe('Soles Mexicali laimės')
     expect(ltSelection('Handikapas: Soles Mexicali -2.5')).toBe('Handikapas: Soles Mexicali −2,5')
+  })
+
+  it('drops the interpolation tag from labels but can still detect it', () => {
+    expect(ltSelection('Suminis: Mažiau 2.0 (interp.)')).toBe('Suminis: Mažiau 2,0')
+    expect(isInterpolatedLabel('Suminis: Mažiau 2.0 (interp.)')).toBe(true)
+    expect(isInterpolatedLabel('Suminis: Mažiau 2.5')).toBe(false)
+    expect(eventLabel('Peterborough – Barnsley')).toBe('Peterborough – Barnsley')
   })
 
   it('marks old scans as stale', () => {
