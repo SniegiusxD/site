@@ -1,14 +1,30 @@
 'use client'
 
-import { Loader2, RefreshCw } from 'lucide-react'
+import { Check, ChevronDown, Loader2, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
-import { formatEuro, formatOdds, ltPlural } from '@/lib/format-lt'
+import {
+  type BetStats,
+  type ClvFilter,
+  type Period,
+  type ValuePoint,
+  betStats,
+  betTime,
+  closingValue,
+  inPeriod,
+  matchesClv,
+  valueSeries,
+  verdict,
+} from '@/lib/bet-value'
+import { formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { kickoffLabel, ltSelection } from '@/lib/live-view'
+import { sportName } from '@/lib/sports-lt'
 import type { ActiveBet, BetStatus } from '@/lib/types'
+import { ChipGroup } from './chip-group'
 import { ProfitCalendar } from './profit-calendar'
+import { ValueChart, signedEuro } from './value-chart'
 
 const STATUS: Record<BetStatus, { label: string; tone: string }> = {
   laukia: { label: 'Laukia', tone: 'bg-rail text-haze' },
@@ -18,10 +34,37 @@ const STATUS: Record<BetStatus, { label: string; tone: string }> = {
   neisspresta: { label: 'Neišspręsta', tone: 'bg-rail text-haze-dim' },
 }
 
+const PERIODS: Array<{ value: Period; label: string }> = [
+  { value: 'week', label: 'Savaitė' },
+  { value: 'month', label: 'Mėnuo' },
+  { value: 'all', label: 'Viskas' },
+]
+
+const CLV_CHOICES: Array<{ value: ClvFilter; label: string }> = [
+  { value: 'all', label: 'Visi' },
+  { value: 'plus', label: 'Įveikė uždarymo kainą' },
+  { value: 'minus', label: 'Neįveikė' },
+  { value: 'without', label: 'Be uždarymo kainos' },
+]
+
+type StatusTab = 'all' | 'pending' | 'settled'
+
+const PAGE = 20
+
+const tone = (value: number) => (value > 0.004 ? 'text-pitch' : value < -0.004 ? 'text-brick' : 'text-chalk')
+const timeOf = (bet: ActiveBet) => new Date(betTime(bet) ?? 0).getTime()
+
 export function BetsView() {
   const [bets, setBets] = useState<ActiveBet[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [period, setPeriod] = useState<Period>('month')
+  const [book, setBook] = useState('')
+  const [sport, setSport] = useState('')
+  const [clv, setClv] = useState<ClvFilter>('all')
+  const [tab, setTab] = useState<StatusTab>('all')
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [now, setNow] = useState(() => new Date())
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -35,6 +78,7 @@ export function BetsView() {
       setError('Nepavyko įkelti statymų. Bandyk dar kartą.')
     } finally {
       setLoading(false)
+      setNow(new Date())
     }
   }, [])
 
@@ -42,26 +86,22 @@ export function BetsView() {
     load()
   }, [load])
 
-  const summary = useMemo(() => {
-    const list = bets ?? []
-    const pending = list.filter((b) => b.status === 'laukia')
-    const settled = list.filter((b) => b.status !== 'laukia' && b.status !== 'neisspresta' && b.profit !== null)
-    const staked = settled.reduce((sum, b) => sum + b.stake, 0)
-    const profit = settled.reduce((sum, b) => sum + (b.profit ?? 0), 0)
-    return {
-      pending,
-      settled: list.filter((b) => b.status !== 'laukia'),
-      pendingStake: pending.reduce((sum, b) => sum + b.stake, 0),
-      profit,
-      roi: staked > 0 ? profit / staked : null,
-      won: settled.filter((b) => b.status === 'laimeta').length,
-      lost: settled.filter((b) => b.status === 'pralaimeta').length,
-      pushed: settled.filter((b) => b.status === 'grazinta').length,
-    }
-  }, [bets])
+  // Filters scope everything below them; the calendar keeps its own month.
+  const scoped = useMemo(
+    () => (bets ?? []).filter((bet) => (!book || bet.bookmaker === book) && (!sport || bet.sport === sport) && matchesClv(bet, clv)),
+    [bets, book, sport, clv],
+  )
+  const inRange = useMemo(() => scoped.filter((bet) => inPeriod(bet, period, now)), [scoped, period, now])
+  const stats = useMemo(() => betStats(inRange), [inRange])
+  const series = useMemo(() => valueSeries(inRange), [inRange])
+  const books = useMemo(() => BOOKS.filter((name) => (bets ?? []).some((bet) => bet.bookmaker === name)), [bets])
+  const sports = useMemo(() => [...new Set((bets ?? []).map((bet) => bet.sport))].sort(), [bets])
+  const pending = useMemo(() => inRange.filter((bet) => bet.status === 'laukia').sort((a, b) => timeOf(a) - timeOf(b)), [inRange])
+  const settled = useMemo(() => inRange.filter((bet) => bet.status !== 'laukia').sort((a, b) => timeOf(b) - timeOf(a)), [inRange])
+  const activeFilters = (book ? 1 : 0) + (sport ? 1 : 0) + (clv !== 'all' ? 1 : 0)
 
   return (
-    <main className="mx-auto max-w-[56rem] px-4 pt-6 pb-16 sm:px-8 lg:pt-10">
+    <main className="mx-auto max-w-[60rem] px-4 pt-6 pb-16 sm:px-8 lg:pt-10">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-[2.4rem] sm:text-[3rem]">Statymai</h1>
         <button
@@ -75,28 +115,6 @@ export function BetsView() {
       </div>
       <p className="mt-2 text-haze">Rezultatai suvedami automatiškai, kai rungtynės baigiasi.</p>
 
-      <dl className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-rail sm:grid-cols-4">
-        <Stat label="Rezultatas">
-          <span className={summary.profit > 0 ? 'text-pitch' : summary.profit < 0 ? 'text-brick' : ''}>
-            {summary.profit > 0 ? '+' : ''}
-            {formatEuro(summary.profit, 2)}
-          </span>
-        </Stat>
-        <Stat label="Grąža">
-          {summary.roi === null ? '–' : `${summary.roi > 0 ? '+' : ''}${(summary.roi * 100).toFixed(1).replace('.', ',')} %`}
-        </Stat>
-        <Stat label="Laimėta / pralaimėta">
-          {summary.won} / {summary.lost}
-          {summary.pushed ? <span className="text-haze"> / {summary.pushed}</span> : null}
-        </Stat>
-        <Stat label="Laukia">
-          {summary.pending.length}{' '}
-          <span className="font-sans text-base font-normal text-haze">{formatEuro(summary.pendingStake)}</span>
-        </Stat>
-      </dl>
-
-      {bets && bets.length > 0 && <ProfitCalendar bets={bets} />}
-
       {error && <p role="alert" className="mt-6 rounded-xl bg-brick-soft px-4 py-3 text-brick">{error}</p>}
 
       {bets === null ? (
@@ -107,68 +125,349 @@ export function BetsView() {
         <div className="mt-10 rounded-2xl bg-stand p-8 text-center hairline">
           <p className="font-display text-3xl font-bold">Dar nepažymėjai nė vieno statymo</p>
           <p className="mx-auto mt-3 max-w-[26rem] text-haze">
-            Kai pastatysi pagal signalą, paspausk „Pastačiau“, ir statymas atsiras čia su rezultatu.
+            Kai pastatysi pagal signalą, paspausk „Pastačiau“, ir statymas atsiras čia su rezultatu, verte ir uždarymo kaina.
           </p>
           <Link href="/signalai" className="mt-6 inline-block rounded-xl bg-chalk px-5 py-3 font-semibold text-night hover:bg-white">
             Į signalus
           </Link>
         </div>
       ) : (
-        <>
-          <BetList title="Laukia rezultato" bets={summary.pending} />
-          <BetList title="Užbaigti" bets={summary.settled} />
-        </>
+        <div className={loading ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <Segmented label="Laikotarpis" options={PERIODS} value={period} onChange={setPeriod} />
+            <button
+              type="button"
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen((value) => !value)}
+              className={`inline-flex h-11 items-center gap-2 rounded-xl px-3.5 font-medium transition-colors ${filtersOpen ? 'bg-chalk text-night' : 'bg-stand hairline hover:bg-stand-hover'}`}
+            >
+              <SlidersHorizontal className="size-4" aria-hidden />
+              Filtrai
+              {activeFilters > 0 && (
+                <span className={`grid size-5 place-items-center rounded-full text-[0.75rem] ${filtersOpen ? 'bg-night text-chalk' : 'bg-chalk text-night'}`}>
+                  {activeFilters}
+                </span>
+              )}
+            </button>
+            {activeFilters > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setBook('')
+                  setSport('')
+                  setClv('all')
+                }}
+                className="px-2 text-[0.95rem] text-haze underline decoration-rail-strong underline-offset-4 hover:text-chalk"
+              >
+                Išvalyti
+              </button>
+            )}
+          </div>
+          {filtersOpen && (
+            <div className="mt-3 space-y-4 rounded-2xl bg-stand p-5 hairline">
+              {books.length > 1 && (
+                <ChipGroup
+                  label="Kontora"
+                  options={[{ value: '', label: 'Visos' }, ...books.map((name) => ({ value: name as string, label: name as string }))]}
+                  value={book}
+                  onChange={setBook}
+                />
+              )}
+              {sports.length > 1 && (
+                <ChipGroup
+                  label="Sporto šaka"
+                  options={[{ value: '', label: 'Visos' }, ...sports.map((value) => ({ value, label: sportName(value) }))]}
+                  value={sport}
+                  onChange={setSport}
+                />
+              )}
+              <ChipGroup label="Uždarymo kaina" options={CLV_CHOICES} value={clv} onChange={setClv} />
+            </div>
+          )}
+
+          <ThreeNumbers stats={stats} />
+          <StatGrid stats={stats} />
+          <ValueCard series={series} stats={stats} />
+          <ProfitCalendar bets={scoped} />
+          <History pending={pending} settled={settled} tab={tab} onTab={setTab} />
+        </div>
       )}
     </main>
   )
 }
 
-function Stat({ label, children }: { label: string; children: React.ReactNode }) {
+function Segmented<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  options: Array<{ value: T; label: string }>
+  value: T
+  onChange: (value: T) => void
+}) {
   return (
-    <div className="bg-stand p-4 sm:p-5">
-      <dt className="text-[0.85rem] text-haze">{label}</dt>
-      <dd className="mt-1 font-display text-3xl font-bold tnum">{children}</dd>
+    <div role="radiogroup" aria-label={label} className="inline-flex rounded-xl bg-stand p-1 hairline">
+      {options.map((option) => {
+        const on = option.value === value
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => onChange(option.value)}
+            className={`rounded-lg px-3.5 py-1.5 text-[0.95rem] font-medium transition-colors ${on ? 'bg-chalk text-night' : 'text-haze hover:text-chalk'}`}
+          >
+            {option.label}
+          </button>
+        )
+      })}
     </div>
   )
 }
 
-function BetList({ title, bets }: { title: string; bets: ActiveBet[] }) {
-  if (bets.length === 0) return null
+function ThreeNumbers({ stats }: { stats: BetStats }) {
   return (
-    <section className="mt-10">
-      <h2 className="text-[1.6rem]">
-        {title} <span className="font-sans text-base font-normal text-haze">{bets.length} {ltPlural(bets.length, 'statymas', 'statymai', 'statymų')}</span>
-      </h2>
-      <ul className="mt-4 divide-y divide-rail overflow-hidden rounded-2xl bg-stand hairline">
-        {bets.map((bet) => {
-          const status = STATUS[bet.status] ?? STATUS.laukia
-          const book = BOOKS.includes(bet.bookmaker as BookName) ? (bet.bookmaker as BookName) : null
-          return (
-            <li key={bet.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:px-5">
-              {book ? <BookMark book={book} /> : <span className="size-8" />}
-              <div className="min-w-0">
-                <p className="truncate font-medium">{bet.match.replace(' vs ', ' – ')}</p>
-                <p className="truncate text-[0.9rem] text-haze">
-                  {ltSelection(bet.betDescription)}
-                  {bet.startsAt ? `, ${kickoffLabel(bet.startsAt)}` : ''}
-                </p>
-                <p className="mt-1 text-[0.85rem] text-haze-dim">
-                  {formatEuro(bet.stake)} už {formatOdds(bet.odds)}, {bet.bookmaker}
-                </p>
-              </div>
-              <div className="text-right">
-                <span className={`inline-block rounded-full px-2.5 py-1 text-[0.8rem] font-medium ${status.tone}`}>{status.label}</span>
-                {bet.profit !== null && (
-                  <p className={`mt-1 font-semibold ${bet.profit > 0 ? 'text-pitch' : bet.profit < 0 ? 'text-brick' : 'text-haze'}`}>
-                    {bet.profit > 0 ? '+' : ''}
-                    {formatEuro(bet.profit, 2)}
-                  </p>
-                )}
-              </div>
-            </li>
-          )
-        })}
-      </ul>
+    <section aria-label="Rezultatas, vertė ir sėkmė" className="mt-4 rounded-2xl bg-stand p-5 hairline sm:p-7">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-end">
+        <div className="col-span-2 sm:col-span-1">
+          <p className="text-[0.9rem] text-haze">Rezultatas</p>
+          <p className={`mt-1 font-display text-[3.4rem] leading-none font-bold ${tone(stats.profit)}`}>{signedEuro(stats.profit)}</p>
+          <p className="mt-2 text-[0.85rem] text-haze">
+            {stats.settled} {ltPlural(stats.settled, 'užbaigtas statymas', 'užbaigti statymai', 'užbaigtų statymų')}
+            {stats.pending > 0 && `, ${stats.pending} laukia`}
+          </p>
+        </div>
+        <span aria-hidden className="hidden pb-8 font-display text-4xl text-haze-dim sm:block">
+          =
+        </span>
+        <div>
+          <p className="text-[0.9rem] text-haze">Vertė</p>
+          <p className={`mt-1 font-display text-[2.2rem] leading-none font-bold ${tone(stats.value)}`}>{signedEuro(stats.value)}</p>
+          <p className="mt-2 text-[0.85rem] text-haze">kiek buvo vertos tavo kainos</p>
+        </div>
+        <span aria-hidden className="hidden pb-8 font-display text-4xl text-haze-dim sm:block">
+          +
+        </span>
+        <div>
+          <p className="text-[0.9rem] text-haze">Sėkmė</p>
+          <p className={`mt-1 font-display text-[2.2rem] leading-none font-bold ${tone(stats.luck)}`}>{signedEuro(stats.luck)}</p>
+          <p className="mt-2 text-[0.85rem] text-haze">likusi, atsitiktinė dalis</p>
+        </div>
+      </div>
     </section>
+  )
+}
+
+function StatGrid({ stats }: { stats: BetStats }) {
+  return (
+    <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-rail sm:grid-cols-4">
+      <Stat label="Laimėta, pralaimėta, grąžinta">
+        {stats.won}–{stats.lost}–{stats.pushed}
+      </Stat>
+      <Stat label="Grąža">{stats.roi === null ? '–' : formatEdge(stats.roi)}</Stat>
+      <Stat label="Vidutinis CLV" note={stats.clvMedian === null ? 'dar nėra uždarymo kainų' : `mediana ${formatEdge(stats.clvMedian)}`}>
+        {stats.clvAverage === null ? '–' : formatEdge(stats.clvAverage)}
+      </Stat>
+      <Stat label="Įveikė uždarymo kainą" note={stats.withClose ? formatPercent(stats.beatClose / stats.withClose, 0) : undefined}>
+        {stats.beatClose} <span className="font-sans text-base font-normal text-haze">iš {stats.withClose}</span>
+      </Stat>
+    </dl>
+  )
+}
+
+function Stat({ label, note, children }: { label: string; note?: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-stand p-4 sm:p-5">
+      <dt className="text-[0.85rem] text-haze">{label}</dt>
+      <dd className="mt-1 font-display text-3xl font-bold tnum">{children}</dd>
+      {note && <dd className="mt-0.5 text-[0.85rem] text-haze-dim">{note}</dd>}
+    </div>
+  )
+}
+
+const VERDICT = {
+  normal: {
+    label: 'Normaliose ribose',
+    icon: Check,
+    tone: 'bg-pitch-soft text-pitch',
+    text: 'Rezultatas nuo vertės skiriasi tiek, kiek įprastai lemia atsitiktinumas.',
+  },
+  above: {
+    label: 'Virš įprastų ribų',
+    icon: TrendingUp,
+    tone: 'bg-pitch-soft text-pitch',
+    text: 'Sekėsi labiau nei įprasta. Neverta tikėtis, kad taip bus visada.',
+  },
+  below: {
+    label: 'Žemiau įprastų ribų',
+    icon: TrendingDown,
+    tone: 'bg-[rgb(245_165_36/0.14)] text-warning',
+    text: 'Nesisekė labiau nei įprasta. Taip nutinka ir su gerais statymais; svarbiausia, ar kainos toliau lenkia uždarymo kainą.',
+  },
+} as const
+
+function ValueCard({ series, stats }: { series: ValuePoint[]; stats: BetStats }) {
+  const end = series[series.length - 1]
+  const state = VERDICT[verdict(end)]
+  const Icon = state.icon
+  const hasData = series.length > 1
+
+  return (
+    <section aria-labelledby="value-title" className="mt-4 rounded-2xl bg-stand p-5 hairline sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="value-title" className="text-[1.6rem]">
+          Vertė ir rezultatas
+        </h2>
+        {hasData && (
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.85rem] font-semibold ${state.tone}`}>
+            <Icon className="size-4" aria-hidden />
+            {state.label}
+          </span>
+        )}
+      </div>
+
+      {hasData ? (
+        <>
+          <p className="mt-1 text-[0.95rem] text-haze">{state.text}</p>
+          <div className="mt-5">
+            <ValueChart points={series} />
+          </div>
+          {(stats.valuedAtEntry > 0 || stats.unvalued > 0) && (
+            <ul className="mt-4 space-y-1.5 text-[0.9rem] text-haze">
+              {stats.valuedAtEntry > 0 && (
+                <li>
+                  {stats.valuedAtEntry} {ltPlural(stats.valuedAtEntry, 'statymo', 'statymų', 'statymų')} vertė kol kas skaičiuojama pagal kainą
+                  statymo metu, nes uždarymo kaina dar nesurinkta.
+                </li>
+              )}
+              {stats.unvalued > 0 && (
+                <li>
+                  {stats.unvalued} {ltPlural(stats.unvalued, 'statymas', 'statymai', 'statymų')} be Pinnacle kainos ({signedEuro(stats.unvaluedProfit)}):
+                  jie įskaičiuoti į rezultatą, bet vertės neturi, todėl visa jų suma patenka į sėkmę.
+                </li>
+              )}
+            </ul>
+          )}
+        </>
+      ) : (
+        <p className="mt-3 text-haze">Kai šio laikotarpio statymai užsibaigs, čia matysi, kaip rezultatas juda aplink vertę.</p>
+      )}
+
+      <details className="group mt-5 border-t border-rail pt-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium [&::-webkit-details-marker]:hidden">
+          Kaip skaičiuojama vertė
+          <ChevronDown className="size-4 text-haze transition-transform group-open:rotate-180" aria-hidden />
+        </summary>
+        <div className="mt-3 max-w-[44rem] space-y-2.5 text-[0.95rem] text-haze">
+          <p>
+            Statymo vertė = suma × (koeficientas × tikroji tikimybė − 1). Tikrąją tikimybę imam iš Pinnacle kainos be maržos: rungtynių
+            pradžioje, kai ją turim, kitaip tą akimirką, kai pažymėjai statymą.
+          </p>
+          <p>
+            Sėkmė yra visa kita: rezultatas minus vertė. Po kelių statymų ji svarbesnė už vertę, po kelių šimtų vertė ima nulemti
+            daugiau.
+          </p>
+          <p>
+            Pilka juosta rodo, kur rezultatas atsiduria maždaug 95 % atvejų, kai statymų vertė tokia pati. Ji skaičiuojama iš tavo
+            statymų sumų ir koeficientų.
+          </p>
+          <p>CLV rodo, kiek tavo koeficientas buvo geresnis už tikrąją kainą rungtynių pradžioje. Nuolat teigiamas CLV yra geriausias ženklas, kad statai teisingai.</p>
+        </div>
+      </details>
+    </section>
+  )
+}
+
+function History({
+  pending,
+  settled,
+  tab,
+  onTab,
+}: {
+  pending: ActiveBet[]
+  settled: ActiveBet[]
+  tab: StatusTab
+  onTab: (tab: StatusTab) => void
+}) {
+  const list = tab === 'pending' ? pending : tab === 'settled' ? settled : [...pending, ...settled]
+  const [shown, setShown] = useState(PAGE)
+  const visible = list.slice(0, shown)
+  return (
+    <section aria-labelledby="history-title" className="mt-10">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h2 id="history-title" className="text-[1.6rem]">
+          Istorija
+        </h2>
+        <Segmented
+          label="Būsena"
+          options={[
+            { value: 'all', label: `Visi ${pending.length + settled.length}` },
+            { value: 'pending', label: `Laukia ${pending.length}` },
+            { value: 'settled', label: `Užbaigti ${settled.length}` },
+          ]}
+          value={tab}
+          onChange={onTab}
+        />
+      </div>
+      {list.length === 0 ? (
+        <p className="mt-4 rounded-2xl bg-stand p-6 text-center text-haze hairline">Pagal pasirinktus filtrus statymų nėra.</p>
+      ) : (
+        <>
+          <ul className="mt-4 divide-y divide-rail overflow-hidden rounded-2xl bg-stand hairline">
+            {visible.map((bet) => (
+              <BetRow key={bet.id} bet={bet} />
+            ))}
+          </ul>
+          {list.length > shown && (
+            <button
+              type="button"
+              onClick={() => setShown((count) => count + PAGE)}
+              className="mt-3 w-full rounded-xl bg-stand py-3 font-medium text-chalk hairline transition-colors hover:bg-stand-hover"
+            >
+              Rodyti daugiau ({list.length - shown})
+            </button>
+          )}
+        </>
+      )}
+    </section>
+  )
+}
+
+function BetRow({ bet }: { bet: ActiveBet }) {
+  const status = STATUS[bet.status] ?? STATUS.laukia
+  const book = BOOKS.includes(bet.bookmaker as BookName) ? (bet.bookmaker as BookName) : null
+  const clv = closingValue(bet)
+  return (
+    <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 px-4 py-4 sm:px-5">
+      <span className="pt-0.5">{book ? <BookMark book={book} /> : <span className="block size-8" />}</span>
+      <div className="min-w-0">
+        <p className="truncate font-medium">{bet.match.replace(' vs ', ' – ')}</p>
+        <p className="truncate text-[0.9rem] text-haze">
+          {ltSelection(bet.betDescription)}
+          {bet.startsAt ? `, ${kickoffLabel(bet.startsAt)}` : ''}
+        </p>
+        <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.85rem]">
+          <span className="text-haze-dim">
+            {formatEuro(bet.stake)} už {formatOdds(bet.odds)}, {bet.bookmaker}
+          </span>
+          {clv !== null ? (
+            <span className={`rounded-full px-2 py-0.5 font-semibold ${clv > 0 ? 'bg-pitch-soft text-pitch' : 'bg-brick-soft text-brick'}`}>
+              CLV {formatEdge(clv)}
+            </span>
+          ) : (
+            <span className="text-haze-dim">{bet.status === 'laukia' ? 'uždarymo kaina dar nežinoma' : 'be uždarymo kainos'}</span>
+          )}
+        </p>
+      </div>
+      <div className="text-right">
+        <span className={`inline-block rounded-full px-2.5 py-1 text-[0.8rem] font-medium ${status.tone}`}>{status.label}</span>
+        {bet.profit !== null && (
+          <p className={`mt-1 font-semibold ${tone(bet.profit)}`}>{signedEuro(bet.profit)}</p>
+        )}
+      </div>
+    </li>
   )
 }
