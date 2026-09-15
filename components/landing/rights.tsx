@@ -53,6 +53,20 @@ export function Rights() {
             ))}
           </ol>
         </div>
+
+        <div className="mt-16 grid gap-6 border-t border-rail pt-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <h3 className="text-[2.2rem] sm:text-[2.8rem]">Kodėl Lietuvos kontoros klysta</h3>
+          <div className="max-w-[40rem] space-y-4 text-haze">
+            <p>
+              Lietuvoje legaliai statyti galima tik licencijuotose kontorose, o nelegalių užsienio svetainių prieiga blokuojama. Vietinės
+              kontoros konkuruoja tarpusavyje, ne su visu pasauliu, todėl kainą pataisyti joms nėra taip skubu.
+            </p>
+            <p>
+              Pinnacle kaina keičiasi, kai tik stambūs lošėjai sužino ką nors naujo. Lietuvos kontora kartais atsilieka minutėmis ar
+              valandomis. Tas atotrūkis ir yra signalas.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   )

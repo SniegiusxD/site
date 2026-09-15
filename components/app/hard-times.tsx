@@ -38,7 +38,7 @@ export function HardTimes({ returns, stake, dailyBets }: { returns: number[]; st
       advice: 'Vertink šimtais statymų, ne dienomis ar savaitėmis.',
     },
     {
-      title: 'Po 1 000 statymų vis dar minuse',
+      title: 'Po 1 000 statymų vis dar minuse',
       answer: `Taip baigiasi ${formatPercent(facts.thousand.shareNegative, 0)} scenarijų.`,
       advice: 'Žiūrėk į CLV statymų puslapyje: jei kainos nuolat lenkia uždarymo kainą, vertė yra, net kai rezultatas dar ne.',
     },

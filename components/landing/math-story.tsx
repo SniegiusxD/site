@@ -18,7 +18,7 @@ const STEPS = [
   },
   {
     title: 'Statai daug kartų po nedaug',
-    body: 'Vienas statymas vis tiek gali pralaimėti. Pranašumas išryškėja tik per šimtus statymų, todėl siūlom mažas sumas. Pajudink vertę ir pažiūrėk, kaip atrodo 1 000 statymų.',
+    body: 'Vienas statymas vis tiek gali pralaimėti. Pranašumas išryškėja tik per šimtus statymų, todėl siūlom mažas sumas. Pajudink vertę ir pažiūrėk, kaip atrodo 1 000 statymų.',
   },
 ] as const
 
@@ -398,14 +398,14 @@ function SimulationVisual() {
         aria-label={`200 simuliacijų po 1000 statymų: vidurys ${Math.round(sim.p50[last])} €, blogiausi 5 % ${Math.round(sim.p5[last])} €, geriausi 5 % ${Math.round(sim.p95[last])} €`}
       >
         <line x1={0} x2={CHART_W} y1={y(0)} y2={y(0)} stroke="var(--rail-strong)" strokeDasharray="6 6" />
-        <motion.path animate={{ d: band }} transition={{ duration: 0.5, ease: EASE }} fill="rgb(141 152 173 / 0.14)" />
+        <motion.path animate={{ d: band }} transition={{ duration: 0.5, ease: EASE }} fill="rgb(141 152 173 / 0.14)" />
         {sim.runs.map((run, index) => (
           <motion.path
             key={index}
             animate={{ d: linePath(run) }}
             transition={{ duration: 0.5, ease: EASE }}
             fill="none"
-            stroke="rgb(141 152 173 / 0.28)"
+            stroke="rgb(141 152 173 / 0.28)"
             strokeWidth={1}
             vectorEffect="non-scaling-stroke"
           />
@@ -421,7 +421,7 @@ function SimulationVisual() {
       </svg>
       <div className="mt-2 flex justify-between text-[0.8rem] text-haze-dim">
         <span>0</span>
-        <span>1 000 statymų po 5 €</span>
+        <span>1 000 statymų po 5 €</span>
       </div>
 
       <dl className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-rail sm:grid-cols-4">

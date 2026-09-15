@@ -44,7 +44,7 @@ export function parsePreferences(input: unknown): Result {
   if (!input || typeof input !== 'object') return { ok: false, error: 'Trūksta nustatymų.' }
   const bankroll = (input as Record<string, unknown>).bankroll
   if (!isNumber(bankroll) || bankroll < 10 || bankroll > 1_000_000) {
-    return { ok: false, error: 'Bankrollas turi būti nuo 10 iki 1 000 000 €.' }
+    return { ok: false, error: 'Bankrollas turi būti nuo 10 iki 1 000 000 €.' }
   }
   const settings = parseSettings(input)
   if (!settings.ok) return settings
@@ -89,7 +89,7 @@ export function parseSettings(input: unknown): SettingsResult {
     for (const [book, limit] of Object.entries(raw.bookLimits as Record<string, unknown>)) {
       if (!BOOKS.includes(book as BookName) || limit === null || limit === undefined || limit === '') continue
       if (!isNumber(limit) || limit < 1 || limit > 100_000) {
-        return { ok: false, error: `${book} limitas turi būti nuo 1 iki 100 000 €.` }
+        return { ok: false, error: `${book} limitas turi būti nuo 1 iki 100 000 €.` }
       }
       bookLimits[book as BookName] = Math.round(limit)
     }
