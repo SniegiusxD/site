@@ -8,7 +8,10 @@ export default function NotFound() {
         {brand.name}
       </Link>
       <div className="mx-auto flex w-full max-w-[36rem] flex-1 flex-col justify-center py-16">
-        <p className="font-display text-[7rem] leading-none font-extrabold text-rail-strong">404</p>
+        {/* Decorative: the heading below says it in words. Steel still clears 3:1 for large text. */}
+        <p aria-hidden className="font-display text-[7rem] leading-none font-extrabold text-steel">
+          404
+        </p>
         <h1 className="mt-4 text-[2.6rem] sm:text-[3.2rem]">Tokio puslapio nėra</h1>
         <p className="mt-3 text-haze">Nuoroda gali būti pasenusi arba su klaida adrese.</p>
         <div className="mt-8 flex flex-wrap gap-3">

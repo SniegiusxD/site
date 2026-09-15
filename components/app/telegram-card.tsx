@@ -161,7 +161,7 @@ export function TelegramCard() {
       {notice && <p className="mt-4 text-pitch" role="status">{notice}</p>}
       {error && <p className="mt-4 rounded-xl bg-brick-soft px-4 py-3 text-brick" role="alert">{error}</p>}
 
-      <div className={`mt-6 space-y-6 ${state.connected ? '' : 'opacity-80'}`}>
+      <div className="mt-6 space-y-6">
         <label className="flex items-center justify-between gap-4">
           <span className="font-medium">Siųsti signalus</span>
           <input

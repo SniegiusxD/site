@@ -46,9 +46,9 @@ export function HardTimes({ returns, stake, dailyBets }: { returns: number[]; st
 
   return (
     <section aria-labelledby={titleId}>
-      <h3 id={titleId} className="text-[1.5rem]">
+      <h2 id={titleId} className="text-[1.5rem]">
         Kai bus sunku
-      </h3>
+      </h2>
       <p className="mt-1 text-[0.95rem] text-haze">Paspausk kortelę. Atsakymai skaičiuoti iš tų pačių scenarijų.</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         {cards.map((card, index) => {

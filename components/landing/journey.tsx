@@ -92,13 +92,7 @@ function ScanVisual({ play, reduced }: { play: boolean; reduced: boolean }) {
         {rows.map((row, index) => {
           const clears = row.odds !== null && row.odds > HERO.fairOdds
           return (
-            <motion.div
-              key={row.book}
-              className="grid grid-cols-[auto_4.5rem_minmax(0,1fr)_2.75rem] items-center gap-2.5"
-              initial={reduced ? false : { opacity: 0.35 }}
-              animate={play ? { opacity: 1 } : undefined}
-              transition={{ duration: 0.3, delay: reduced ? 0 : 0.25 + index * 0.35 }}
-            >
+            <div key={row.book} className="grid grid-cols-[auto_4.5rem_minmax(0,1fr)_2.75rem] items-center gap-2.5">
               <BookMark book={row.book} size="sm" />
               <span className="text-[0.95rem]">{row.book}</span>
               {row.odds === null ? (
@@ -121,7 +115,7 @@ function ScanVisual({ play, reduced }: { play: boolean; reduced: boolean }) {
                   <span className={`text-right font-semibold tnum ${clears ? 'text-floodlight' : ''}`}>{formatOdds(row.odds)}</span>
                 </>
               )}
-            </motion.div>
+            </div>
           )
         })}
       </div>

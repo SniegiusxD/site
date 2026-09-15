@@ -135,9 +135,12 @@ export function ProfitCalendar({ bets }: { bets: ActiveBet[] }) {
               animate={{ opacity: hot && !on ? 0.55 : 1, scale: 1 }}
               transition={reduced ? { duration: 0 } : { duration: 0.3, ease: EASE, delay: 0.01 * cell }}
             >
-              <span className="text-[0.7rem] text-haze sm:text-[0.8rem]">{Number(date.slice(8))}</span>
+              {/* Text on a tinted cell sits on its own dark pill, so it reads at any tint. */}
+              <span className={`self-start text-[0.7rem] sm:text-[0.8rem] ${settled ? 'rounded bg-night/80 px-1 text-chalk' : 'text-haze'}`}>
+                {Number(date.slice(8))}
+              </span>
               {settled && Math.abs(day!.profit) >= 1 && (
-                <span className={`hidden self-end text-[0.8rem] font-semibold sm:block ${day!.profit >= 0 ? 'text-pitch' : 'text-brick'}`}>
+                <span className="hidden self-end rounded bg-night/80 px-1 text-[0.8rem] font-semibold text-chalk sm:block">
                   {day!.profit > 0 ? '+' : '−'}
                   {Math.round(Math.abs(day!.profit))}
                 </span>
