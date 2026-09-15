@@ -15,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!account.onboarded) redirect('/pradzia')
 
   return (
-    <AccountProvider initial={account} email={user.email}>
+    <AccountProvider initial={account} email={user.email} memberSince={user.createdAt ? new Date(user.createdAt).toISOString() : null}>
       <AppShell>{account.access.hasAccess ? children : <Paywall access={account.access} />}</AppShell>
       {/* Phones: clear the bottom navigation and the sticky "Pastačiau" bar. */}
       <Toaster

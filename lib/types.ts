@@ -92,6 +92,8 @@ export interface ActiveBet {
   line?: number
   startsAt?: string
   placedAtIso?: string
+  /** When the result was recorded, once settled. */
+  settledAtIso?: string | null
   /** Pinnacle fair probability when the bet was marked. */
   entryFairProb?: number | null
   /** Pinnacle fair probability at the close, once captured. */

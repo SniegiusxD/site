@@ -7,6 +7,8 @@ import type { Settings } from '@/lib/preferences'
 type AccountContextValue = {
   account: Account
   email: string
+  /** When the account was created (ISO), for "Narys nuo". */
+  memberSince: string | null
   setAccount: (account: Account) => void
   /** Optimistic settings change, saved after a short pause. */
   updateSettings: (patch: Partial<Settings>) => void
@@ -20,10 +22,12 @@ const SAVE_DELAY_MS = 700
 export function AccountProvider({
   initial,
   email,
+  memberSince,
   children,
 }: {
   initial: Account
   email: string
+  memberSince: string | null
   children: React.ReactNode
 }) {
   const [account, setAccount] = useState(initial)
@@ -60,8 +64,8 @@ export function AccountProvider({
   }, [])
 
   const value = useMemo(
-    () => ({ account, email, setAccount, updateSettings, saveError }),
-    [account, email, updateSettings, saveError],
+    () => ({ account, email, memberSince, setAccount, updateSettings, saveError }),
+    [account, email, memberSince, updateSettings, saveError],
   )
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>
 }

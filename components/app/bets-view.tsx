@@ -1,9 +1,10 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Check, ChevronDown, Loader2, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
 import {
   type BetStats,
@@ -22,8 +23,11 @@ import { formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/l
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { kickoffLabel, ltSelection } from '@/lib/live-view'
 import { OUTCOME_LABEL } from '@/lib/member-outcomes'
+import { type SettledSummary, latestSettlement, settledSince } from '@/lib/since-last-visit'
 import { sportName } from '@/lib/sports-lt'
 import type { ActiveBet, BetStatus } from '@/lib/types'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { useAccount } from './account-provider'
 import { ChipGroup } from './chip-group'
 import { ProfitCalendar } from './profit-calendar'
 import { Segmented } from './segmented'
@@ -57,6 +61,9 @@ const EURO_FLOW = { minimumFractionDigits: 2, maximumFractionDigits: 2, signDisp
 
 const PAGE = 20
 
+// Per device and account: the newest settlement this member has already seen here.
+const SEEN_KEY = 'bets-seen-settled:'
+
 const tone = (value: number) => (value > 0.004 ? 'text-pitch' : value < -0.004 ? 'text-brick' : 'text-chalk')
 const timeOf = (bet: ActiveBet) => new Date(betTime(bet) ?? 0).getTime()
 
@@ -71,6 +78,24 @@ export function BetsView() {
   const [tab, setTab] = useState<StatusTab>('all')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [now, setNow] = useState(() => new Date())
+  const { email } = useAccount()
+  const [since, setSince] = useState<SettledSummary | null>(null)
+  const sinceChecked = useRef(false)
+
+  // Once per visit: what settled since the last one, then remember the newest result as seen.
+  useEffect(() => {
+    if (!bets || sinceChecked.current) return
+    sinceChecked.current = true
+    const key = `${SEEN_KEY}${email}`
+    try {
+      const marker = window.localStorage.getItem(key)
+      setSince(settledSince(bets, marker))
+      const latest = latestSettlement(bets)
+      window.localStorage.setItem(key, marker && marker > latest ? marker : latest)
+    } catch {
+      // Storage refused (private window): no summary this visit.
+    }
+  }, [bets, email])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -191,6 +216,7 @@ export function BetsView() {
             </div>
           )}
 
+          <AnimatePresence>{since && <SinceLastVisit summary={since} onClose={() => setSince(null)} />}</AnimatePresence>
           <ThreeNumbers stats={stats} />
           <StatGrid stats={stats} />
           <ValueCard series={series} stats={stats} />
@@ -199,6 +225,44 @@ export function BetsView() {
         </div>
       )}
     </main>
+  )
+}
+
+function SinceLastVisit({ summary, onClose }: { summary: SettledSummary; onClose: () => void }) {
+  const reduced = useReducedMotion()
+  const parts = [
+    summary.won > 0 ? `${summary.won} ${ltPlural(summary.won, 'laimėtas', 'laimėti', 'laimėtų')}` : null,
+    summary.lost > 0 ? `${summary.lost} ${ltPlural(summary.lost, 'pralaimėtas', 'pralaimėti', 'pralaimėtų')}` : null,
+    summary.pushed > 0 ? `${summary.pushed} ${ltPlural(summary.pushed, 'grąžintas', 'grąžinti', 'grąžintų')}` : null,
+  ]
+    .filter(Boolean)
+    .join(', ')
+  return (
+    <motion.section
+      aria-label="Nuo paskutinio apsilankymo"
+      initial={reduced ? false : { opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={reduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-stand p-4 hairline sm:px-6"
+    >
+      <div className="min-w-0">
+        <p className="font-medium">
+          Nuo paskutinio apsilankymo užsibaigė {summary.count} {ltPlural(summary.count, 'statymas', 'statymai', 'statymų')}
+        </p>
+        <p className="mt-0.5 text-[0.9rem] text-haze">{parts}</p>
+      </div>
+      <div className="flex items-center gap-4">
+        <p className={`font-display text-[1.8rem] leading-none font-bold tnum ${tone(summary.profit)}`}>{signedEuro(summary.profit)}</p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-xl bg-rail px-3.5 py-2 font-medium transition-colors hover:bg-rail-strong"
+        >
+          Gerai
+        </button>
+      </div>
+    </motion.section>
   )
 }
 

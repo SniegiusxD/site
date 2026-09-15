@@ -37,6 +37,7 @@ function rowToActiveBet(row: typeof userBet.$inferSelect): ActiveBet {
     pickName: row.pickName ?? undefined,
     line: row.line ?? undefined,
     startsAt: row.startsAt?.toISOString(),
+    settledAtIso: row.settledAt ? row.settledAt.toISOString() : null,
     entryFairProb: row.entryFairProb,
     closingFairProb: row.closingFairProb,
     eventKey: row.eventKey,

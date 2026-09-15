@@ -22,10 +22,11 @@ import { TelegramCard } from './telegram-card'
 const KELLY_LABEL: Record<(typeof KELLY_CHOICES)[number], string> = { 0.125: '⅛ Kelly', 0.25: '¼ Kelly', 0.5: '½ Kelly' }
 
 const dateFormat = new Intl.DateTimeFormat('lt-LT', { timeZone: 'Europe/Vilnius', month: 'long', day: 'numeric' })
+const sinceFormat = new Intl.DateTimeFormat('lt-LT', { timeZone: 'Europe/Vilnius', year: 'numeric', month: 'long', day: 'numeric' })
 
 export function ProfileView() {
   const router = useRouter()
-  const { account, email, updateSettings, saveError } = useAccount()
+  const { account, email, memberSince, updateSettings, saveError } = useAccount()
   const prefs = account.preferences
   const [bankrollOpen, setBankrollOpen] = useState(false)
   const closeBankroll = useCallback(() => setBankrollOpen(false), [])
@@ -57,7 +58,7 @@ export function ProfileView() {
       <p className="mt-2 text-haze">Pakeitimai išsaugomi iš karto.</p>
       {saveError && <p role="alert" className="mt-4 rounded-xl bg-brick-soft px-4 py-3 text-brick">{saveError}</p>}
 
-      <ProfileSummary email={email} plan={plan} />
+      <ProfileSummary email={email} plan={plan} memberSince={memberSince} />
 
       <Section title="Bankrollas">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -214,7 +215,7 @@ export function ProfileView() {
 }
 
 /** Who the member is and how their bets are going, above the settings. */
-function ProfileSummary({ email, plan }: { email: string; plan: string }) {
+function ProfileSummary({ email, plan, memberSince }: { email: string; plan: string; memberSince: string | null }) {
   const [summary, setSummary] = useState<{ stats: BetStats; count: number } | null>(null)
 
   useEffect(() => {
@@ -249,6 +250,9 @@ function ProfileSummary({ email, plan }: { email: string; plan: string }) {
         <div className="min-w-0">
           <p className="truncate text-[1.1rem] font-medium">{email}</p>
           <p className="mt-0.5 text-[0.95rem] text-haze">{plan}</p>
+          {memberSince && (
+            <p className="mt-0.5 text-[0.85rem] text-haze-dim">Narys nuo {sinceFormat.format(new Date(memberSince))}</p>
+          )}
         </div>
       </div>
       <dl className="grid grid-cols-2 gap-px border-t border-rail bg-rail sm:grid-cols-4">
