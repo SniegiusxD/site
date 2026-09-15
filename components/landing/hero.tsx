@@ -43,12 +43,12 @@ export function Hero() {
               >
                 Išbandyti 7 dienas nemokamai
               </Link>
-              <a
-                href="#kaip-veikia"
+              <Link
+                href="/skaiciuokle"
                 className="text-[1.05rem] text-chalk underline decoration-rail-strong decoration-2 underline-offset-[6px] transition-colors hover:decoration-chalk"
               >
-                Kaip tai veikia
-              </a>
+                Pamatyk, kaip atrodo 1{' '}000 statymų
+              </Link>
             </div>
             <p className="mt-4 text-[0.9rem] text-haze-dim">
               Kortelės nereikia. Po bandymo 25 € per mėnesį, atšaukti gali bet kada.

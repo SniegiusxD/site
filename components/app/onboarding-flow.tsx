@@ -4,15 +4,21 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ArrowLeft, Check, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useId, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
 import { brand } from '@/lib/brand'
-import { formatEuro, formatOdds } from '@/lib/format-lt'
+import { formatEdge, formatEuro, formatInteger, formatOdds, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
+import { PACE_CHOICES, TRACK_RECORD, daysTo, recordPeriodLabel, simulationStake, timeLabel } from '@/lib/pace'
 import { KELLY_CHOICES, type Preferences, suggestedStake } from '@/lib/preferences'
+import type { SignalCounts } from '@/lib/signal-counts'
+import { sampleStretches, simulate } from '@/lib/simulate'
+import { HardTimes } from './hard-times'
+import { Outlook } from './outlook'
+import { signedWhole } from './scenario-chart'
 
 const EASE = [0.22, 1, 0.36, 1] as const
-const STEPS = ['Bankrollas', 'Kontoros', 'Signalai', 'Rizika'] as const
+const STEPS = ['Bankrollas', 'Kontoros', 'Signalai', 'Rizika', 'Tempas'] as const
 
 const BANKROLL_PRESETS = [250, 500, 1000, 2500]
 const EDGE_CHOICES = [0.01, 0.02, 0.03, 0.05]
@@ -38,7 +44,7 @@ const EXAMPLE = { odds: 2.06, fair: 2 }
 
 const percent = (fraction: number) => `${Math.round(fraction * 100)} %`
 
-export function OnboardingFlow({ initial }: { initial: Preferences }) {
+export function OnboardingFlow({ initial, counts }: { initial: Preferences; counts: SignalCounts | null }) {
   const router = useRouter()
   const reduced = useReducedMotion()
   const [prefs, setPrefs] = useState<Preferences>(initial)
@@ -142,9 +148,10 @@ export function OnboardingFlow({ initial }: { initial: Preferences }) {
                   }}
                 />
               )}
-              {step === 1 && <BooksStep prefs={prefs} update={update} />}
+              {step === 1 && <BooksStep prefs={prefs} update={update} counts={counts} />}
               {step === 2 && <SignalsStep prefs={prefs} update={update} />}
               {step === 3 && <RiskStep prefs={prefs} update={update} />}
+              {step === 4 && <PaceStep prefs={prefs} update={update} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -234,7 +241,7 @@ function BankrollStep({ prefs, text, onText }: { prefs: Preferences; text: strin
   )
 }
 
-function BooksStep({ prefs, update }: StepProps) {
+function BooksStep({ prefs, update, counts }: StepProps & { counts: SignalCounts | null }) {
   const toggle = (book: BookName) =>
     update({
       books: prefs.books.includes(book)
@@ -262,7 +269,14 @@ function BooksStep({ prefs, update }: StepProps) {
             >
               <span className="flex items-center gap-4">
                 <BookMark book={book} />
-                <span className="text-[1.15rem] font-medium">{book}</span>
+                <span>
+                  <span className="block text-[1.15rem] font-medium">{book}</span>
+                  {counts?.perBook[book] !== undefined && (
+                    <span className="block text-[0.9rem] text-haze">
+                      {formatInteger(counts.perBook[book]!)} {ltPlural(counts.perBook[book]!, 'signalas', 'signalai', 'signalų')} per paskutinę parą
+                    </span>
+                  )}
+                </span>
               </span>
               <span
                 className={`grid size-7 place-items-center rounded-full transition-colors ${
@@ -469,6 +483,88 @@ function LimitInput({ book, value, onChange }: { book: BookName; value: number |
         />
         <span className="pointer-events-none absolute inset-y-0 right-4 grid place-items-center text-haze">€</span>
       </div>
+    </div>
+  )
+}
+
+function PaceStep({ prefs, update }: StepProps) {
+  const returns = TRACK_RECORD.returns
+  const stake = simulationStake(prefs.bankroll, prefs.kellyFraction)
+  const month = prefs.dailyBets * 30
+  const simulation = useMemo(() => simulate({ returns, stake, bets: month, paths: 100, seed: 30, points: 60 }), [returns, stake, month])
+  const days = useMemo(() => sampleStretches({ returns, stake, bets: prefs.dailyBets, count: 12, seed: 40 }), [returns, stake, prefs.dailyBets])
+  const months = useMemo(() => sampleStretches({ returns, stake, bets: month, count: 12, seed: 41 }), [returns, stake, month])
+  const redDays = days.filter((value) => value < 0).length
+  const greenMonths = months.filter((value) => value >= 0).length
+
+  return (
+    <div>
+      <StepTitle
+        title="Kiek statymų per dieną?"
+        body="Tai bus tavo dienos tikslas. Raudonų dienų bus visada, bet kuo daugiau statymų, tuo mažiau lemia atsitiktinumas."
+      />
+      <div role="radiogroup" aria-label="Statymų per dieną" className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {PACE_CHOICES.map(({ bets, minutes }) => {
+          const checked = prefs.dailyBets === bets
+          return (
+            <button
+              key={bets}
+              type="button"
+              role="radio"
+              aria-checked={checked}
+              onClick={() => update({ dailyBets: bets })}
+              className={`rounded-2xl bg-stand p-4 text-left transition-[background-color,box-shadow] duration-200 ${
+                checked ? 'shadow-[inset_0_0_0_1.5px_var(--chalk)]' : 'hairline hover:bg-stand-hover'
+              }`}
+            >
+              <span className="block font-display text-[2.4rem] leading-none font-bold">{bets}</span>
+              <span className="mt-1 block text-[0.9rem] text-haze">per dieną, apie {timeLabel(minutes)}</span>
+              <span className="mt-2 block text-[0.8rem] text-haze-dim">
+                {formatInteger(1000)} per ~{daysTo(1000, bets)} d.
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="mt-8">
+        <Outlook simulation={simulation} title="Tipiškas mėnuo" detail={`${formatInteger(month)} statymų po ${formatEuro(stake)}`} />
+      </div>
+      <div className="mt-4 grid gap-5 rounded-2xl bg-stand p-5 hairline sm:grid-cols-2">
+        <Squares label="Pavyzdys: 12 atsitiktinių dienų" values={days} note={`${redDays} iš 12 minuse`} />
+        <Squares label="Pavyzdys: 12 atsitiktinių mėnesių" values={months} note={`${greenMonths} iš 12 pliuse`} />
+      </div>
+      <div className="mt-8">
+        <HardTimes returns={returns} stake={stake} dailyBets={prefs.dailyBets} />
+      </div>
+      <p className="mt-6 text-[0.85rem] text-haze-dim">
+        Scenarijai iš {formatInteger(TRACK_RECORD.bets)} mūsų užbaigtų signalų ({recordPeriodLabel()}, grąža {formatEdge(TRACK_RECORD.roi)}). Tai ne
+        prognozė.{' '}
+        <Link href="/skaiciuokle" className="underline decoration-rail-strong underline-offset-4 hover:text-chalk">
+          Skaičiuoklė
+        </Link>
+      </p>
+    </div>
+  )
+}
+
+function Squares({ label, values, note }: { label: string; values: number[]; note: string }) {
+  return (
+    <div>
+      <p className="text-[0.85rem] text-haze">{label}</p>
+      <ol className="mt-2 grid grid-cols-12 gap-1">
+        {values.map((value, index) => (
+          <li
+            key={index}
+            title={signedWhole(value)}
+            className="h-6 rounded-[4px]"
+            style={{ background: value < 0 ? 'var(--scenario-down)' : 'var(--scenario-up)' }}
+          >
+            <span className="sr-only">{signedWhole(value)}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-2 text-[0.9rem] font-medium">{note}</p>
     </div>
   )
 }

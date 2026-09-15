@@ -36,6 +36,11 @@
   --pitch-soft: rgb(61 220 151 / 0.14);
   --brick: #ff6464;
   --brick-soft: rgb(255 100 100 / 0.14);
+  /* Scenario marks (ended above / below zero). Darker steps of pitch and brick
+     that pass the chart palette checks on --stand; CVD separation is 6.3, so
+     below-zero marks also carry a dash and every chart states the share in text. */
+  --scenario-up: #27a06d;
+  --scenario-down: #d9483f;
 
   /* shadcn token names, so shadcn primitives render in the palette. */
   --background: var(--night);

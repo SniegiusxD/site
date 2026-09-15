@@ -36,7 +36,10 @@ export function SiteFooter() {
               Informacija apie kainas, ne patarimas lažintis. Statymų nepriimam ir su kontoromis
               nesame susiję.
             </p>
-            <nav aria-label="Teisinė informacija" className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
+            <nav aria-label="Nuorodos" className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
+              <Link href="/skaiciuokle" className="hover:text-chalk">
+                Skaičiuoklė
+              </Link>
               <Link href="/taisykles" className="hover:text-chalk">
                 Naudojimosi taisyklės
               </Link>

@@ -4,11 +4,13 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { brand } from '@/lib/brand'
 
+// Absolute, so the header also works on other public pages such as the calculator.
 const LINKS = [
-  { href: '#kaip-veikia', label: 'Kaip veikia' },
-  { href: '#funkcijos', label: 'Funkcijos' },
-  { href: '#rezultatai', label: 'Rezultatai' },
-  { href: '#kaina', label: 'Kaina' },
+  { href: '/#kaip-veikia', label: 'Kaip veikia' },
+  { href: '/#funkcijos', label: 'Funkcijos' },
+  { href: '/#rezultatai', label: 'Rezultatai' },
+  { href: '/skaiciuokle', label: 'Skaičiuoklė' },
+  { href: '/#kaina', label: 'Kaina' },
 ]
 
 export function SiteHeader() {
@@ -35,9 +37,9 @@ export function SiteHeader() {
         </Link>
         <nav aria-label="Pagrindinė" className="hidden items-center gap-8 text-[0.95rem] lg:flex">
           {LINKS.map((link) => (
-            <a key={link.href} href={link.href} className="text-haze transition-colors hover:text-chalk">
+            <Link key={link.href} href={link.href} className="text-haze transition-colors hover:text-chalk">
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
         <div className="flex items-center gap-2 sm:gap-4">
