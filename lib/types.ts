@@ -98,6 +98,12 @@ export interface ActiveBet {
   closingFairProb?: number | null
   /** Match key shared by every bet on the same match. */
   eventKey?: string | null
+  /** The aggregator's final grade under the exact market contract, when published. */
+  canonicalOutcome?: 'won' | 'half_won' | 'push' | 'void' | 'half_lost' | 'lost' | null
+  /** The period score that grade used. */
+  homeScore?: number | null
+  awayScore?: number | null
+  resultSource?: string | null
 }
 
 export interface HistoryBet {

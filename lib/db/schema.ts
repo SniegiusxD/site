@@ -1,10 +1,4 @@
-import {
-  pgTable,
-  text,
-  timestamp,
-  boolean,
-  doublePrecision,
-} from 'drizzle-orm/pg-core'
+import { boolean, doublePrecision, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 // --- Better Auth required tables -------------------------------------------
 // Column names are camelCase to match Better Auth's defaults. Do not rename.
@@ -99,4 +93,8 @@ export const userBet = pgTable('user_bet', {
   eventKey: text('eventKey'),
   closingFairProb: doublePrecision('closingFairProb'),
   closingCapturedAt: timestamp('closingCapturedAt', { withTimezone: true }),
+  canonicalOutcome: text('canonicalOutcome'),
+  resultSource: text('resultSource'),
+  homeScore: integer('homeScore'),
+  awayScore: integer('awayScore'),
 })

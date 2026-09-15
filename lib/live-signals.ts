@@ -16,6 +16,10 @@ export type LivePrice = {
   eventName: string
   selectionLabel: string
   capturedAt: string
+  /** Pinnacle had no price on this exact line; the fair price was interpolated between its neighbours. Null before the VM release. */
+  fairPriceInterpolated?: boolean | null
+  /** Distance from this line to the nearest real Pinnacle line (0 for exact lines). */
+  fairPriceNearestLineDistance?: number | null
 }
 
 export type LiveSignal = {
@@ -66,11 +70,10 @@ export async function loadLiveBoard(): Promise<LiveBoard> {
     const [signalsResult, statusResult] = await Promise.all([
       pool.query(
         `SELECT s.*,
+                -- Whole rows, so columns added by a VM release (interpolation fields)
+                -- arrive without this query naming columns that may not exist yet.
                 COALESCE(
-                  json_agg(json_build_object(
-                    'book', p.book, 'odds', p.odds, 'edge', p.edge, 'published', p.published,
-                    'eventName', p.event_name, 'selectionLabel', p.selection_label,
-                    'capturedAt', p.captured_at) ORDER BY p.odds DESC)
+                  json_agg(to_jsonb(p) ORDER BY p.odds DESC)
                   FILTER (WHERE p.book IS NOT NULL), '[]') AS prices
            FROM live_signal s
            LEFT JOIN live_signal_price p ON p.signal_id = s.id
@@ -113,9 +116,12 @@ export async function loadLiveBoard(): Promise<LiveBoard> {
             odds: Number(price.odds),
             edge: Number(price.edge),
             published: Boolean(price.published),
-            eventName: String(price.eventName ?? ''),
-            selectionLabel: String(price.selectionLabel ?? ''),
-            capturedAt: iso(price.capturedAt as string)!,
+            eventName: String(price.event_name ?? ''),
+            selectionLabel: String(price.selection_label ?? ''),
+            capturedAt: iso(price.captured_at as string)!,
+            fairPriceInterpolated: typeof price.fair_price_interpolated === 'boolean' ? price.fair_price_interpolated : null,
+            fairPriceNearestLineDistance:
+              price.fair_price_nearest_line_distance == null ? null : Number(price.fair_price_nearest_line_distance),
           })),
       }))
 

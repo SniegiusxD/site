@@ -21,6 +21,7 @@ import {
 import { formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { kickoffLabel, ltSelection } from '@/lib/live-view'
+import { OUTCOME_LABEL } from '@/lib/member-outcomes'
 import { sportName } from '@/lib/sports-lt'
 import type { ActiveBet, BetStatus } from '@/lib/types'
 import { ChipGroup } from './chip-group'
@@ -473,9 +474,17 @@ function BetRow({ bet }: { bet: ActiveBet }) {
         </p>
       </div>
       <div className="text-right">
-        <span className={`inline-block rounded-full px-2.5 py-1 text-[0.8rem] font-medium ${status.tone}`}>{status.label}</span>
+        <span className={`inline-block rounded-full px-2.5 py-1 text-[0.8rem] font-medium ${status.tone}`}>
+          {bet.canonicalOutcome ? OUTCOME_LABEL[bet.canonicalOutcome] : status.label}
+        </span>
         {bet.profit !== null && (
           <p className={`mt-1 font-semibold ${tone(bet.profit)}`}>{signedEuro(bet.profit)}</p>
+        )}
+        {bet.homeScore != null && bet.awayScore != null && (
+          <p className="mt-0.5 text-[0.8rem] text-haze-dim">
+            <span className="sr-only">Rezultatas </span>
+            {bet.homeScore}:{bet.awayScore}
+          </p>
         )}
       </div>
     </li>

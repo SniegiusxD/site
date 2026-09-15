@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
+import { pool } from '@/lib/db'
 import { ensureBetsSchema } from '@/lib/db/ensure-bets-schema'
+import { applyMemberOutcomes } from '@/lib/member-outcomes'
 import { settlePendingBets } from '@/lib/settle-bets'
 
 export const dynamic = 'force-dynamic'
@@ -27,8 +29,11 @@ export async function GET(req: NextRequest) {
 
   try {
     await ensureBetsSchema()
+    // Aggregator results and closing prices first (all members); the name-matching
+    // grader below then only handles bets without a canonical result.
+    const outcomes = await applyMemberOutcomes(pool, null)
     const summary = await settlePendingBets({ debug })
-    return NextResponse.json({ ok: true, ...summary })
+    return NextResponse.json({ ok: true, outcomes, ...summary })
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : 'settle failed' },

@@ -134,7 +134,7 @@ export function SignalDetail({
           <div className="min-w-0">
             <p className="text-[0.9rem] text-haze">Statymas {price.book}</p>
             <p className="mt-1 text-[1.2rem] font-medium">{ltSelection(price.selectionLabel)}</p>
-            {isInterpolatedLabel(price.selectionLabel) && (
+            {(price.fairPriceInterpolated === true || isInterpolatedLabel(price.selectionLabel)) && (
               <p className="mt-2 max-w-[28rem] text-[0.85rem] text-haze">
                 Pinnacle tokios linijos neturi, todėl tikroji kaina apskaičiuota iš gretimų jo linijų.
               </p>

@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth'
 import { db, pool } from '@/lib/db'
 import { userBet } from '@/lib/db/schema'
 import { ensureBetsSchema } from '@/lib/db/ensure-bets-schema'
+import { applyMemberOutcomes, isCanonicalOutcome } from '@/lib/member-outcomes'
 import { settlePendingBets } from '@/lib/settle-bets'
 import type { ActiveBet, BetStatus } from '@/lib/types'
 
@@ -39,6 +40,10 @@ function rowToActiveBet(row: typeof userBet.$inferSelect): ActiveBet {
     entryFairProb: row.entryFairProb,
     closingFairProb: row.closingFairProb,
     eventKey: row.eventKey,
+    canonicalOutcome: isCanonicalOutcome(row.canonicalOutcome) ? row.canonicalOutcome : null,
+    homeScore: row.homeScore ?? null,
+    awayScore: row.awayScore ?? null,
+    resultSource: row.resultSource ?? null,
   }
 }
 
@@ -48,31 +53,15 @@ async function requireSession() {
   return session.user.id
 }
 
-/** Copy closing prices the VM published onto this member's bets, once each. */
-async function backfillClosings(userId: string) {
-  try {
-    await pool.query(
-      `UPDATE user_bet ub
-          SET "closingFairProb" = s.closing_fair_prob, "closingCapturedAt" = s.closing_captured_at
-         FROM live_signal s
-        WHERE ub."userId" = $1 AND ub."signalId" = s.id
-          AND ub."closingFairProb" IS NULL AND s.closing_fair_prob IS NOT NULL`,
-      [userId],
-    )
-  } catch (error) {
-    // A fresh database may not have live_signal or its closing columns yet.
-    const code = (error as { code?: string }).code
-    if (code !== '42P01' && code !== '42703') throw error
-  }
-}
-
 export async function GET() {
   const userId = await requireSession()
   if (!userId) return NextResponse.json({ error: 'Prisijunk iš naujo.' }, { status: 401 })
 
   try {
     await ensureBetsSchema()
-    await backfillClosings(userId)
+    // Canonical results first: the site's own grader then only sees bets the
+    // aggregator has not graded yet.
+    await applyMemberOutcomes(pool, userId)
     await settlePendingBets({ userId })
 
     const rows = await db.select().from(userBet).where(eq(userBet.userId, userId)).orderBy(desc(userBet.placedAt))
