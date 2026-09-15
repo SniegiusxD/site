@@ -1,7 +1,8 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
-import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion, useInView } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { RotateCcw } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 

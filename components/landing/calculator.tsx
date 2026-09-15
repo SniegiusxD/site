@@ -1,6 +1,7 @@
 'use client'
 
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { ArrowLeft, Check } from 'lucide-react'
 import Link from 'next/link'
 import { useId, useMemo, useState } from 'react'

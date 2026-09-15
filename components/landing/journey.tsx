@@ -1,6 +1,7 @@
 'use client'
 
-import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion, useInView } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { Check, RotateCcw, Send } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { edgeOf, formatEdge, formatEuro, formatOdds, kellyFraction } from '@/lib/format-lt'

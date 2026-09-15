@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Big_Shoulders, Schibsted_Grotesk } from 'next/font/google'
+import { MotionProvider } from '@/components/motion-provider'
 import { brand } from '@/lib/brand'
 import './globals.css'
 
@@ -57,7 +58,7 @@ export default function RootLayout({
   return (
     <html lang="lt" className={`${display.variable} ${text.variable}`}>
       <body className="bg-background text-foreground font-sans antialiased">
-        {children}
+        <MotionProvider>{children}</MotionProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

@@ -1,7 +1,8 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { AlertTriangle, Bell, Check, ChevronDown, Eye, RefreshCw, SlidersHorizontal, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'

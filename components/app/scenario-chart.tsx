@@ -1,6 +1,7 @@
 'use client'
 
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { useEffect, useId, useRef, useState } from 'react'
 import { formatEuro, formatInteger, ltPlural } from '@/lib/format-lt'
 import type { Simulation } from '@/lib/simulate'
