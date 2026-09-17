@@ -158,7 +158,7 @@ export function BetsView() {
           <p className="mx-auto mt-3 max-w-[26rem] text-haze">
             Kai pastatysi pagal signalą, paspausk „Pastačiau“, ir statymas atsiras čia su rezultatu, verte ir uždarymo kaina.
           </p>
-          <Link href="/signalai" className="mt-6 inline-block rounded-xl bg-chalk px-5 py-3 font-semibold text-night hover:bg-white">
+          <Link href="/signalai" className="mt-6 inline-block rounded-xl bg-floodlight px-5 py-3 font-semibold text-night transition-transform hover:-translate-y-0.5">
             Į signalus
           </Link>
         </div>

@@ -1,14 +1,15 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Big_Shoulders, Schibsted_Grotesk } from 'next/font/google'
+import { Bricolage_Grotesque, Schibsted_Grotesk } from 'next/font/google'
 import { MotionProvider } from '@/components/motion-provider'
 import { brand } from '@/lib/brand'
 import './globals.css'
 
 // latin-ext carries ą č ę ė į š ų ū ž. Without it Lithuanian text silently
 // falls back to a different typeface mid-word.
-// The opsz axis lets headlines use the condensed display cut automatically.
-const display = Big_Shoulders({
+// Bricolage Grotesque replaced the condensed Big Shoulders (owner: headlines felt like a
+// slide deck). The opsz axis tightens large headlines automatically.
+const display = Bricolage_Grotesque({
   variable: '--font-display-face',
   subsets: ['latin', 'latin-ext'],
   axes: ['opsz'],
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: 'dark',
-  themeColor: '#0A1020',
+  themeColor: '#06231A',
 }
 
 export default function RootLayout({

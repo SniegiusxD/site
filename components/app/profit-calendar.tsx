@@ -129,7 +129,7 @@ export function ProfitCalendar({ bets }: { bets: ActiveBet[] }) {
               onFocus={() => setHot(date)}
               className="relative flex aspect-square flex-col justify-between rounded-md p-1 text-left outline-none sm:aspect-[1.25] sm:p-1.5"
               style={{
-                background: settled ? cellFill(day!.profit, scale, on) : on ? 'var(--stand-hover)' : 'rgb(30 42 68 / 0.45)',
+                background: settled ? cellFill(day!.profit, scale, on) : on ? 'var(--stand-hover)' : 'rgb(28 90 64 / 0.45)',
                 boxShadow: date === today ? 'inset 0 0 0 1.5px var(--chalk)' : on && settled ? `inset 0 0 0 1.5px ${day!.profit >= 0 ? UP : DOWN}` : undefined,
               }}
               initial={{ opacity: reduced ? 1 : 0, scale: reduced ? 1 : 0.7 }}

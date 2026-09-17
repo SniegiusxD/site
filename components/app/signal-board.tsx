@@ -279,9 +279,9 @@ export function SignalBoard({ initial, initialBets }: { initial: LiveBoard; init
       <section aria-label="Signalų sąrašas" className="flex min-h-0 flex-col lg:border-r lg:border-rail">
         <div className="min-h-0 flex-1 lg:overflow-y-auto">
           <div className="border-b border-rail px-4 pt-5 pb-4 sm:px-6">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <div className="flex items-baseline gap-3">
-                <h1 className="text-[2.2rem]">Signalai</h1>
+                <h1 className="text-[1.9rem]">Signalai</h1>
                 <p className="flex items-center gap-1.5 text-[0.95rem] text-pitch">
                   <span className="relative flex size-2">
                     {status?.sharpAvailable && !stale && (
@@ -312,11 +312,11 @@ export function SignalBoard({ initial, initialBets }: { initial: LiveBoard; init
                   type="button"
                   aria-expanded={filtersOpen}
                   onClick={() => setFiltersOpen((value) => !value)}
-                  className={`ml-1 inline-flex h-10 items-center justify-center gap-2 rounded-xl font-medium transition-colors max-sm:w-10 sm:px-3 ${filtersOpen ? 'bg-chalk text-night' : 'bg-stand text-chalk hairline hover:bg-stand-hover'}`}
+                  className={`ml-1 inline-flex h-10 items-center justify-center gap-2 rounded-xl font-medium transition-colors max-xl:w-10 xl:px-3 ${filtersOpen ? 'bg-chalk text-night' : 'bg-stand text-chalk hairline hover:bg-stand-hover'}`}
                 >
                   <SlidersHorizontal className="size-4" aria-hidden />
-                  {/* Phones: the title row has no room for the word; it stays for screen readers. */}
-                  <span className="max-sm:sr-only">Filtrai</span>
+                  {/* The list column is narrow; the word only fits on wide screens. */}
+                  <span className="max-xl:sr-only">Filtrai</span>
                 </button>
               </div>
             </div>

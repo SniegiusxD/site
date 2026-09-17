@@ -28,7 +28,7 @@ export function Paywall({ access }: { access: Access }) {
         <button
           type="button"
           disabled
-          className="mt-8 h-12 w-full cursor-not-allowed rounded-xl bg-chalk/60 font-semibold text-night"
+          className="mt-8 h-12 w-full cursor-not-allowed rounded-xl bg-floodlight/60 font-semibold text-night"
         >
           Mokėjimai įjungiami netrukus
         </button>

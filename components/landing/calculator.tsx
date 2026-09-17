@@ -273,7 +273,7 @@ export function Calculator({ counts }: { counts: SignalCounts | null }) {
           <button
             type="submit"
             disabled={!valid}
-            className="rounded-xl bg-chalk px-6 py-3 font-semibold text-night transition-transform hover:bg-white active:scale-[0.97] disabled:opacity-50"
+            className="rounded-xl bg-floodlight px-6 py-3 font-semibold text-night transition-transform hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-50"
           >
             {step === QUESTIONS - 1 ? 'Rodyti 100 scenarijų' : 'Toliau'}
           </button>

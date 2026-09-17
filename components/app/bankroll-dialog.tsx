@@ -207,7 +207,7 @@ export function BankrollDialog({ open, onClose }: { open: boolean; onClose: () =
               <button
                 type="submit"
                 disabled={pending}
-                className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-chalk font-semibold text-night transition-transform hover:bg-white active:scale-[0.98] disabled:opacity-70"
+                className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-floodlight font-semibold text-night transition-transform hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70"
               >
                 {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
                 {SUBMIT[kind]}

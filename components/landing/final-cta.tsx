@@ -1,38 +1,38 @@
 import Link from 'next/link'
-import { formatInteger, ltPlural } from '@/lib/format-lt'
+import { ltPlural } from '@/lib/format-lt'
 import type { PublicStats } from '@/lib/public-stats'
+import { Reveal, Roll } from './motion-primitives'
 
 export function FinalCta({ stats }: { stats: PublicStats | null }) {
   return (
-    <section className="relative isolate overflow-hidden border-t border-rail">
-      {/* Two floodlight cones rising from below the fold, the page's closing light. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -bottom-24 left-[58%] h-[38rem] w-[18rem] origin-bottom -rotate-[26deg] bg-[linear-gradient(to_top,rgb(255_210_63/0.28),transparent_78%)] blur-2xl" />
-        <div className="absolute -bottom-24 left-[76%] h-[34rem] w-[15rem] origin-bottom rotate-[16deg] bg-[linear-gradient(to_top,rgb(238_242_247/0.14),transparent_72%)] blur-2xl" />
-        <div className="absolute inset-x-0 bottom-0 h-48 bg-[radial-gradient(55%_100%_at_72%_100%,rgb(255_210_63/0.16),transparent_70%)]" />
-      </div>
-      <div className="mx-auto flex max-w-[80rem] flex-col items-start gap-8 px-5 py-24 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:py-32">
-        <div>
-          <h2 className="max-w-[46rem] text-[3rem] sm:text-[4.5rem]">Kitą kartą, kai kontora suklys, būk ten</h2>
-          {stats && (
-            <p className="mt-5 flex items-center gap-2.5 text-[1.05rem] text-haze">
-              <span className="relative flex size-2">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-pitch opacity-60 motion-reduce:hidden" />
-                <span className="relative inline-flex size-2 rounded-full bg-pitch" />
-              </span>
-              Per paskutinę parą radom {formatInteger(stats.any)} {ltPlural(stats.any, 'signalą', 'signalus', 'signalų')}.
-            </p>
-          )}
-        </div>
-        <div>
+    <section className="relative overflow-hidden bg-night px-5 py-[clamp(80px,10vw,140px)] sm:px-8">
+      <div
+        aria-hidden
+        className="kr-breathe pointer-events-none absolute -top-[260px] left-1/2 -ml-[450px] h-[560px] w-[900px] bg-[radial-gradient(closest-side,rgb(91_229_132/0.18),transparent_70%)] [animation-duration:14s]"
+      />
+      <div className="relative mx-auto max-w-[60rem] text-center">
+        <Reveal>
+          <p className="font-display text-[clamp(2rem,4.5vw,3.5rem)] leading-none font-extrabold tracking-[-0.03em]">
+            {stats ? (
+              <>
+                Per paskutinę parą radom <Roll value={stats.any} /> {ltPlural(stats.any, 'signalą', 'signalus', 'signalų')}
+              </>
+            ) : (
+              'Kitą kartą, kai kontora suklys, būk ten'
+            )}
+          </p>
+        </Reveal>
+        <Reveal delay={120}>
           <Link
             href="/registracija"
-            className="inline-block rounded-xl bg-chalk px-7 py-4 text-[1.05rem] font-semibold text-night shadow-[0_0_40px_-8px_rgb(255_210_63/0.45)] transition-[transform,box-shadow] duration-200 hover:bg-white hover:shadow-[0_0_56px_-6px_rgb(255_210_63/0.6)] active:scale-[0.97]"
+            className="kr-cta-glow mt-8 inline-flex min-h-11 items-center rounded-[14px] bg-floodlight px-[26px] py-4 text-[1.0625rem] font-semibold text-night transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.97]"
           >
             Išbandyti 7 dienas nemokamai
           </Link>
-          <p className="mt-3 text-[0.9rem] text-haze-dim">Kortelės nereikia.</p>
-        </div>
+        </Reveal>
+        <p className="mx-auto mt-5 max-w-[48ch] text-[0.8125rem] text-haze">
+          Tik nuo 18 metų. Lošimas gali sukelti priklausomybę. Vertė veikia per šimtus statymų, ir nė vienas statymas nėra saugus.
+        </p>
       </div>
     </section>
   )

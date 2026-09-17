@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { LiveBoard } from '@/components/landing/live-board'
+import { HeroBoard } from '@/components/landing/hero-board'
 import { brand } from '@/lib/brand'
 import { getSessionUser } from '@/lib/session'
 
@@ -23,11 +23,15 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       <aside className="relative hidden overflow-hidden border-l border-rail bg-night-deep lg:flex lg:items-center lg:justify-center lg:p-12">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,rgb(255_210_63/0.08),transparent_70%)]"
+          className="kr-stripes pointer-events-none absolute inset-0 [mask-image:radial-gradient(70%_60%_at_50%_0%,#000,transparent_70%)]"
         />
-        <div className="relative w-full max-w-[34rem]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,rgb(91_229_132/0.10),transparent_70%)]"
+        />
+        <div className="relative w-full max-w-[36rem]">
           <p className="mb-5 text-haze">Taip atrodo signalai viduje.</p>
-          <LiveBoard />
+          <HeroBoard stats={null} />
         </div>
       </aside>
     </div>

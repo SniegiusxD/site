@@ -278,7 +278,7 @@ function JoinCard({ profile, onSave }: { profile: TopProfile; onSave: (next: Top
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex h-12 items-center gap-2 rounded-xl bg-chalk px-5 font-semibold text-night transition-transform hover:bg-white active:scale-[0.98] disabled:opacity-70"
+          className="inline-flex h-12 items-center gap-2 rounded-xl bg-floodlight px-5 font-semibold text-night transition-transform hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70"
         >
           {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
           {profile.optIn ? 'Išsaugoti' : 'Rodyti mane tope'}

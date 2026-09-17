@@ -1,72 +1,150 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { useReducedMotion } from '@/lib/use-reduced-motion'
 import Link from 'next/link'
-import { FloodlightBeams } from './floodlight-beams'
-import { LiveBoard } from './live-board'
+import { useEffect, useRef, useState } from 'react'
+import type { PublicStats } from '@/lib/public-stats'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { HeroBoard } from './hero-board'
 
-const EASE = [0.22, 1, 0.36, 1] as const
-
-export function Hero() {
+export function Hero({ stats }: { stats: PublicStats | null }) {
+  const light = useRef<HTMLDivElement>(null)
   const reduced = useReducedMotion()
-  const rise = (delay: number) =>
-    reduced
-      ? {}
-      : {
-          initial: { opacity: 0, y: 24 },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.9, ease: EASE, delay },
-        }
+
+  // A soft floodlight follows the mouse across the hero; touch and reduced motion skip it.
+  function follow(event: React.PointerEvent<HTMLElement>) {
+    const element = light.current
+    if (!element || reduced || event.pointerType !== 'mouse') return
+    const box = event.currentTarget.getBoundingClientRect()
+    element.style.opacity = '1'
+    element.style.translate = `${(event.clientX - box.left).toFixed(0)}px ${(event.clientY - box.top).toFixed(0)}px`
+  }
 
   return (
-    <section className="relative overflow-hidden">
-      {/* Floodlight wash from above the stand; the WebGL towers draw on top once the page is idle. */}
+    <section
+      className="relative overflow-hidden pt-24 pb-16 sm:pt-28 lg:pt-32 lg:pb-28"
+      onPointerMove={follow}
+      onPointerLeave={() => {
+        if (light.current) light.current.style.opacity = '0'
+      }}
+    >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 -top-40 h-[42rem] bg-[radial-gradient(60%_50%_at_70%_0%,rgb(255_210_63/0.10),transparent_70%)]"
+        className="kr-stripes pointer-events-none absolute inset-[-10%_-20%] [mask-image:radial-gradient(90%_70%_at_88%_6%,#000,transparent_62%)]"
       />
-      <FloodlightBeams className="absolute inset-x-0 top-0 h-[50rem] w-full [mask-image:linear-gradient(to_bottom,black_50%,transparent)]" />
-      <div className="relative mx-auto grid max-w-[80rem] items-center gap-14 px-5 pt-32 pb-24 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 lg:pt-40 lg:pb-32">
-        <div className="max-w-[36rem]">
-          {/* The headline is the largest paint: it renders at once, never from opacity 0. */}
-          <h1 className="text-[3.6rem] sm:text-[5rem] lg:text-[5.6rem] xl:text-[6.25rem]">
-            Kai kontora suklysta, tu tai matai pirmas
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute inset-[-20%_-40%] animate-[kr-sweep_16s_cubic-bezier(.55,0,.45,1)_infinite_alternate] bg-[linear-gradient(112deg,transparent_42%,rgb(234_246_238/0.05)_50%,transparent_58%)]" />
+        <div
+          ref={light}
+          className="absolute top-0 left-0 -mt-[260px] -ml-[260px] size-[520px] bg-[radial-gradient(closest-side,rgb(91_229_132/0.13),transparent_72%)] opacity-0 transition-[opacity,translate] duration-500 ease-out"
+        />
+      </div>
+      <div
+        aria-hidden
+        className="kr-breathe pointer-events-none absolute -top-[220px] -right-[120px] h-[620px] w-[760px] bg-[radial-gradient(closest-side,rgb(91_229_132/0.16),transparent_70%)]"
+      />
+
+      <div className="relative mx-auto grid max-w-[80rem] items-center gap-12 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,38rem)] lg:gap-14">
+        <div className="min-w-0">
+          <h1 className="text-[clamp(2.75rem,7vw,6rem)] leading-[0.95]">
+            <span className="block overflow-hidden pb-[0.14em]">
+              <span className="kr-line block" style={{ animationDelay: '80ms' }}>
+                Kai <BookRotator /> suklysta,
+              </span>
+            </span>
+            <span className="block overflow-hidden pb-[0.04em]">
+              <span className="kr-line block" style={{ animationDelay: '140ms' }}>
+                tu tai matai
+              </span>
+            </span>
+            <span className="block overflow-hidden pb-[0.04em]">
+              <span className="kr-line block" style={{ animationDelay: '200ms' }}>
+                pirmas
+              </span>
+            </span>
           </h1>
-          <p className="mt-7 text-[1.15rem] leading-relaxed text-haze">
-            Visą parą lyginam 7BET, TopSport ir Betsson koeficientus su Pinnacle kaina be maržos.
-            Kai Lietuvos kontora už statymą moka daugiau, nei jis vertas, gauni signalą: visų
-            kontorų kainas, siūlomą sumą ir statymo pavadinimą, kurį įklijuoji paieškoje.
+          <p className="kr-fade-up mt-6 max-w-[56ch] text-[clamp(1.05rem,1.4vw,1.25rem)] leading-normal text-haze" style={{ animationDelay: '320ms' }}>
+            Visą parą lyginam 7BET, TopSport ir Betsson koeficientus su Pinnacle kaina be maržos. Kai Lietuvos kontora už statymą moka
+            daugiau, nei jis vertas, gauni signalą.
           </p>
-          <motion.div {...rise(0.22)} className="mt-10">
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
-              <Link
-                href="/registracija"
-                className="rounded-xl bg-chalk px-6 py-4 text-[1.05rem] font-semibold text-night transition-transform duration-200 hover:bg-white active:scale-[0.97]"
-              >
-                Išbandyti 7 dienas nemokamai
-              </Link>
-              <Link
-                href="/skaiciuokle"
-                className="text-[1.05rem] text-chalk underline decoration-rail-strong decoration-2 underline-offset-[6px] transition-colors hover:decoration-chalk"
-              >
-                Pamatyk, kaip atrodo 1{' '}000 statymų
-              </Link>
-            </div>
-            <p className="mt-4 text-[0.9rem] text-haze-dim">
-              Kortelės nereikia. Po bandymo 25 € per mėnesį, atšaukti gali bet kada.
-            </p>
-          </motion.div>
+          <div className="kr-pop mt-9 flex flex-wrap items-center gap-x-6 gap-y-4" style={{ animationDelay: '460ms' }}>
+            <Link
+              href="/registracija"
+              className="kr-cta-glow flex min-h-11 items-center rounded-[14px] bg-floodlight px-[26px] py-4 text-[1.0625rem] font-semibold text-night transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.97]"
+            >
+              Išbandyti 7 dienas nemokamai
+            </Link>
+            <Link href="/#tukstantis" className="border-b border-rail py-3 font-medium text-chalk transition-colors hover:border-chalk">
+              Pamatyk, kaip atrodo 1 000 statymų
+            </Link>
+          </div>
+          <p className="kr-fade mt-5 text-[0.9375rem] text-haze" style={{ animationDelay: '520ms' }}>
+            Kortelės nereikia. Po bandymo 25 € per mėnesį, atšaukti gali bet kada.
+          </p>
         </div>
 
-        <motion.div
-          initial={reduced ? false : { opacity: 0, y: 40, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 1.1, ease: EASE, delay: 0.18 }}
-        >
-          <LiveBoard />
-        </motion.div>
+        <div className="kr-rise min-w-0" style={{ animationDelay: '520ms' }}>
+          <HeroBoard stats={stats} />
+        </div>
       </div>
     </section>
+  )
+}
+
+const WORDS = ['kontora', '7BET', 'TopSport', 'Betsson']
+
+/**
+ * "kontora" rolls through the three bookmakers. Each word's width is measured with
+ * a ResizeObserver, so it re-measures when the web font arrives and never clips.
+ */
+function BookRotator() {
+  const reduced = useReducedMotion()
+  const [index, setIndex] = useState(0)
+  const [widths, setWidths] = useState<number[] | null>(null)
+  const words = useRef<Array<HTMLSpanElement | null>>([])
+
+  useEffect(() => {
+    const measure = () => setWidths(words.current.map((element) => element?.getBoundingClientRect().width ?? 0))
+    measure()
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+    words.current.forEach((element) => element && observer?.observe(element))
+    document.fonts?.ready.then(measure).catch(() => {})
+    return () => observer?.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (reduced) return
+    const timer = window.setInterval(() => {
+      if (!document.hidden) setIndex((current) => (current + 1) % WORDS.length)
+    }, 3400)
+    return () => window.clearInterval(timer)
+  }, [reduced])
+
+  const width = widths?.[index]
+  return (
+    <>
+      <span className="sr-only">kontora</span>
+      <span
+        aria-hidden
+        className="relative inline-flex h-[1.05em] overflow-hidden align-bottom transition-[width] duration-[420ms] ease-[cubic-bezier(.22,1,.36,1)]"
+        style={{ width: width ? Math.ceil(width) + 2 : undefined }}
+      >
+        <span
+          className="flex flex-col items-start transition-transform duration-[560ms] ease-[cubic-bezier(.76,0,.24,1)]"
+          style={{ transform: `translateY(${-index * 1.05}em)` }}
+        >
+          {WORDS.map((word, position) => (
+            <span
+              key={word}
+              ref={(element) => {
+                words.current[position] = element
+              }}
+              className="block h-[1.05em] w-max leading-[1.05] whitespace-nowrap"
+            >
+              {word}
+            </span>
+          ))}
+        </span>
+      </span>
+    </>
   )
 }

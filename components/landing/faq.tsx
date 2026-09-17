@@ -1,8 +1,9 @@
-import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { formatEdge, formatInteger } from '@/lib/format-lt'
 import { TRACK_RECORD, recordPeriodLabel } from '@/lib/pace'
 import { simulate } from '@/lib/simulate'
+import { FaqList } from './faq-list'
+import { Reveal } from './motion-primitives'
 
 // The same resampled history as the calculator: how many 1,000-bet runs end below zero.
 const negativeInTen = Math.round(
@@ -18,7 +19,7 @@ const QUESTIONS: Array<{ q: string; a: React.ReactNode }> = [
       <>
         Pažadėti to niekas negali. Mūsų {formatInteger(TRACK_RECORD.bets)} užbaigtų signalų ({recordPeriodLabel()}) grąža kol kas{' '}
         {formatEdge(TRACK_RECORD.roi)}, o istorija dar trumpa. Skaičiuoklėje, kuri naudoja tuos pačius rezultatus, maždaug {negativeInTen} iš 10
-        scenarijų po 1 000 statymų baigiasi minuse. Todėl rodom ir CLV: jis parodo, ar kainos buvo geros, net kai rezultatas dar svyruoja.{' '}
+        scenarijų po 1 000 statymų baigiasi minuse. Todėl rodom ir CLV: jis parodo, ar kainos buvo geros, net kai rezultatas dar svyruoja.{' '}
         <Link href="/skaiciuokle" className={linkClass}>
           Skaičiuoklė
         </Link>
@@ -30,7 +31,7 @@ const QUESTIONS: Array<{ q: string; a: React.ReactNode }> = [
     a: (
       <>
         Vienam statymui apie 3 minutės: atidarai signalą, nukopijuoji pavadinimą, pastatai ir pažymi. Dešimt statymų per dieną yra maždaug
-        pusvalandis. Kiek laiko užtruks 1 000 statymų, pamatysi{' '}
+        pusvalandis. Kiek laiko užtruks 1 000 statymų, pamatysi{' '}
         <Link href="/skaiciuokle" className={linkClass}>
           skaičiuoklėje
         </Link>
@@ -64,7 +65,7 @@ const QUESTIONS: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Kas bus po 7 dienų?',
-    a: 'Bandymas baigsis ir signalai užsirakins, kol neužsiprenumeruosi. Kortelės bandymui neprašom, todėl nieko automatiškai nenuskaičiuosim.',
+    a: 'Bandymas baigsis ir signalai užsirakins, kol neužsiprenumeruosi. Kortelės bandymui neprašom, todėl nieko automatiškai nenuskaitysim.',
   },
   {
     q: 'Ar galiu atšaukti prenumeratą?',
@@ -78,23 +79,12 @@ const QUESTIONS: Array<{ q: string; a: React.ReactNode }> = [
 
 export function Faq() {
   return (
-    <section className="border-t border-rail bg-night-deep">
-      <div className="mx-auto grid max-w-[80rem] gap-10 px-5 py-24 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20 lg:py-32">
-        <h2 className="text-[3rem] sm:text-[4rem]">Dažni klausimai</h2>
-        <div className="divide-y divide-rail border-y border-rail">
-          {QUESTIONS.map((item) => (
-            <details key={item.q} className="group">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-[1.15rem] font-medium transition-colors hover:text-white [&::-webkit-details-marker]:hidden">
-                {item.q}
-                <Plus
-                  className="size-5 shrink-0 text-haze transition-transform duration-300 group-open:rotate-45"
-                  aria-hidden
-                />
-              </summary>
-              <p className="max-w-[40rem] pb-6 text-haze">{item.a}</p>
-            </details>
-          ))}
-        </div>
+    <section className="bg-night-alt px-5 py-[clamp(80px,10vw,160px)] sm:px-8">
+      <div className="mx-auto max-w-[60rem]">
+        <Reveal>
+          <h2 className="mb-[clamp(32px,4vw,56px)] text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[0.95]">Dažni klausimai</h2>
+        </Reveal>
+        <FaqList items={QUESTIONS} />
       </div>
     </section>
   )

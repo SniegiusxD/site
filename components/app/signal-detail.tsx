@@ -297,7 +297,7 @@ export function SignalDetail({
             type="button"
             onClick={track}
             disabled={tracking === 'pending'}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-chalk text-[1.05rem] font-semibold text-night transition-transform hover:bg-white active:scale-[0.98] disabled:opacity-70"
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-floodlight text-[1.05rem] font-semibold text-night transition-transform hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70"
           >
             {tracking === 'pending' && <Loader2 className="size-5 animate-spin" aria-hidden />}
             Pastačiau {formatEuro(stake)} už {formatOdds(price.odds)}

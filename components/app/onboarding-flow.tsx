@@ -176,7 +176,7 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex items-center gap-2 rounded-xl bg-chalk px-7 py-3.5 font-semibold text-night transition-transform duration-200 hover:bg-white active:scale-[0.97] disabled:opacity-70"
+            className="inline-flex items-center gap-2 rounded-xl bg-floodlight px-7 py-3.5 font-semibold text-night transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-70"
           >
             {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
             {last ? 'Rodyti signalus' : 'Toliau'}

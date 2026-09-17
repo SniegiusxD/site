@@ -1,38 +1,48 @@
 import { edgeOf, formatEdge, formatOdds } from '@/lib/format-lt'
-import { type LandingSignal, landingSignals, SIGNALS_CAPTURED_LABEL } from '@/lib/landing-signals'
-import { BookMark } from './book-mark'
+import { landingSignals } from '@/lib/landing-signals'
 
-const valuePrice = (signal: LandingSignal) => signal.prices.find((price) => price.book === signal.valueBook) ?? signal.prices[0]
+const items = landingSignals.map((signal) => {
+  const price = signal.prices.find((item) => item.book === signal.valueBook) ?? signal.prices[0]
+  return { id: signal.id, event: price.event, book: price.book, odds: formatOdds(price.odds), value: formatEdge(edgeOf(price.odds, signal.fairOdds)) }
+})
 
 /**
- * A scoreboard ticker of real signals from one scan. Pure CSS: it runs before
- * any JavaScript loads, pauses on hover, and stands still for reduced motion.
+ * Two lines of real captured signals moving in opposite directions. Pure CSS: each
+ * list holds two copies, so half its width is one seamless loop. Pauses on hover.
  */
 export function OddsTicker() {
-  const items = landingSignals.map((signal) => {
-    const price = valuePrice(signal)
-    return { id: signal.id, book: price.book, event: price.event, selection: price.selection, odds: price.odds, edge: edgeOf(price.odds, signal.fairOdds) }
-  })
-
+  const reversed = [...items].reverse()
   return (
-    <section aria-label={`Signalų pavyzdžiai iš skenavimo ${SIGNALS_CAPTURED_LABEL}`} className="group relative overflow-hidden border-t border-rail bg-night-deep">
-      <ul className="flex w-max animate-[ticker_52s_linear_infinite] py-3.5 group-hover:[animation-play-state:paused] motion-reduce:animate-none">
+    <div
+      aria-label="Paskutiniai signalai"
+      className="grid gap-[5px] overflow-hidden border-y border-rail bg-[#0a2c21] py-[9px] [mask-image:linear-gradient(90deg,transparent,#000_5%,#000_95%,transparent)]"
+    >
+      <ul className="kr-marquee flex w-max">
         {[...items, ...items].map((item, index) => (
           <li
             key={`${item.id}-${index}`}
             aria-hidden={index >= items.length}
-            className="flex shrink-0 items-center gap-3 pr-12 text-[0.95rem] whitespace-nowrap"
+            className="flex items-center gap-2.5 border-r border-rail px-5 text-[0.875rem] whitespace-nowrap text-haze"
           >
-            <BookMark book={item.book} size="sm" />
-            <span className="font-medium">{item.event}</span>
-            <span className="text-haze">{item.selection}</span>
-            <span className="font-display text-[1.25rem] leading-none font-bold tnum">{formatOdds(item.odds)}</span>
-            <span className="font-semibold text-floodlight">{formatEdge(item.edge)}</span>
+            <span className="text-chalk">{item.event}</span>
+            <span>{item.book}</span>
+            <span className="font-semibold text-chalk tnum">{item.odds}</span>
+            <span className="font-semibold text-floodlight tnum">{item.value}</span>
           </li>
         ))}
       </ul>
-      <div aria-hidden className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-night-deep to-transparent sm:w-32" />
-      <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-night-deep to-transparent sm:w-32" />
-    </section>
+      <ul aria-hidden className="kr-marquee-slow flex w-max">
+        {[...reversed, ...reversed].map((item, index) => (
+          <li
+            key={`${item.id}-slow-${index}`}
+            className="flex items-center gap-[9px] border-r border-stand-hover px-[18px] text-[0.8125rem] whitespace-nowrap text-haze-dim"
+          >
+            <span>{item.event}</span>
+            <span>{item.book}</span>
+            <span className="font-semibold tnum">{item.odds}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

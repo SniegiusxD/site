@@ -1,15 +1,16 @@
-import { ArrowUpRight, Scale } from 'lucide-react'
+import { ArrowUpRight } from 'lucide-react'
+import { Reveal, Roll } from './motion-primitives'
 
 const RULINGS = [
   {
     date: '2026 m. vasario 18 d.',
-    fine: '15 000 €',
+    fine: 15000,
     text: 'UAB „Amber Gaming“ apribojo lošėją už statymus žemesnių lygų rungtynėse, nors tokio pagrindo jos taisyklėse nebuvo. Teismas: jei kontora pati siūlo tokius statymus, vėliau riboti už jų naudojimą ji negali.',
     href: 'https://www.teismai.lt/lt/naujienos/teismu-pranesimai-spaudai/lvat-losimu-bendroves-negali-elgtis-savavaliskai-loseju-atzvilgiu/14027',
   },
   {
     date: '2025 m. balandžio 16 d.',
-    fine: '6 000 €',
+    fine: 6000,
     text: 'Kontora lošėjui pritaikė „supaprastintą lažybų pasiūlą“, kurios jos taisyklės nenumatė. Teismas: ribojimo atvejai turi būti aiškiai aprašyti ir paskelbti iš anksto.',
     href: 'https://www.teismai.lt/lt/teismu-pranesimai-spaudai/lvat-losimu-bendroves-neturi-neribotos-diskrecijos-spresti-del-loseju-teises-statyti/13309',
   },
@@ -17,56 +18,52 @@ const RULINGS = [
 
 export function Rights() {
   return (
-    <section className="border-t border-rail bg-night-deep">
-      <div className="mx-auto max-w-[80rem] px-5 py-24 sm:px-8 lg:py-32">
-        <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
-          <div className="max-w-[34rem]">
-            <Scale className="size-9 text-haze" aria-hidden />
-            <h2 className="mt-6 text-[3rem] sm:text-[4rem]">Kontora negali tavęs riboti savavališkai</h2>
-            <p className="mt-6 text-haze">
-              Lietuvos vyriausiasis administracinis teismas du kartus patvirtino Lošimų priežiūros
-              tarnybos baudas kontoroms, kurios ribojo lošėjus be pagrindo savo taisyklėse.
-            </p>
-            <p className="mt-4 text-haze">
-              Tai nereiškia, kad limitų nebelieka: kontoros vis dar nustato didžiausias sumas.
-              Todėl kiekvienai kontorai įrašai savo limitą, o siūloma suma prie jo prisitaiko.
-            </p>
-          </div>
-
-          <ol className="grid gap-4">
-            {RULINGS.map((ruling) => (
-              <li key={ruling.date} className="rounded-2xl bg-stand p-6 hairline sm:p-8">
+    <section className="bg-cream px-5 py-[clamp(80px,10vw,160px)] text-ink sm:px-8">
+      <div className="mx-auto max-w-[80rem]">
+        <Reveal>
+          <h2 className="text-[clamp(2.25rem,4.5vw,4rem)] leading-[0.95] text-ink">Kontora negali tavęs riboti savavališkai</h2>
+        </Reveal>
+        <Reveal delay={80}>
+          <p className="mt-5 max-w-[64ch] text-[clamp(1.05rem,1.4vw,1.25rem)] text-moss">
+            Lietuvos vyriausiasis administracinis teismas du kartus patvirtino Lošimų priežiūros tarnybos baudas kontoroms, kurios ribojo
+            lošėjus be pagrindo savo taisyklėse. Limitai nedingsta, todėl kiekvienai kontorai įrašai savo, o siūloma suma prie jo
+            prisitaiko.
+          </p>
+        </Reveal>
+        <div className="mt-[clamp(40px,5vw,72px)] grid gap-5 lg:grid-cols-2">
+          {RULINGS.map((ruling, index) => (
+            <Reveal key={ruling.date} delay={index * 80}>
+              <article className="h-full rounded-[20px] bg-white p-[clamp(22px,3vw,32px)] shadow-[inset_0_0_0_1px_rgb(11_31_23/0.08)]">
                 <div className="flex flex-wrap items-baseline justify-between gap-3">
-                  <p className="text-haze">{ruling.date}</p>
-                  <p className="font-display text-5xl font-bold tnum">{ruling.fine}</p>
+                  <span className="text-[0.9375rem] text-moss">{ruling.date}</span>
+                  <Roll value={ruling.fine} suffix=" €" className="font-display text-[2rem] leading-none font-extrabold tracking-[-0.03em] text-ink" />
                 </div>
-                <p className="mt-4">{ruling.text}</p>
+                <p className="mt-[18px] text-ink">{ruling.text}</p>
                 <a
                   href={ruling.href}
                   rel="noopener"
-                  className="mt-5 inline-flex items-center gap-1.5 text-[0.95rem] text-chalk underline decoration-rail-strong underline-offset-4 transition-colors hover:decoration-chalk"
+                  className="mt-3 inline-flex min-h-11 items-center gap-1.5 text-[0.9375rem] font-semibold text-field underline decoration-field/40 underline-offset-4 hover:decoration-field"
                 >
                   Teismo pranešimas
                   <ArrowUpRight className="size-4" aria-hidden />
                 </a>
-              </li>
-            ))}
-          </ol>
+              </article>
+            </Reveal>
+          ))}
         </div>
-
-        <div className="mt-16 grid gap-6 border-t border-rail pt-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
-          <h3 className="text-[2.2rem] sm:text-[2.8rem]">Kodėl Lietuvos kontoros klysta</h3>
-          <div className="max-w-[40rem] space-y-4 text-haze">
+        <Reveal className="mt-12 grid gap-6 border-t border-ink/10 pt-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <h3 className="text-[clamp(1.5rem,2.2vw,2rem)] tracking-[-0.02em] text-ink">Kodėl Lietuvos kontoros klysta</h3>
+          <div className="max-w-[40rem] space-y-4 text-moss">
             <p>
-              Lietuvoje legaliai statyti galima tik licencijuotose kontorose, o nelegalių užsienio svetainių prieiga blokuojama. Vietinės
-              kontoros konkuruoja tarpusavyje, ne su visu pasauliu, todėl kainą pataisyti joms nėra taip skubu.
+              Lietuvoje legaliai statyti galima tik licencijuotose kontorose. Vietinės kontoros konkuruoja tarpusavyje, ne su visu pasauliu,
+              todėl kainą pataisyti joms nėra taip skubu.
             </p>
             <p>
               Pinnacle kaina keičiasi, kai tik stambūs lošėjai sužino ką nors naujo. Lietuvos kontora kartais atsilieka minutėmis ar
               valandomis. Tas atotrūkis ir yra signalas.
             </p>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   )

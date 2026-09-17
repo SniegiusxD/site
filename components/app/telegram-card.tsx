@@ -133,7 +133,7 @@ export function TelegramCard() {
             type="button"
             onClick={connect}
             disabled={linking || !state.configured}
-            className="inline-flex items-center gap-2 rounded-xl bg-chalk px-5 py-3 font-semibold text-night transition-transform hover:bg-white active:scale-[0.97] disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl bg-floodlight px-5 py-3 font-semibold text-night transition-transform hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-60"
           >
             {linking && <Loader2 className="size-4 animate-spin" aria-hidden />}
             {linking ? 'Laukiam patvirtinimo Telegram' : 'Prijungti Telegram'}

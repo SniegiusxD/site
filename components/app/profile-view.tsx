@@ -75,7 +75,7 @@ export function ProfileView() {
           <button
             type="button"
             onClick={() => setBankrollOpen(true)}
-            className="rounded-xl bg-chalk px-5 py-3 font-semibold text-night transition-transform hover:bg-white active:scale-[0.97]"
+            className="rounded-xl bg-floodlight px-5 py-3 font-semibold text-night transition-transform hover:-translate-y-0.5 active:scale-[0.97]"
           >
             Įnešti arba išimti
           </button>

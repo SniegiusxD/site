@@ -155,7 +155,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         <button
           type="submit"
           disabled={pending}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-chalk font-semibold text-night transition-transform duration-200 hover:bg-white active:scale-[0.98] disabled:opacity-70"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-floodlight font-semibold text-night transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70"
         >
           {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
           {signUp ? 'Sukurti paskyrą' : 'Prisijungti'}

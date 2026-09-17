@@ -5,42 +5,52 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Palette v2: a floodlit match at night (planning/SITE_REDESIGN_PLAN_2026-09-14.md)
- *   Night       page ground, deep navy (never neutral black)
- *   Stand       raised surfaces
- *   Rail        lines and second raise
- *   Chalk       text
- *   Haze        secondary text
- *   Floodlight  the price gap: where a book pays more than the fair price. Nothing else.
- *   Pitch       won bets, positive CLV
- *   Brick       lost bets, negative CLV
+ * Palette v3 (2026-09-17): the pitch at night, in greens (owner: "light green, darker green").
+ * Token names are kept so every page re-skins at once; values changed.
+ *   Night       page ground, deep evergreen #06231A
+ *   Stand       cards #0E3A2B, hover #12432F
+ *   Rail        hairlines and chip grounds
+ *   Chalk       text, 13:1 on night
+ *   Haze        secondary text, 9.3:1 on night; haze-dim 5.5:1 on stand
+ *   Floodlight  the value: where a book pays more than the true price (spring green)
+ *   Pitch       won bets, positive numbers (the same spring green: positive = in your favour)
+ *   Brick       lost bets, negative numbers (coral, 7.3:1 on night)
+ * Contrast figures computed from the hex values (WCAG relative luminance).
  */
 :root {
   color-scheme: dark;
 
-  --night: #0a1020;
-  --night-deep: #070b17;
-  --stand: #111a2e;
-  --stand-hover: #16223a;
-  --rail: #1e2a44;
-  --rail-strong: #2b3a5c;
-  --chalk: #eef2f7;
-  --haze: #8d98ad;
-  /* Quieter text; still 4.9:1 on the lightest panel (#16223a). */
-  --haze-dim: #8390a6;
-  /* Non-text greys: bar bases, outlines. Not for text (fails contrast). */
-  --steel: #5f6b82;
-  --floodlight: #ffd23f;
-  --floodlight-soft: rgb(255 210 63 / 0.14);
-  --pitch: #3ddc97;
-  --pitch-soft: rgb(61 220 151 / 0.14);
-  --brick: #ff6464;
-  --brick-soft: rgb(255 100 100 / 0.14);
-  /* Scenario marks (ended above / below zero). Darker steps of pitch and brick
-     that pass the chart palette checks on --stand; CVD separation is 6.3, so
-     below-zero marks also carry a dash and every chart states the share in text. */
-  --scenario-up: #27a06d;
-  --scenario-down: #d9483f;
+  --night: #06231a;
+  --night-deep: #041a13;
+  --stand: #0e3a2b;
+  --stand-hover: #12432f;
+  --rail: #1c5a40;
+  --rail-strong: #26704f;
+  --chalk: #eaf6ee;
+  --haze: #a9c9b8;
+  /* Quieter text; 5.5:1 on --stand, 4.9:1 on --stand-hover. */
+  --haze-dim: #8fb3a1;
+  /* Non-text: bar bases, outlines. Not for text. */
+  --steel: #3d6b56;
+  --floodlight: #5be584;
+  --floodlight-soft: rgb(91 229 132 / 0.14);
+  --pitch: #5be584;
+  --pitch-soft: rgb(91 229 132 / 0.14);
+  --brick: #ff8a80;
+  --brick-soft: rgb(255 138 128 / 0.14);
+  /* Alternate dark section ground. */
+  --night-alt: #0a2c21;
+  /* Light sections (cream ground) use these instead of chalk/haze. */
+  --cream: #f2f7f1;
+  --ink: #0b1f17;
+  --moss: #4a6358;
+  --field: #0e7a43;
+  /* Losses on light grounds, 5.0:1 on --cream. */
+  --coral: #c62f37;
+  /* Scenario marks (ended above / below zero) on --stand; below-zero marks also
+     carry a dash and every chart states the share in text. */
+  --scenario-up: #3fbf6c;
+  --scenario-down: #e5645a;
 
   /* shadcn token names, so shadcn primitives render in the palette. */
   --background: var(--night);
@@ -63,7 +73,7 @@
   --ring: var(--chalk);
   --success: var(--pitch);
   --success-foreground: var(--night);
-  --warning: #f5a524;
+  --warning: #f5b94a;
   --warning-foreground: var(--night);
   --danger: var(--brick);
   --danger-foreground: var(--night);
@@ -85,8 +95,8 @@
 
 @theme inline {
   --font-sans: var(--font-text-face), system-ui, sans-serif;
-  --font-display: var(--font-display-face), 'Arial Narrow', sans-serif;
-  --font-heading: var(--font-display-face), 'Arial Narrow', sans-serif;
+  --font-display: var(--font-display-face), system-ui, sans-serif;
+  --font-heading: var(--font-display-face), system-ui, sans-serif;
 
   --color-night: var(--night);
   --color-night-deep: var(--night-deep);
@@ -104,6 +114,12 @@
   --color-pitch-soft: var(--pitch-soft);
   --color-brick: var(--brick);
   --color-brick-soft: var(--brick-soft);
+  --color-night-alt: var(--night-alt);
+  --color-coral: var(--coral);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-moss: var(--moss);
+  --color-field: var(--field);
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -173,7 +189,7 @@
   h3 {
     font-family: var(--font-display);
     font-weight: 800;
-    letter-spacing: -0.005em;
+    letter-spacing: -0.03em;
     line-height: 0.98;
     text-wrap: balance;
   }
@@ -212,8 +228,8 @@
   /* The one lift used for floating panels (board, sheets, popovers). */
   .lift {
     box-shadow:
-      0 0 0 1px rgb(238 242 247 / 0.06),
-      0 1px 0 0 rgb(238 242 247 / 0.05) inset,
+      0 0 0 1px rgb(234 246 238 / 0.06),
+      0 1px 0 0 rgb(234 246 238 / 0.05) inset,
       0 30px 80px -30px rgb(0 0 0 / 0.75);
   }
 }
@@ -258,9 +274,141 @@
 /* A signal that appeared since the last poll glows once. */
 @keyframes row-new {
   from {
-    background-color: rgb(61 220 151 / 0.18);
+    background-color: rgb(91 229 132 / 0.18);
   }
   to {
     background-color: transparent;
   }
+}
+
+/* ---- Landing motion (2026-09-17). Transform and opacity only; the reduced-motion
+   rule above collapses every one of these to its end state. ---- */
+@keyframes kr-line {
+  from { transform: translateY(108%); }
+  to { transform: none; }
+}
+@keyframes kr-fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes kr-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes kr-pop {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes kr-rise {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes kr-row-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes kr-row-drop {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes kr-drift {
+  from { background-position: 0 0; }
+  to { background-position: 240px 0; }
+}
+@keyframes kr-sweep {
+  from { transform: translate3d(-60%, 0, 0); }
+  to { transform: translate3d(60%, 0, 0); }
+}
+@keyframes kr-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.07); }
+}
+@keyframes kr-cta-glow {
+  0%, 100% { box-shadow: 0 10px 34px -14px rgb(91 229 132 / 0.25); }
+  50% { box-shadow: 0 14px 44px -12px rgb(91 229 132 / 0.6); }
+}
+@keyframes kr-scan {
+  0% { top: 0; opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+@keyframes kr-shimmer {
+  0% { transform: translateX(-140%); }
+  55%, 100% { transform: translateX(340%); }
+}
+@keyframes kr-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.7); }
+}
+@keyframes kr-ring {
+  from { stroke-dashoffset: 82; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes kr-toast {
+  0% { opacity: 0; transform: translateY(18px); }
+  10% { opacity: 1; transform: none; }
+  86% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(10px); }
+}
+@keyframes kr-expand {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes kr-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes kr-dots {
+  0%, 100% { opacity: 0.22; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
+}
+@keyframes kr-tg {
+  0% { opacity: 0; transform: translateY(20px); }
+  9% { opacity: 1; transform: none; }
+  82% { opacity: 1; transform: none; }
+  92% { opacity: 0; transform: translateY(-10px); }
+  100% { opacity: 0; transform: translateY(20px); }
+}
+@keyframes kr-tg-prev {
+  0%, 9% { opacity: 0.35; transform: translateY(-6px); }
+  22%, 82% { opacity: 1; transform: none; }
+  100% { opacity: 0.35; transform: translateY(-6px); }
+}
+@keyframes kr-swap-a {
+  0%, 44% { opacity: 1; transform: none; }
+  50%, 94% { opacity: 0; transform: translateY(-6px); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes kr-swap-b {
+  0%, 44% { opacity: 0; transform: translateY(6px); }
+  50%, 94% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(6px); }
+}
+@keyframes kr-bar-sweep {
+  0% { transform: translateX(-120%); }
+  60%, 100% { transform: translateX(320%); }
+}
+
+@layer utilities {
+  .kr-line { animation: kr-line 700ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .kr-fade-up { animation: kr-fade-up 500ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .kr-fade { animation: kr-fade 400ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .kr-pop { animation: kr-pop 420ms cubic-bezier(0.34, 1.3, 0.64, 1) both; }
+  .kr-rise { animation: kr-rise 800ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .kr-row-in { animation: kr-row-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .kr-row-drop { animation: kr-row-drop 540ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .kr-expand { animation: kr-expand 400ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .kr-cta-glow { animation: kr-cta-glow 4.5s ease-in-out infinite; }
+  .kr-breathe { animation: kr-breathe 12s ease-in-out infinite; }
+  .kr-float { animation: kr-float 4.2s ease-in-out infinite; }
+  /* Mown-stripe texture of the pitch, drifting slowly. */
+  .kr-stripes {
+    background-image: repeating-linear-gradient(118deg, rgb(234 246 238 / 0.028) 0 44px, transparent 44px 120px);
+    animation: kr-drift 44s linear infinite;
+  }
+  .kr-marquee { animation: ticker 50s linear infinite; }
+  .kr-marquee-slow { animation: ticker 68s linear infinite reverse; }
+  .kr-marquee:hover,
+  .kr-marquee-slow:hover { animation-play-state: paused; }
 }
