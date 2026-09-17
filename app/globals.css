@@ -375,14 +375,16 @@
   22%, 82% { opacity: 1; transform: none; }
   100% { opacity: 0.35; transform: translateY(-6px); }
 }
+/* The two pills sit in one cell, so they cross over quickly: a long fade would
+   blend their colours and drop the contrast of the text on top. */
 @keyframes kr-swap-a {
-  0%, 44% { opacity: 1; transform: none; }
-  50%, 94% { opacity: 0; transform: translateY(-6px); }
+  0%, 48% { opacity: 1; transform: none; }
+  50%, 98% { opacity: 0; transform: translateY(-6px); }
   100% { opacity: 1; transform: none; }
 }
 @keyframes kr-swap-b {
-  0%, 44% { opacity: 0; transform: translateY(6px); }
-  50%, 94% { opacity: 1; transform: none; }
+  0%, 48% { opacity: 0; transform: translateY(6px); }
+  50%, 98% { opacity: 1; transform: none; }
   100% { opacity: 0; transform: translateY(6px); }
 }
 @keyframes kr-bar-sweep {
