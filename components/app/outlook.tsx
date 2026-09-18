@@ -10,11 +10,13 @@ export function Outlook({
   title,
   detail,
   betsLabel,
+  onRerun,
 }: {
   simulation: Simulation
   title: string
   detail: React.ReactNode
   betsLabel?: string
+  onRerun?: () => void
 }) {
   return (
     <section aria-label={title} className="rounded-2xl bg-stand p-5 hairline sm:p-6">
@@ -32,7 +34,7 @@ export function Outlook({
         </p>
       </div>
       <div className="mt-5">
-        <ScenarioChart simulation={simulation} betsLabel={betsLabel} />
+        <ScenarioChart simulation={simulation} betsLabel={betsLabel} onRerun={onRerun} />
       </div>
       <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-rail pt-4 text-[0.95rem]">
         <div>

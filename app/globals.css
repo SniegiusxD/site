@@ -234,6 +234,41 @@
   }
 }
 
+/* Windows draws a wide grey scrollbar that cuts through a dark layout. Thin,
+   themed, and only visible while there is something to scroll. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rail-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--rail-strong);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--steel);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* The app is a dashboard: the landing's 18px reading size makes it need a zoom
+   step to fit. 16px everywhere inside it. */
+.app-dense,
+.app-dense input,
+.app-dense select,
+.app-dense textarea {
+  font-size: 1rem;
+}
+
 @media (min-width: 64rem) {
   body {
     font-size: 1.125rem;

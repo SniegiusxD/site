@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { RefreshCw } from 'lucide-react'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { useEffect, useId, useRef, useState } from 'react'
 import { formatEuro, formatInteger, ltPlural } from '@/lib/format-lt'
@@ -39,7 +39,41 @@ function useWidth<T extends HTMLElement>() {
  * below, with the typical scenario drawn on top. The paths reveal left to
  * right once per new simulation.
  */
-export function ScenarioChart({ simulation, betsLabel }: { simulation: Simulation; betsLabel?: string }) {
+const RUN_MS = 2600
+
+/** Draws the run from 0 to 1 once per simulation; 1 immediately in calm motion. */
+function useRun(key: string | number, calm: boolean) {
+  const [progress, setProgress] = useState(1)
+  useEffect(() => {
+    if (calm) {
+      setProgress(1)
+      return
+    }
+    let frame = 0
+    const start = performance.now()
+    const step = (now: number) => {
+      // Ease out, so the first hundred bets fly and the ending settles.
+      const t = Math.min(1, (now - start) / RUN_MS)
+      setProgress(1 - (1 - t) ** 3)
+      if (t < 1) frame = requestAnimationFrame(step)
+    }
+    setProgress(0)
+    frame = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(frame)
+  }, [key, calm])
+  return progress
+}
+
+export function ScenarioChart({
+  simulation,
+  betsLabel,
+  onRerun,
+}: {
+  simulation: Simulation
+  betsLabel?: string
+  /** Shown as "Dar kartą": runs the scenarios again with new luck. */
+  onRerun?: () => void
+}) {
   const reduced = useReducedMotion()
   const clipId = useId().replace(/:/g, '')
   const [ref, width] = useWidth<HTMLDivElement>()
@@ -58,6 +92,11 @@ export function ScenarioChart({ simulation, betsLabel }: { simulation: Simulatio
   const d = (path: number[]) => path.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')
   const totalBets = checkpoints[last]
 
+  const progress = useRun(`${totalBets}-${simulation.median}-${paths.length}`, reduced)
+  const running = progress < 1
+  const head = Math.max(0, Math.min(last, Math.round(progress * last)))
+  const betsDone = checkpoints[head]
+
   const column = active === null ? null : paths.map((path) => path[active]).sort((a, b) => a - b)
   const band = column ? { low: column[Math.round(0.05 * (column.length - 1))], high: column[Math.round(0.95 * (column.length - 1))] } : null
 
@@ -70,6 +109,33 @@ export function ScenarioChart({ simulation, betsLabel }: { simulation: Simulatio
 
   return (
     <div>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="flex items-center gap-2.5 text-[0.9rem] text-haze" aria-live="polite">
+          <span className="relative flex size-2">
+            {running && <span className="absolute inline-flex size-full animate-[kr-ring_1.4s_ease-out_infinite] rounded-full bg-floodlight" />}
+            <span className="relative inline-flex size-2 rounded-full bg-floodlight" />
+          </span>
+          {running ? (
+            <>
+              Simuliuojam… <span className="font-semibold text-chalk tnum">{formatInteger(betsDone)}</span> / {formatInteger(totalBets)} statymų
+            </>
+          ) : (
+            <>
+              {paths.length} scenarijų · tipiškas <span className="font-semibold text-chalk tnum">{signedWhole(simulation.median)}</span>
+            </>
+          )}
+        </p>
+        {onRerun && (
+          <button
+            type="button"
+            onClick={onRerun}
+            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-rail px-4 text-[0.9rem] font-medium transition-colors hover:bg-rail-strong"
+          >
+            <RefreshCw className="size-4" aria-hidden />
+            Dar kartą
+          </button>
+        )}
+      </div>
       <div
         ref={ref}
         tabIndex={0}
@@ -87,15 +153,7 @@ export function ScenarioChart({ simulation, betsLabel }: { simulation: Simulatio
         <svg width={width} height={HEIGHT} className="block max-w-full" aria-hidden>
           <defs>
             <clipPath id={clipId}>
-              <motion.rect
-                key={`${totalBets}-${simulation.median}`}
-                x={0}
-                y={0}
-                height={HEIGHT}
-                initial={{ width: reduced ? width : PAD.left }}
-                animate={{ width }}
-                transition={{ duration: reduced ? 0 : 1.4, ease: [0.22, 1, 0.36, 1] }}
-              />
+              <rect x={0} y={0} height={HEIGHT} width={PAD.left + plotW * progress} />
             </clipPath>
           </defs>
           {ticks.map((value) => (
@@ -119,8 +177,9 @@ export function ScenarioChart({ simulation, betsLabel }: { simulation: Simulatio
               />
             ))}
             <path d={d(typical)} fill="none" stroke="var(--chalk)" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
-            <circle cx={x(last)} cy={y(typical[last])} r={4.5} fill="var(--chalk)" stroke="var(--stand)" strokeWidth={2} />
           </g>
+          <circle cx={x(head)} cy={y(typical[head])} r={running ? 5.5 : 4.5} fill="var(--chalk)" stroke="var(--stand)" strokeWidth={2} />
+          {running && <circle cx={x(head)} cy={y(typical[head])} r={11} fill="none" stroke="var(--chalk)" strokeOpacity={0.35} strokeWidth={1.5} />}
           <text x={PAD.left} y={HEIGHT - 8} className="fill-haze-dim text-[0.75rem]">
             0
           </text>

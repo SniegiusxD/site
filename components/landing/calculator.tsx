@@ -26,13 +26,15 @@ export function Calculator({ counts }: { counts: SignalCounts | null }) {
   const [books, setBooks] = useState<BookName[]>([...BOOKS])
   const [bankrollText, setBankrollText] = useState('500')
   const [dailyBets, setDailyBets] = useState(10)
+  // "Dar kartą" runs the same rules with different luck.
+  const [seed, setSeed] = useState(1000)
 
   const bankroll = Number(bankrollText.replace(/\s/g, '').replace(',', '.')) || 0
   const stake = simulationStake(bankroll, 0.25)
   const valid = step === 0 ? books.length > 0 : step === 1 ? bankroll >= 10 && bankroll <= 1_000_000 : true
   const simulation = useMemo(
-    () => simulate({ returns: TRACK_RECORD.returns, stake, bets: BETS, paths: 100, seed: 1000, points: 80 }),
-    [stake],
+    () => simulate({ returns: TRACK_RECORD.returns, stake, bets: BETS, paths: 100, seed, points: 80 }),
+    [stake, seed],
   )
   const days = daysTo(BETS, dailyBets)
 
@@ -69,6 +71,7 @@ export function Calculator({ counts }: { counts: SignalCounts | null }) {
             simulation={simulation}
             title={`Tipiškas rezultatas po ${formatInteger(BETS)} statymų`}
             detail={`po ${formatEuro(stake)} kiekvienas: ¼ Kelly nuo ${formatEuro(bankroll)} bankrollo`}
+            onRerun={() => setSeed((current) => current + 1)}
           />
           <div className="space-y-4">
             <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-rail lg:grid-cols-1">

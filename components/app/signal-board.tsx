@@ -312,7 +312,7 @@ export function SignalBoard({
   }
 
   return (
-    <main className="lg:grid lg:h-dvh lg:grid-cols-[minmax(0,27rem)_minmax(0,1fr)]">
+    <main className="lg:grid lg:h-dvh lg:grid-cols-[minmax(0,29rem)_minmax(0,1fr)]">
       <section aria-label="Signalų sąrašas" className="flex min-h-0 flex-col lg:border-r lg:border-rail">
         <div className="min-h-0 flex-1 lg:overflow-y-auto">
           <div className="border-b border-rail px-4 pt-5 pb-4 sm:px-6">

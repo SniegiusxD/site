@@ -182,17 +182,6 @@ export function ProfileView() {
         </div>
       </Section>
 
-      <Section title="Topas">
-        <p className="max-w-[36rem] text-haze">
-          Pasirink, ar kiti nariai matys tavo rezultatus tope. Rodomas tik tavo pasirinktas vardas, el. pašto nerodome.
-        </p>
-        <Link
-          href="/topas"
-          className="mt-4 inline-flex rounded-xl bg-rail px-4 py-2.5 font-medium transition-colors hover:bg-rail-strong"
-        >
-          Atidaryti topą
-        </Link>
-      </Section>
 
       <Section title="Telegram pranešimai" id="telegram">
         <TelegramCard />

@@ -1,7 +1,7 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
-import { Activity, LogOut, ReceiptText, Trophy, UserRound } from 'lucide-react'
+import { Activity, LogOut, ReceiptText, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
@@ -14,7 +14,6 @@ import { BankrollDialog } from './bankroll-dialog'
 const NAV = [
   { href: '/signalai', label: 'Signalai', icon: Activity },
   { href: '/statymai', label: 'Statymai', icon: ReceiptText },
-  { href: '/topas', label: 'Topas', icon: Trophy },
   { href: '/profilis', label: 'Profilis', icon: UserRound },
 ]
 
@@ -42,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[16.5rem_minmax(0,1fr)]">
+    <div className="app-dense min-h-dvh lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-rail bg-night-deep px-4 py-6 lg:flex">
         <Link href="/signalai" className="px-3 font-display text-[1.7rem] leading-none font-extrabold">
