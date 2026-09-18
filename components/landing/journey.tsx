@@ -72,8 +72,8 @@ export function Journey() {
         </Reveal>
         <Reveal delay={80}>
           <p className="mt-5 max-w-[62ch] text-[clamp(1.05rem,1.4vw,1.25rem)] text-haze">
-            Vienas ciklas: nuskenuojam visas kontoras, palyginam su Pinnacle kaina be maržos ir atsiunčiam tai, kas verta. Tikro laiko
-            nežadam — jei kaina pasikeitė, signalas pažymimas kaip užsidaręs.
+            Pinnacle yra tiksliausia kontora pasaulyje. Kai lietuviška kontora už tą patį statymą siūlo daugiau nei ji, tą kainą kontora
+            pastatė per aukštai — ir būtent tokias tau siunčiam.
           </p>
         </Reveal>
 
@@ -81,7 +81,7 @@ export function Journey() {
           <Step
             index={0}
             title="Randam, kur kontora permoka"
-            blurb="Trys kontoros prieš Pinnacle kainą be maržos, visose rungtynėse, kurias jos pačios siūlo."
+            blurb="Lyginam 7BET, TopSport ir Betsson koeficientus su Pinnacle. Kur lietuviška kontora moka daugiau, ten ir verta statyti."
             active={step === 0}
             beat={beat}
           >
@@ -122,7 +122,7 @@ export function Journey() {
                 })}
               </div>
               <p className="mt-3 flex justify-between gap-2 border-t border-rail/70 px-2.5 pt-2.5 text-[0.8125rem] text-haze">
-                <span>Tikroji kaina be maržos</span>
+                <span>Tiek verta iš tikrųjų (Pinnacle)</span>
                 <span className="font-semibold text-chalk tnum">{formatOdds(scan.fairOdds)}</span>
               </p>
             </div>
@@ -131,7 +131,7 @@ export function Journey() {
           <Step
             index={1}
             title="Atsiunčiam tau signalą"
-            blurb="Rungtynės, kontora, koeficientas, vertė ir suma. Pavadinimas toks, kokį rašo ta kontora."
+            blurb="Kiekviena rasta kaina atkeliauja į Telegram iškart po skenavimo. Pačiam ieškoti nieko nereikia."
             active={step === 1}
             beat={beat}
           >
@@ -180,8 +180,8 @@ export function Journey() {
 
           <Step
             index={2}
-            title="Pastatai ir sekam"
-            blurb="Suma jau suskaičiuota pagal tavo banką. Rezultatą ir uždarymo kainą užpildom automatiškai."
+            title="Pastatai per pusę minutės"
+            blurb="Suma jau suskaičiuota pagal tavo banką. Belieka pastatyti, kol kontora kainos neištaisė."
             active={step === 2}
             beat={beat}
           >

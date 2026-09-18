@@ -4,6 +4,8 @@ import NumberFlow from '@number-flow/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatEdge, formatInteger, formatOdds } from '@/lib/format-lt'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import type { BookName } from '@/lib/landing-signals'
+import { BookMark } from './book-mark'
 import { Pills, Reveal, useInViewOnce } from './motion-primitives'
 
 const MOVE = 'cubic-bezier(0.76, 0, 0.24, 1)'
@@ -19,11 +21,10 @@ export function HowItWorks() {
         </Reveal>
         <Reveal delay={80}>
           <p className="mt-5 max-w-[64ch] text-[clamp(1.05rem,1.4vw,1.25rem)] leading-normal text-moss">
-            Trys žingsniai: nuimam Pinnacle maržą, ieškom, kur Lietuvos kontora moka daugiau, ir tikrinam, ką tai reiškia po
-            tūkstančio statymų.
+            Pinnacle yra tiksliausia kontora pasaulyje, todėl jos kaina rodo tikrą baigties tikimybę. Ieškom, kur Lietuvos kontora
+            siūlo daugiau nei ji, ir tikrinam, ką tai reiškia po tūkstančio statymų.
           </p>
         </Reveal>
-        <MarginChapter />
         <GapChapter />
         <ThousandChapter />
       </div>
@@ -31,98 +32,14 @@ export function HowItWorks() {
   )
 }
 
-/* Chapter 1: scroll shrinks 105,3 % to 100 % and lifts both prices from 1,90 to 2,00. */
-function MarginChapter() {
-  const ref = useRef<HTMLDivElement>(null)
-  const reduced = useReducedMotion()
-  const [progress, setProgress] = useState(0)
-
-  useEffect(() => {
-    if (reduced) {
-      setProgress(1)
-      return
-    }
-    let frame = 0
-    const update = () => {
-      frame = 0
-      const element = ref.current
-      if (!element) return
-      const box = element.getBoundingClientRect()
-      const next = Math.max(0, Math.min(1, (window.innerHeight * 0.82 - box.top) / Math.max(200, box.height * 0.6)))
-      setProgress((current) => (Math.abs(current - next) > 0.004 ? next : current))
-    }
-    const schedule = () => {
-      if (!frame) frame = window.requestAnimationFrame(update)
-    }
-    update()
-    window.addEventListener('scroll', schedule, { passive: true })
-    window.addEventListener('resize', schedule)
-    return () => {
-      window.removeEventListener('scroll', schedule)
-      window.removeEventListener('resize', schedule)
-      if (frame) window.cancelAnimationFrame(frame)
-    }
-  }, [reduced])
-
-  const share = 52.63 - 2.63 * progress
-  const total = share * 2
-  const SCALE = 55
-  const line = `${((50 / SCALE) * 100).toFixed(2)}%`
-
-  return (
-    <div ref={ref} className="mt-[clamp(48px,6vw,88px)] grid items-start gap-[clamp(28px,4vw,56px)] lg:grid-cols-2">
-      <div className="min-w-0">
-        <h3 className={H3}>Nuimam Pinnacle maržą</h3>
-        <p className="mt-3.5 max-w-[60ch] text-moss">
-          Pinnacle abiejų baigčių tikimybės kartu sudaro daugiau nei 100 %. Tas perviršis yra marža. Ją nuėmę gaunam kainą, kuri atitinka
-          tikrąją tikimybę, ir su ja lyginam visas kitas kontoras.
-        </p>
-        <p className="mt-3.5 max-w-[60ch] text-[0.9375rem] text-moss">
-          Slink žemyn: 105,3 % susitraukia iki 100 %, o koeficientai pakyla nuo 1,90 iki 2,00.
-        </p>
-      </div>
-      <div className={`${CARD} lg:sticky lg:top-24`}>
-        <div className="mb-[22px] flex items-baseline justify-between gap-3">
-          <span className="text-[0.8125rem] text-moss">Pinnacle, abiejų baigčių tikimybė</span>
-          <span className={`font-display text-[1.25rem] font-bold tracking-[-0.02em] tnum ${total > 100.4 ? 'text-coral' : 'text-field'}`}>
-            {total.toFixed(1).replace('.', ',')} %
-          </span>
-        </div>
-        <div className="grid gap-[18px]">
-          {['Daugiau', 'Mažiau'].map((side) => (
-            <div key={side} className="grid grid-cols-[minmax(58px,74px)_minmax(0,1fr)_54px] items-center gap-2.5">
-              <span className="text-[0.875rem] text-moss">{side}</span>
-              <span className="relative flex h-[22px] rounded-full bg-ink/[0.06]">
-                <span className="block h-[22px] rounded-l-full bg-field" style={{ width: `${((Math.min(share, 50) / SCALE) * 100).toFixed(2)}%` }} />
-                <span className="block h-[22px] rounded-r-full bg-coral" style={{ width: `${((Math.max(0, share - 50) / SCALE) * 100).toFixed(2)}%` }} />
-                <span aria-hidden className="absolute -inset-y-1.5 w-0.5 bg-ink" style={{ left: line }} />
-              </span>
-              <span className="text-right font-display text-[1.125rem] font-bold tnum">{formatOdds(100 / share)}</span>
-            </div>
-          ))}
-          <div className="grid grid-cols-[minmax(58px,74px)_minmax(0,1fr)_54px] gap-2.5">
-            <span />
-            <span className="relative h-4">
-              <span className="absolute -translate-x-1/2 text-[0.75rem] whitespace-nowrap text-moss" style={{ left: line }}>
-                100 % riba
-              </span>
-            </span>
-          </div>
-        </div>
-        <p className="mt-3 text-[0.8125rem] text-moss">Raudona dalis yra marža virš 100 %. Tai ne tavo šansų dalis, todėl ją nuimam.</p>
-      </div>
-    </div>
-  )
-}
-
-/* Chapter 2: the true price is a line; the book that pays more pushes a green gap past it. */
+/* Chapter 1: the true price is a line; the book that pays more pushes a green gap past it. */
 function GapChapter() {
   const [gap, setGap] = useState(5)
   const low = 1.86
   const high = 2.18
   const at = (odds: number) => 4 + ((odds - low) / (high - low)) * 92
   const best = 2 * (1 + gap / 100)
-  const books = [
+  const books: Array<{ label: BookName; odds: number; value: boolean }> = [
     { label: 'Betsson', odds: best, value: true },
     { label: 'TopSport', odds: 1.96, value: false },
     { label: '7BET', odds: 1.92, value: false },
@@ -173,10 +90,11 @@ function GapChapter() {
                 />
               </div>
               <div
-                className="absolute top-[26px] -translate-x-1/2 text-[0.8125rem] whitespace-nowrap text-moss transition-[left] duration-[620ms]"
+                className="absolute top-[24px] flex -translate-x-1/2 items-center gap-1.5 text-[0.8125rem] whitespace-nowrap text-moss transition-[left] duration-[620ms]"
                 style={{ left: `${at(book.odds)}%`, transitionTimingFunction: MOVE }}
               >
-                {book.label} {formatOdds(book.odds)}
+                <BookMark book={book.label} size="sm" />
+                {book.label} <span className="font-semibold text-ink tnum">{formatOdds(book.odds)}</span>
               </div>
             </div>
           ))}
@@ -196,7 +114,7 @@ function GapChapter() {
   )
 }
 
-/* Chapter 3: 120 seeded runs of 1 000 bets draw themselves; the summary rolls in at the end. */
+/* Chapter 2: 120 seeded runs of 1 000 bets draw themselves; the summary rolls in at the end. */
 const PATHS = 120
 const BETS = 1000
 const SAMPLES = 50
