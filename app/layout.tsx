@@ -1,46 +1,55 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono, Hanken_Grotesk } from 'next/font/google'
+import { Bricolage_Grotesque, Schibsted_Grotesk } from 'next/font/google'
+import { MotionProvider } from '@/components/motion-provider'
+import { brand } from '@/lib/brand'
+import { MOTION_BOOT_SCRIPT } from '@/lib/motion-mode'
 import './globals.css'
 
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
+// latin-ext carries ą č ę ė į š ų ū ž. Without it Lithuanian text silently
+// falls back to a different typeface mid-word.
+// Bricolage Grotesque replaced the condensed Big Shoulders (owner: headlines felt like a
+// slide deck). The opsz axis tightens large headlines automatically.
+const display = Bricolage_Grotesque({
+  variable: '--font-display-face',
+  subsets: ['latin', 'latin-ext'],
+  axes: ['opsz'],
+  display: 'swap',
 })
-const hanken = Hanken_Grotesk({
-  variable: '--font-hanken',
-  subsets: ['latin'],
-  weight: ['400', '600', '700', '800'],
+
+const text = Schibsted_Grotesk({
+  variable: '--font-text-face',
+  subsets: ['latin', 'latin-ext'],
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
-  title: 'SportsBetting AI · Signalai',
-  description:
-    'Sporto statymų signalai, vertės galimybės ir portfelio valdymas su DI prognozėmis.',
-  generator: 'v0.app',
-  icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+  title: `${brand.name}: kur Lietuvos kontoros moka daugiau, nei verta`,
+  description: brand.description,
+  icons: { icon: '/icon.svg' },
+  // Absolute URLs for the share image. Replace with the real domain once registered.
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : 'http://localhost:3100',
+  ),
+  openGraph: {
+    type: 'website',
+    locale: 'lt_LT',
+    siteName: brand.name,
+    title: `${brand.name}: kur Lietuvos kontoros moka daugiau, nei verta`,
+    description: brand.description,
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: `${brand.name}: signalai su visų kontorų kainomis` }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/og.png'],
   },
 }
 
 export const viewport: Viewport = {
   colorScheme: 'dark',
-  themeColor: '#1a1a1f',
+  themeColor: '#06231A',
 }
 
 export default function RootLayout({
@@ -49,12 +58,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html
-      lang="lt"
-      className={`${geistSans.variable} ${geistMono.variable} ${hanken.variable} bg-background`}
-    >
-      <body className="bg-background font-sans antialiased">
-        {children}
+    // The boot script writes data-motion before hydration; that attribute is
+    // meant to differ from the server HTML.
+    <html lang="lt" suppressHydrationWarning className={`${display.variable} ${text.variable}`}>
+      <body className="bg-background text-foreground font-sans antialiased">
+        {/* Picks the motion mode before the first frame, so nothing flickers. */}
+        <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
+        <MotionProvider>{children}</MotionProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

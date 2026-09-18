@@ -1,0 +1,22 @@
+import { NextResponse } from 'next/server'
+import { freeBoard } from '@/lib/free-tier'
+import { loadLiveBoard } from '@/lib/live-signals'
+import { getSessionUser } from '@/lib/session'
+import { getAccess } from '@/lib/subscription-store'
+
+export const dynamic = 'force-dynamic'
+
+export async function GET() {
+  const user = await getSessionUser()
+  if (!user) return NextResponse.json({ error: 'Prisijunk iš naujo.' }, { status: 401 })
+
+  try {
+    const [access, board] = await Promise.all([getAccess(user.id), loadLiveBoard()])
+    return NextResponse.json(access.hasAccess ? board : freeBoard(board), {
+      headers: { 'Cache-Control': 'private, no-store' },
+    })
+  } catch (error) {
+    console.error('[api/live]', error)
+    return NextResponse.json({ error: 'Nepavyko įkelti signalų. Bandyk dar kartą.' }, { status: 500 })
+  }
+}

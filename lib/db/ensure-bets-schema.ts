@@ -35,6 +35,23 @@ export async function ensureBetsSchema() {
       "settledAt" TIMESTAMPTZ
     );
 
+    -- 2026-09-14: value tracking. Entry fair probability from the signal, the
+    -- match key for same-match warnings, and the closing price copied from
+    -- live_signal once the VM captures it.
+    ALTER TABLE user_bet
+      ADD COLUMN IF NOT EXISTS "entryFairProb" DOUBLE PRECISION,
+      ADD COLUMN IF NOT EXISTS "eventKey" TEXT,
+      ADD COLUMN IF NOT EXISTS "closingFairProb" DOUBLE PRECISION,
+      ADD COLUMN IF NOT EXISTS "closingCapturedAt" TIMESTAMPTZ;
+
+    -- 2026-09-15: canonical outcomes from the aggregator's signal_result. The
+    -- half outcomes cannot be recovered from status alone, so they are kept.
+    ALTER TABLE user_bet
+      ADD COLUMN IF NOT EXISTS "canonicalOutcome" TEXT,
+      ADD COLUMN IF NOT EXISTS "resultSource" TEXT,
+      ADD COLUMN IF NOT EXISTS "homeScore" INTEGER,
+      ADD COLUMN IF NOT EXISTS "awayScore" INTEGER;
+
     CREATE INDEX IF NOT EXISTS user_bet_user_idx ON user_bet ("userId", "placedAt" DESC);
     CREATE INDEX IF NOT EXISTS user_bet_pending_idx ON user_bet ("userId", status) WHERE status = 'laukia';
   `)
