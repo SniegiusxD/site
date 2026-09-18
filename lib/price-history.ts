@@ -1,7 +1,7 @@
 import { pool } from '@/lib/db'
 import { ensureAppSchema } from '@/lib/db/ensure-app-schema'
 import type { BookName } from '@/lib/landing-signals'
-import type { Movement, MovementMap } from '@/lib/price-movement'
+import type { MovementMap } from '@/lib/price-movement'
 
 export type { Movement, MovementMap } from '@/lib/price-movement'
 export { driftOf, DRIFT_FLOOR } from '@/lib/price-movement'

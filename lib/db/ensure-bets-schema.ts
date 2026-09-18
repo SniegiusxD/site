@@ -54,6 +54,14 @@ export async function ensureBetsSchema() {
 
     CREATE INDEX IF NOT EXISTS user_bet_user_idx ON user_bet ("userId", "placedAt" DESC);
     CREATE INDEX IF NOT EXISTS user_bet_pending_idx ON user_bet ("userId", status) WHERE status = 'laukia';
+    -- Settlement and the "starts soon" queries walk a member's open bets by kick-off.
+    CREATE INDEX IF NOT EXISTS user_bet_status_start_idx ON user_bet ("userId", status, "startsAt");
+    -- Fixture exposure and closing-price capture both look up by event.
+    CREATE INDEX IF NOT EXISTS user_bet_event_idx ON user_bet ("eventKey") WHERE "eventKey" IS NOT NULL;
+    -- One bet per member, signal and book: the route checked this in application
+    -- code only, which two quick clicks can race past.
+    CREATE UNIQUE INDEX IF NOT EXISTS user_bet_signal_book_key
+      ON user_bet ("userId", "signalId", bookmaker) WHERE "signalId" IS NOT NULL;
   `)
   ensured = true
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { parseBetInput } from '@/lib/bet-input'
 import { headers } from 'next/headers'
 import { and, desc, eq } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
@@ -81,36 +82,19 @@ export async function POST(req: Request) {
     await ensureBetsSchema()
     const body = await req.json().catch(() => ({}))
 
-    const entryFairProb = Number(body.entryFairProb)
+    const parsed = parseBetInput(body)
+    if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 })
+
     const row = {
       id: `bet-${crypto.randomUUID()}`,
       userId,
-      signalId: typeof body.signalId === 'string' ? body.signalId.slice(0, 64) : null,
-      sport: String(body.sport ?? 'OTHER'),
-      match: String(body.match ?? ''),
-      betDescription: String(body.betDescription ?? ''),
-      bookmaker: String(body.bookmaker ?? '7BET'),
-      odds: Number(body.odds),
-      stake: Number(body.stake),
-      marketType: String(body.marketType ?? 'moneyline'),
-      pickName: body.pickName ?? null,
-      line: body.line != null ? Number(body.line) : null,
-      homeName: body.homeName ?? null,
-      awayName: body.awayName ?? null,
-      gameKey: body.gameKey ?? null,
-      startsAt: body.startsAt ? new Date(body.startsAt) : null,
+      ...parsed.value,
       status: 'laukia',
       profit: null,
       placedAt: new Date(),
       settledAt: null,
-      entryFairProb: Number.isFinite(entryFairProb) && entryFairProb > 0 && entryFairProb < 1 ? entryFairProb : null,
-      eventKey: typeof body.eventKey === 'string' ? body.eventKey.slice(0, 64) : null,
       closingFairProb: null,
       closingCapturedAt: null,
-    }
-
-    if (!row.match || !Number.isFinite(row.odds) || row.odds <= 1 || !Number.isFinite(row.stake) || row.stake <= 0) {
-      return NextResponse.json({ error: 'Neteisingi statymo duomenys.' }, { status: 400 })
     }
 
     if (row.signalId) {
