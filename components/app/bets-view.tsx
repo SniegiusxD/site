@@ -2,7 +2,7 @@
 
 import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, ChevronDown, Loader2, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
+import { Check, ChevronDown, Download, Loader2, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
@@ -19,6 +19,7 @@ import {
   valueSeries,
   verdict,
 } from '@/lib/bet-value'
+import { betsToCsv, csvFileName } from '@/lib/bets-csv'
 import { executionStats } from '@/lib/execution'
 import { formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
@@ -222,7 +223,7 @@ export function BetsView() {
           <StatGrid stats={stats} bets={scoped} />
           <ValueCard series={series} stats={stats} />
           <ProfitCalendar bets={scoped} />
-          <History pending={pending} settled={settled} tab={tab} onTab={setTab} />
+          <History pending={pending} settled={settled} tab={tab} onTab={setTab} onChanged={load} />
         </div>
       )}
     </main>
@@ -456,11 +457,14 @@ function History({
   settled,
   tab,
   onTab,
+  onChanged,
 }: {
   pending: ActiveBet[]
   settled: ActiveBet[]
   tab: StatusTab
   onTab: (tab: StatusTab) => void
+  /** Reload after an edit or a delete. */
+  onChanged: () => void
 }) {
   const list = tab === 'pending' ? pending : tab === 'settled' ? settled : [...pending, ...settled]
   const [shown, setShown] = useState(PAGE)
@@ -471,6 +475,7 @@ function History({
         <h2 id="history-title" className="text-[1.6rem]">
           Istorija
         </h2>
+        <div className="flex flex-wrap items-center gap-2">
         <Segmented
           label="Būsena"
           options={[
@@ -481,6 +486,25 @@ function History({
           value={tab}
           onChange={onTab}
         />
+        <button
+          type="button"
+          onClick={() => {
+            // Built in the browser: the history is already here, and a round trip
+            // would only be a second copy of the same rows.
+            const blob = new Blob([betsToCsv([...pending, ...settled])], { type: 'text/csv;charset=utf-8' })
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = csvFileName()
+            link.click()
+            URL.revokeObjectURL(url)
+          }}
+          className="inline-flex h-10 items-center gap-2 rounded-xl bg-stand px-3.5 text-[0.9rem] font-medium hairline transition-colors hover:bg-stand-hover"
+        >
+          <Download className="size-4" aria-hidden />
+          CSV
+        </button>
+        </div>
       </div>
       {list.length === 0 ? (
         <p className="mt-4 rounded-2xl bg-stand p-6 text-center text-haze hairline">Pagal pasirinktus filtrus statymų nėra.</p>
@@ -488,7 +512,7 @@ function History({
         <>
           <ul className="mt-4 divide-y divide-rail overflow-hidden rounded-2xl bg-stand hairline">
             {visible.map((bet) => (
-              <BetRow key={bet.id} bet={bet} />
+              <BetRow key={bet.id} bet={bet} onChanged={onChanged} />
             ))}
           </ul>
           {list.length > shown && (
@@ -506,10 +530,41 @@ function History({
   )
 }
 
-function BetRow({ bet }: { bet: ActiveBet }) {
+function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
   const status = STATUS[bet.status] ?? STATUS.laukia
   const book = BOOKS.includes(bet.bookmaker as BookName) ? (bet.bookmaker as BookName) : null
   const clv = closingValue(bet)
+  const [editing, setEditing] = useState(false)
+  const [odds, setOdds] = useState(() => formatOdds(bet.odds))
+  const [stake, setStake] = useState(() => String(bet.stake))
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function send(method: 'PATCH' | 'DELETE') {
+    setBusy(true)
+    setError(null)
+    try {
+      const response = await fetch(`/api/bets/${bet.id}`, {
+        method,
+        headers: method === 'PATCH' ? { 'Content-Type': 'application/json' } : undefined,
+        body:
+          method === 'PATCH'
+            ? JSON.stringify({ odds: Number(odds.replace(',', '.')), stake: Number(stake.replace(',', '.')) })
+            : undefined,
+      })
+      const body = await response.json().catch(() => null)
+      if (!response.ok) {
+        setError(body?.error ?? 'Nepavyko.')
+        return
+      }
+      setEditing(false)
+      onChanged()
+    } catch {
+      setError('Nepavyko pasiekti serverio.')
+    } finally {
+      setBusy(false)
+    }
+  }
   return (
     <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 px-4 py-4 sm:px-5">
       <span className="pt-0.5">{book ? <BookMark book={book} /> : <span className="block size-8" />}</span>
@@ -536,6 +591,15 @@ function BetRow({ bet }: { bet: ActiveBet }) {
         <span className={`inline-block rounded-full px-2.5 py-1 text-[0.8rem] font-medium ${status.tone}`}>
           {bet.canonicalOutcome ? OUTCOME_LABEL[bet.canonicalOutcome] : status.label}
         </span>
+        {bet.status === 'laukia' && !editing && (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="mt-1 block w-full text-right text-[0.8rem] text-haze underline decoration-rail-strong underline-offset-4 hover:text-chalk"
+          >
+            Taisyti
+          </button>
+        )}
         {bet.profit !== null && (
           <p className={`mt-1 font-semibold ${tone(bet.profit)}`}>{signedEuro(bet.profit)}</p>
         )}
@@ -546,6 +610,63 @@ function BetRow({ bet }: { bet: ActiveBet }) {
           </p>
         )}
       </div>
+
+      {editing && (
+        <div className="col-span-3 mt-3 rounded-xl bg-night/60 p-3">
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="text-[0.8rem] text-haze">
+              Koeficientas
+              <input
+                type="text"
+                inputMode="decimal"
+                value={odds}
+                onChange={(event) => setOdds(event.target.value)}
+                className="mt-1 block h-10 w-24 rounded-lg bg-stand px-2.5 text-[0.95rem] text-chalk tnum hairline"
+              />
+            </label>
+            <label className="text-[0.8rem] text-haze">
+              Suma, €
+              <input
+                type="text"
+                inputMode="decimal"
+                value={stake}
+                onChange={(event) => setStake(event.target.value)}
+                className="mt-1 block h-10 w-24 rounded-lg bg-stand px-2.5 text-[0.95rem] text-chalk tnum hairline"
+              />
+            </label>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => send('PATCH')}
+              className="h-10 rounded-lg bg-chalk px-3.5 font-semibold text-night disabled:opacity-60"
+            >
+              Išsaugoti
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEditing(false)
+                setError(null)
+              }}
+              className="h-10 rounded-lg px-3 text-haze hover:text-chalk"
+            >
+              Atšaukti
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                // A mistaken record should be removable, but not by accident.
+                if (window.confirm('Ištrinti šį statymą? Grąža ir CLV perskaičiuojami be jo.')) send('DELETE')
+              }}
+              className="ml-auto h-10 rounded-lg px-3 font-medium text-brick hover:bg-brick-soft disabled:opacity-60"
+            >
+              Ištrinti
+            </button>
+          </div>
+          {error && <p className="mt-2 text-[0.85rem] text-brick">{error}</p>}
+        </div>
+      )}
     </li>
   )
 }

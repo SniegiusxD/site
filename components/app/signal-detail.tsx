@@ -7,12 +7,13 @@ import Link from 'next/link'
 import { useId, useState } from 'react'
 import { toast } from 'sonner'
 import { BookMark } from '@/components/landing/book-mark'
+import { PriceHistoryChart } from './price-history-chart'
 import { CopyButton } from '@/components/landing/copy-button'
 import { type BoardBet, boardStake, type Exposure, exposureFor, toBoardBet } from '@/lib/exposure'
 import { formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/lib/format-lt'
 import { BOOKS } from '@/lib/landing-signals'
 import type { LivePrice, LiveSignal } from '@/lib/live-signals'
-import { clockLabel, eventLabel, isInterpolatedLabel, kickoffLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
+import { agoLabel, clockLabel, eventLabel, isInterpolatedLabel, kickoffLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
 import { sportName } from '@/lib/sports-lt'
 import { trackBet } from '@/lib/track-bet'
 import { useAccount } from './account-provider'
@@ -162,6 +163,16 @@ export function SignalDetail({
         </div>
       </div>
 
+      <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.875rem] text-haze">
+        <span>
+          Signalą matom <span className="font-semibold text-chalk">{agoLabel(signal.firstSeenAt, now)}</span>
+        </span>
+        <span>
+          Kaina iš <span className="font-semibold text-chalk">{clockLabel(price.capturedAt)}</span> skenavimo
+        </span>
+        <span>{price.fairPriceInterpolated === true ? 'Tikroji kaina interpoliuota tarp Pinnacle linijų' : 'Tikroji kaina — tiksli Pinnacle linija'}</span>
+      </p>
+
       <section className="mt-4 rounded-2xl bg-stand p-5 hairline sm:p-6" aria-label="Kainos visose kontorose">
         <h3 className="text-[1.5rem]">Kainos visose kontorose</h3>
         <div className="mt-5 space-y-4">
@@ -208,6 +219,8 @@ export function SignalDetail({
           {signal.pinnacleOdds ? ` Pinnacle su marža siūlo ${formatOdds(signal.pinnacleOdds)}.` : ''}
         </p>
       </section>
+
+      <PriceHistoryChart signalId={signal.id} book={price.book} fairOdds={signal.fairOdds} />
 
       {(exposure.selection.count > 0 || exposure.match.count > 0) && tracking !== 'done' && (
         <ExposureNotice exposure={exposure} kelly={sizing.kelly} remaining={sizing.remaining} />

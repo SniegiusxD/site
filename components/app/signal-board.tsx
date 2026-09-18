@@ -3,7 +3,7 @@
 import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion, useDragControls } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
-import { AlertTriangle, ArrowDown, ArrowUp, Bell, Check, ChevronDown, Eye, Lock, RefreshCw, X } from 'lucide-react'
+import { AlertTriangle, ArrowDown, ArrowUp, Bell, Check, ChevronDown, Eye, Lock, RefreshCw, Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -53,6 +53,15 @@ const HOUR_CHOICES = [
   { value: 168, label: '7 d.' },
 ]
 const HIDDEN_KEY = 'hidden-signals'
+const VIEW_KEY = 'board-view'
+
+type SortKey = 'value' | 'new' | 'soon' | 'moving'
+const SORTS: Array<{ key: SortKey; label: string }> = [
+  { key: 'value', label: 'Pagal vertę' },
+  { key: 'new', label: 'Naujausi' },
+  { key: 'soon', label: 'Greičiausiai prasideda' },
+  { key: 'moving', label: 'Labiausiai juda' },
+]
 
 type Pulse = 'new' | 'up' | 'down'
 
@@ -126,6 +135,33 @@ export function SignalBoard({
   const [markets, setMarkets] = useState<string[]>([])
   const [periods, setPeriods] = useState<string[]>([])
   const [drift, setDrift] = useState<'all' | 'down' | 'up'>('all')
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<SortKey>('value')
+
+  // The board a member left is the board they expect to come back to. Their own
+  // device only: these are view choices, not account settings.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(VIEW_KEY)
+      if (!raw) return
+      const view = JSON.parse(raw) as Partial<{ sort: SortKey; drift: 'all' | 'down' | 'up'; sports: string[]; markets: string[]; periods: string[] }>
+      if (view.sort && SORTS.some((option) => option.key === view.sort)) setSort(view.sort)
+      if (view.drift === 'down' || view.drift === 'up') setDrift(view.drift)
+      if (Array.isArray(view.sports)) setSportsPicked(view.sports)
+      if (Array.isArray(view.markets)) setMarkets(view.markets)
+      if (Array.isArray(view.periods)) setPeriods(view.periods)
+    } catch {
+      // A blocked or broken store just means the default board.
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(VIEW_KEY, JSON.stringify({ sort, drift, sports: sportsPicked, markets, periods }))
+    } catch {
+      // See above.
+    }
+  }, [sort, drift, sportsPicked, markets, periods])
   const [showClosed, setShowClosed] = useState(false)
   const [showHidden, setShowHidden] = useState(false)
   const [selected, setSelected] = useState<BoardRow | null>(null)
@@ -214,15 +250,35 @@ export function SignalBoard({
   }
   const rows = useMemo(() => boardRows(board.signals, filters, now), [board.signals, JSON.stringify(filters), now]) // eslint-disable-line react-hooks/exhaustive-deps
   const visible = useMemo(() => {
-    const kept = rows.open.filter((row) => !hidden.has(row.signal.id))
-    if (drift === 'all') return kept
-    return kept.filter((row) => {
+    let kept = rows.open.filter((row) => !hidden.has(row.signal.id))
+
+    if (drift !== 'all') {
+      kept = kept.filter((row) => {
+        const movement = board.movement?.[row.signal.id]?.[row.price.book]
+        if (!movement) return false
+        const change = driftOf(movement)
+        return drift === 'down' ? change <= -DRIFT_FLOOR : change >= DRIFT_FLOOR
+      })
+    }
+
+    const needle = search.trim().toLowerCase()
+    if (needle) {
+      kept = kept.filter((row) =>
+        `${row.price.eventName} ${row.price.selectionLabel} ${sportName(row.signal.sport)}`.toLowerCase().includes(needle),
+      )
+    }
+
+    const movementOf = (row: BoardRow) => {
       const movement = board.movement?.[row.signal.id]?.[row.price.book]
-      if (!movement) return false
-      const change = driftOf(movement)
-      return drift === 'down' ? change <= -DRIFT_FLOOR : change >= DRIFT_FLOOR
-    })
-  }, [rows.open, hidden, drift, board.movement])
+      return movement ? Math.abs(driftOf(movement)) : -1
+    }
+    const sorted = [...kept]
+    if (sort === 'value') sorted.sort((a, b) => b.price.edge - a.price.edge)
+    if (sort === 'new') sorted.sort((a, b) => new Date(b.signal.firstSeenAt).getTime() - new Date(a.signal.firstSeenAt).getTime())
+    if (sort === 'soon') sorted.sort((a, b) => new Date(a.signal.startsAt).getTime() - new Date(b.signal.startsAt).getTime())
+    if (sort === 'moving') sorted.sort((a, b) => movementOf(b) - movementOf(a))
+    return sorted
+  }, [rows.open, hidden, drift, board.movement, search, sort])
   const hiddenRows = useMemo(() => rows.open.filter((row) => hidden.has(row.signal.id)), [rows.open, hidden])
   const looseCount = useMemo(
     () =>
@@ -372,8 +428,32 @@ export function SignalBoard({
 
             <DailyTarget bets={bets} now={now} target={prefs.dailyBets} onChange={(dailyBets) => updateSettings({ dailyBets })} />
 
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <label className="relative min-w-0 flex-1">
+                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-haze-dim" aria-hidden />
+                <span className="sr-only">Ieškoti komandos ar rungtynių</span>
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Ieškoti komandos…"
+                  className="h-11 w-full rounded-full bg-stand pr-3 pl-9 text-[0.95rem] text-chalk hairline placeholder:text-haze-dim"
+                />
+              </label>
+              <FilterChip label="Rikiuoti" value={SORTS.find((option) => option.key === sort)!.label} active={sort !== 'value'}>
+                {SORTS.map((option) => (
+                  <FilterOption
+                    key={option.key}
+                    label={option.label}
+                    checked={sort === option.key}
+                    onChange={() => setSort(option.key)}
+                  />
+                ))}
+              </FilterChip>
+            </div>
+
             {/* Always visible, the way a member actually works: narrow, look, widen. */}
-            <div className="mt-4 flex flex-wrap gap-1.5">
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
               <FilterChip label="Kontoros" value={prefs.books.length < BOOKS.length ? booksValue : 'Kontoros'} active={prefs.books.length < BOOKS.length}>
                 {BOOKS.map((book) => (
                   <FilterOption key={book} label={book} multiple checked={prefs.books.includes(book)} onChange={() => toggleBook(book)} />
@@ -515,7 +595,9 @@ export function SignalBoard({
                 {status ? 'Šiuo metu signalų nėra' : 'Signalai dar neskelbiami'}
               </p>
               <p className="mx-auto mt-3 max-w-[22rem] text-haze">
-                {drift !== 'all'
+                {search.trim()
+                  ? `Pagal „${search.trim()}“ nieko neradom. Pabandyk kitą komandos pavadinimą.`
+                  : drift !== 'all'
                   ? 'Kainų judėjimą matom tik tuose signaluose, kuriuos matėm bent dviejuose skenavimuose. Palauk kito skenavimo arba grąžink filtrą į „Visos“.'
                   : !status
                   ? 'Kai tik ateis pirmas skenavimas, signalai atsiras čia patys.'
