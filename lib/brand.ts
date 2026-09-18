@@ -1,12 +1,11 @@
 /**
- * The brand in one place. The name is a PLACEHOLDER: the owner rejected
- * "Spraga" on 2026-09-14 and will pick the real name later. Change it here and
- * nowhere else. The domain stays null until one is registered (GitHub Student
- * Pack domains only).
+ * The brand in one place. Named Statyk on 2026-09-18 (owner registered
+ * statyk.me); it replaced the placeholder "Kraštas". Change it here and nowhere
+ * else.
  */
 export const brand = {
-  name: 'Kraštas',
-  domain: null as string | null,
+  name: 'Statyk',
+  domain: 'statyk.me' as string | null,
   description:
     'Lyginam 7BET, TopSport ir Betsson koeficientus su Pinnacle ir parodom, kur kontora moka daugiau, nei verta.',
 } as const

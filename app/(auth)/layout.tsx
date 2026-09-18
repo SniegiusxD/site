@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { HeroBoard } from '@/components/landing/hero-board'
+import { AuthAside } from '@/components/landing/auth-aside'
 import { brand } from '@/lib/brand'
+import { loadPublicStats } from '@/lib/public-stats'
 import { getSessionUser } from '@/lib/session'
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -29,9 +30,8 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,rgb(91_229_132/0.10),transparent_70%)]"
         />
-        <div className="relative w-full max-w-[36rem]">
-          <p className="mb-5 text-haze">Taip atrodo signalai viduje.</p>
-          <HeroBoard stats={null} />
+        <div className="relative flex w-full justify-center">
+          <AuthAside stats={await loadPublicStats()} />
         </div>
       </aside>
     </div>

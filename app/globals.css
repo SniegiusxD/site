@@ -240,10 +240,22 @@
   }
 }
 
+/* Calm motion. The OS preference sets it (below), and <html data-motion> can
+   override it in either direction: see lib/motion-mode.ts. */
+:root[data-motion='calm'] *,
+:root[data-motion='calm'] *::before,
+:root[data-motion='calm'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Without JavaScript no attribute is set, so the media query still has to hold. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  :root:not([data-motion='full']) *,
+  :root:not([data-motion='full']) *::before,
+  :root:not([data-motion='full']) *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -374,6 +386,11 @@
   0%, 9% { opacity: 0.35; transform: translateY(-6px); }
   22%, 82% { opacity: 1; transform: none; }
   100% { opacity: 0.35; transform: translateY(-6px); }
+}
+/* A bar that runs the length of one beat, so a looping section shows its clock. */
+@keyframes kr-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 /* The two pills sit in one cell, so they cross over quickly: a long fade would
    blend their colours and drop the contrast of the text on top. */

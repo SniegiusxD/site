@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { edgeOf, formatEdge, formatOdds, kellyFraction, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName, landingSignals } from '@/lib/landing-signals'
 import type { PublicStats } from '@/lib/public-stats'
-import { Pills, Reveal } from './motion-primitives'
+import { Reveal, useInViewOnce } from './motion-primitives'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
@@ -57,57 +57,85 @@ export function ProductTiles({ stats }: { stats: PublicStats | null }) {
   )
 }
 
+/**
+ * One selection, every book's price on one axis, with the true price marked.
+ * A bar past the mark is value: that reading needs no toggle and no legend.
+ */
 function PricesTile() {
-  const [mode, setMode] = useState<'fair' | 'pinnacle'>('fair')
-  const reference = mode === 'fair' ? threeBook.fairOdds : threeBook.pinnacleOdds
+  const [ref, seen] = useInViewOnce<HTMLDivElement>()
   const prices = BOOKS.map((book) => threeBook.prices.find((price) => price.book === book)!).filter(Boolean)
+  const sorted = [...prices].sort((a, b) => b.odds - a.odds)
   const event = threeBook.prices.find((price) => price.book === threeBook.valueBook)!
+  const fair = threeBook.fairOdds
+
+  // The axis starts below the cheapest price and ends above the dearest, so the
+  // true price always sits inside the frame with room on both sides.
+  const low = Math.min(fair, ...prices.map((price) => price.odds)) * 0.94
+  const high = Math.max(fair, ...prices.map((price) => price.odds)) * 1.03
+  const at = (odds: number) => ((odds - low) / (high - low)) * 100
 
   return (
     <article className={CARD}>
       <h3 className={H3}>Visų kontorų kainos prie kiekvieno signalo</h3>
-      <p className={BODY}>Matai ne tik geriausią kainą, o visą eilę ir tikrąją kainą po jomis. Turi kelias paskyras? Statai ten, kur moka daugiausia.</p>
+      <p className={BODY}>Matai ne tik geriausią kainą, o visą eilę ir tikrąją kainą tarp jų. Turi kelias paskyras? Statai ten, kur moka daugiausia.</p>
       <p className="mt-4 text-[0.875rem]">
         {event.event} <span className="text-haze">· {threeBook.market}: {event.selection}</span>
       </p>
-      <div className="mt-4">
-        <Pills
-          label="Lyginti su"
-          hideLabel
-          options={[
-            { value: 'fair', label: 'Be maržos' },
-            { value: 'pinnacle', label: 'Pinnacle kaina' },
-          ]}
-          value={mode}
-          onChange={setMode}
-        />
-      </div>
-      <div className="mt-4 grid flex-1 grid-cols-2 gap-2.5 sm:grid-cols-4">
-        {prices.map((price) => {
-          const delta = price.odds / reference - 1
+
+      <div ref={ref} className="relative mt-5 grid flex-1 content-start gap-2.5">
+        {/* The true price: everything in this card is read against this line. */}
+        <div className="pointer-events-none absolute inset-y-0 z-10" style={{ left: `${at(fair)}%` }} aria-hidden>
+          <div className="h-full w-px border-l border-dashed border-chalk/45" />
+        </div>
+
+        {sorted.map((price, index) => {
+          const delta = price.odds / fair - 1
+          const value = delta > 0
           return (
-            <div
-              key={price.book}
-              className={`rounded-[14px] bg-night p-3.5 ${delta > 0 ? 'shadow-[inset_0_0_0_1px_var(--floodlight)]' : ''}`}
-            >
-              <p className="text-[0.8125rem] text-haze">{price.book}</p>
-              <p className="mt-1.5 font-display text-[1.5rem] font-bold tracking-[-0.02em] tnum">{formatOdds(price.odds)}</p>
-              <p className={`mt-1 text-[0.8125rem] font-semibold tnum ${delta > 0 ? 'text-floodlight' : 'text-brick'}`}>
-                <NumberFlow
-                  value={delta}
-                  locales="lt-LT"
-                  format={{ style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' }}
+            <div key={price.book} className="grid grid-cols-[4.5rem_1fr] items-center gap-3">
+              <span className="truncate text-[0.875rem] text-haze">{price.book}</span>
+              <div className="relative h-11 rounded-[10px] bg-night">
+                <div
+                  className={`absolute inset-y-0 left-0 rounded-[10px] ${value ? 'bg-floodlight/20 shadow-[inset_0_0_0_1px_var(--floodlight)]' : 'bg-rail/45'}`}
+                  style={{
+                    width: seen ? `${at(price.odds)}%` : '0%',
+                    transition: `width 900ms cubic-bezier(0.22,1,0.36,1) ${index * 90}ms`,
+                  }}
                 />
-              </p>
+                <div className="relative flex h-full items-center justify-between gap-2 px-3">
+                  <span className={`font-display text-[1.05rem] font-bold tnum ${value ? 'text-floodlight' : 'text-chalk'}`}>
+                    {formatOdds(price.odds)}
+                  </span>
+                  <span className={`text-[0.8125rem] font-semibold tnum ${value ? 'text-floodlight' : 'text-haze'}`}>
+                    <NumberFlow
+                      value={seen ? delta : 0}
+                      locales="lt-LT"
+                      format={{ style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' }}
+                    />
+                  </span>
+                </div>
+              </div>
             </div>
           )
         })}
-        <div className="rounded-[14px] bg-night p-3.5 shadow-[inset_0_0_0_1px_var(--rail)]">
-          <p className="text-[0.8125rem] text-haze">{mode === 'fair' ? 'Tikroji kaina' : 'Pinnacle'}</p>
-          <p className="mt-1.5 font-display text-[1.5rem] font-bold tracking-[-0.02em] tnum">{formatOdds(reference)}</p>
-          <p className="mt-1 text-[0.8125rem] text-haze">atskaita</p>
+
+        <div className="grid grid-cols-[4.5rem_1fr] items-center gap-3">
+          <span className="text-[0.875rem] text-haze">Tikroji</span>
+          <div className="relative h-5">
+            <span
+              className="absolute top-0 -translate-x-1/2 text-[0.8125rem] whitespace-nowrap text-chalk tnum"
+              style={{ left: `${at(fair)}%` }}
+            >
+              {formatOdds(fair)}
+            </span>
+          </div>
         </div>
       </div>
+
+      <p className="mt-4 text-[0.875rem] text-haze">
+        Tikroji kaina — Pinnacle kaina be maržos. Pinnacle šitą siūlo už {formatOdds(threeBook.pinnacleOdds)}; išėmus maržą lieka {formatOdds(fair)}.
+        Kas moka daugiau, tas moka per daug.
+      </p>
     </article>
   )
 }

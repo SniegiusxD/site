@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Bricolage_Grotesque, Schibsted_Grotesk } from 'next/font/google'
 import { MotionProvider } from '@/components/motion-provider'
 import { brand } from '@/lib/brand'
+import { MOTION_BOOT_SCRIPT } from '@/lib/motion-mode'
 import './globals.css'
 
 // latin-ext carries ą č ę ė į š ų ū ž. Without it Lithuanian text silently
@@ -57,8 +58,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="lt" className={`${display.variable} ${text.variable}`}>
+    // The boot script writes data-motion before hydration; that attribute is
+    // meant to differ from the server HTML.
+    <html lang="lt" suppressHydrationWarning className={`${display.variable} ${text.variable}`}>
       <body className="bg-background text-foreground font-sans antialiased">
+        {/* Picks the motion mode before the first frame, so nothing flickers. */}
+        <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
         <MotionProvider>{children}</MotionProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
