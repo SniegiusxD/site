@@ -71,14 +71,14 @@ export function Hero({ stats }: { stats: PublicStats | null }) {
               href="/registracija"
               className="kr-cta-glow flex min-h-11 items-center rounded-[14px] bg-floodlight px-[26px] py-4 text-[1.0625rem] font-semibold text-night transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.97]"
             >
-              Išbandyti 7 dienas nemokamai
+              Sukurti nemokamą paskyrą
             </Link>
             <Link href="/#tukstantis" className="border-b border-rail py-3 font-medium text-chalk transition-colors hover:border-chalk">
               Pamatyk, kaip atrodo 1 000 statymų
             </Link>
           </div>
           <p className="kr-fade mt-5 text-[0.9375rem] text-haze" style={{ animationDelay: '520ms' }}>
-            Kortelės nereikia. Po bandymo 25 € per mėnesį, atšaukti gali bet kada.
+            Registracija nemokama ir be termino. Visi signalai — 25 € per mėnesį, prieš tai 7 dienos nemokamai.
           </p>
         </div>
 

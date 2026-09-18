@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { Toaster } from 'sonner'
 import { AccountProvider } from '@/components/app/account-provider'
 import { AppShell } from '@/components/app/app-shell'
-import { Paywall } from '@/components/app/paywall'
 import { loadAccount } from '@/lib/account-store'
 import { getSessionUser } from '@/lib/session'
 
@@ -16,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <AccountProvider initial={account} email={user.email} memberSince={user.createdAt ? new Date(user.createdAt).toISOString() : null}>
-      <AppShell>{account.access.hasAccess ? children : <Paywall access={account.access} />}</AppShell>
+      <AppShell>{children}</AppShell>
       {/* Phones: clear the bottom navigation and the sticky "Pastačiau" bar. */}
       <Toaster
         position="bottom-right"

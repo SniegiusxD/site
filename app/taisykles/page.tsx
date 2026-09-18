@@ -45,9 +45,10 @@ export default function TermsPage() {
       <section>
         <h2>Bandymas ir kaina</h2>
         <p>
-          Pirmos {TRIAL_DAYS} dienos nemokamos, kortelės bandymui neprašom. Po bandymo prieiga
-          kainuoja {PRICE_EUR_PER_MONTH} € per mėnesį. Prenumeratą gali atšaukti bet kada, prieiga
-          lieka iki apmokėto laikotarpio pabaigos.
+          Nemokama paskyra neturi termino: joje matai signalus iki 2 % vertės ir iki 2,50
+          koeficiento. Visus signalus atrakina {TRIAL_DAYS} dienų bandymas (kortelės neprašom) arba
+          prenumerata už {PRICE_EUR_PER_MONTH} € per mėnesį. Prenumeratą gali atšaukti bet kada:
+          prieiga lieka iki apmokėto laikotarpio pabaigos, paskui paskyra grįžta į nemokamą planą.
         </p>
       </section>
 

@@ -58,7 +58,22 @@ export type RunnerStatus = {
   events: { pinnacle: number | null; sevenbet: number | null; topsport: number | null; betsson: number | null }
 }
 
-export type LiveBoard = { signals: LiveSignal[]; status: RunnerStatus | null }
+/** A signal a free account may not see yet: no match, market or book. */
+export type LockedSignal = {
+  id: string
+  sport: string
+  startsAt: string
+  bestEdge: number
+  bestOdds: number
+}
+
+export type LiveBoard = {
+  signals: LiveSignal[]
+  status: RunnerStatus | null
+  /** Only on the free tier: what a subscription would unlock. */
+  locked?: LockedSignal[]
+  tier?: 'free' | 'full'
+}
 
 /** Closed signals stay visible this long so an open detail can say "closed". */
 const CLOSED_VISIBLE_HOURS = 3
@@ -141,10 +156,10 @@ export async function loadLiveBoard(): Promise<LiveBoard> {
         }
       : null
 
-    return { signals, status }
+    return { signals, status, tier: 'full' }
   } catch (error) {
     // Tables not created yet (fresh database): an empty board, not a crash.
-    if ((error as { code?: string }).code === '42P01') return { signals: [], status: null }
+    if ((error as { code?: string }).code === '42P01') return { signals: [], status: null, tier: 'full' }
     throw error
   }
 }

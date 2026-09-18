@@ -13,7 +13,7 @@ import type { ActiveBet } from '@/lib/types'
 import { signedEuro } from './value-chart'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { DAILY_BET_CHOICES, KELLY_CHOICES } from '@/lib/preferences'
-import { PRICE_EUR_PER_MONTH } from '@/lib/subscription'
+import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
 import { useAccount } from './account-provider'
 import { BankrollDialog } from './bankroll-dialog'
 import { ChipGroup } from './chip-group'
@@ -39,7 +39,9 @@ export function ProfileView() {
         ? `Prenumerata aktyvi, ${PRICE_EUR_PER_MONTH} € per mėnesį`
         : access.state === 'ending'
           ? `Prenumerata baigsis ${dateFormat.format(new Date(access.endsAt!))}`
-          : 'Prieiga baigėsi'
+          : access.canStartTrial
+            ? `Nemokamas planas, ${TRIAL_DAYS} dienų bandymas dar nepanaudotas`
+            : 'Nemokamas planas'
 
   function toggleBook(book: BookName) {
     const next = prefs.books.includes(book) ? prefs.books.filter((b) => b !== book) : BOOKS.filter((b) => b === book || prefs.books.includes(b))

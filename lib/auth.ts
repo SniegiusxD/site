@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { username } from 'better-auth/plugins'
 import { pool } from '@/lib/db'
-import { startTrial } from '@/lib/subscription-store'
+import { ensureSubscription } from '@/lib/subscription-store'
 
 const productionUrl =
   process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL
@@ -44,10 +44,10 @@ export const auth = betterAuth({
       create: {
         after: async (user) => {
           try {
-            await startTrial(user.id)
+            await ensureSubscription(user.id)
           } catch (error) {
-            // Not fatal: getAccess() starts the trial on first load if this failed.
-            console.error('[auth] could not start trial', error)
+            // Not fatal: getAccess() creates the free row on first load.
+            console.error('[auth] could not create the subscription row', error)
           }
         },
       },

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { freeBoard } from '@/lib/free-tier'
 import { loadLiveBoard } from '@/lib/live-signals'
 import { getSessionUser } from '@/lib/session'
 import { getAccess } from '@/lib/subscription-store'
@@ -10,12 +11,10 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Prisijunk iš naujo.' }, { status: 401 })
 
   try {
-    const access = await getAccess(user.id)
-    if (!access.hasAccess) {
-      return NextResponse.json({ error: 'Bandymas baigėsi.', access }, { status: 402 })
-    }
-    const board = await loadLiveBoard()
-    return NextResponse.json(board, { headers: { 'Cache-Control': 'private, no-store' } })
+    const [access, board] = await Promise.all([getAccess(user.id), loadLiveBoard()])
+    return NextResponse.json(access.hasAccess ? board : freeBoard(board), {
+      headers: { 'Cache-Control': 'private, no-store' },
+    })
   } catch (error) {
     console.error('[api/live]', error)
     return NextResponse.json({ error: 'Nepavyko įkelti signalų. Bandyk dar kartą.' }, { status: 500 })

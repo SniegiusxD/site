@@ -64,12 +64,12 @@ const QUESTIONS: Array<{ q: string; a: React.ReactNode }> = [
     a: 'Kai skirtumas dingsta, signalas pažymimas kaip užsidaręs. Jei ta pati kaina dar laikosi kitoje kontoroje, tai ir parodom.',
   },
   {
-    q: 'Kas bus po 7 dienų?',
-    a: 'Bandymas baigsis ir signalai užsirakins, kol neužsiprenumeruosi. Kortelės bandymui neprašom, todėl nieko automatiškai nenuskaitysim.',
+    q: 'Ką gaunu nemokamai?',
+    a: 'Tikrus signalus iki 2 % vertės ir iki 2,50 koeficiento, kartu su bankrollu ir statymų sekimu. Didesnės vertės signalai matomi kaip užrakinti: matai, kiek jų yra ir kokia vertė, bet ne rungtynes. Juos atrakina 7 dienų bandymas arba prenumerata.',
   },
   {
     q: 'Ar galiu atšaukti prenumeratą?',
-    a: 'Taip, bet kada profilyje. Prieiga lieka iki apmokėto mėnesio pabaigos.',
+    a: 'Taip, bet kada profilyje. Prieiga lieka iki apmokėto mėnesio pabaigos, o paskui grįžti į nemokamą paskyrą — bankrollas ir statymai lieka vietoje.',
   },
   {
     q: 'Ar tai legalu?',

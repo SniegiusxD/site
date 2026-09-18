@@ -27,7 +27,7 @@ export function FinalCta({ stats }: { stats: PublicStats | null }) {
             href="/registracija"
             className="kr-cta-glow mt-8 inline-flex min-h-11 items-center rounded-[14px] bg-floodlight px-[26px] py-4 text-[1.0625rem] font-semibold text-night transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.97]"
           >
-            Išbandyti 7 dienas nemokamai
+            Sukurti nemokamą paskyrą
           </Link>
         </Reveal>
         <p className="mx-auto mt-5 max-w-[48ch] text-[0.8125rem] text-haze">

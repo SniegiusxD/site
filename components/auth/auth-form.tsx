@@ -69,10 +69,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
   return (
     <div>
-      <h1 className="text-[2.75rem] sm:text-[3.25rem]">{signUp ? 'Pradėk 7 dienas nemokamai' : 'Sveikas sugrįžęs'}</h1>
+      <h1 className="text-[2.75rem] sm:text-[3.25rem]">{signUp ? 'Sukurk nemokamą paskyrą' : 'Sveikas sugrįžęs'}</h1>
       <p className="mt-3 text-haze">
         {signUp
-          ? 'Kortelės nereikia. Po bandymo 25 € per mėnesį, atšaukti gali bet kada.'
+          ? 'Nemokamai matai signalus iki 2 % vertės. Norėdamas visų, viduje įsijungi 7 dienų bandymą — kortelės nereikia.'
           : 'Prisijunk ir žiūrėk, kur šiandien kontoros moka per daug.'}
       </p>
 
@@ -168,7 +168,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           href={signUp ? '/prisijungti' : '/registracija'}
           className="font-medium text-chalk underline decoration-rail-strong underline-offset-4 hover:decoration-chalk"
         >
-          {signUp ? 'Prisijunk' : 'Išbandyk 7 dienas nemokamai'}
+          {signUp ? 'Prisijunk' : 'Sukurk nemokamą paskyrą'}
         </Link>
       </p>
     </div>

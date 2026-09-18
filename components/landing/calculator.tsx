@@ -79,13 +79,13 @@ export function Calculator({ counts }: { counts: SignalCounts | null }) {
             <div className="rounded-2xl bg-chalk p-5 text-night sm:p-6">
               <p className="font-display text-[1.9rem] leading-none font-bold">Nori matyti tikrus signalus?</p>
               <p className="mt-2 text-[0.95rem] text-night/75">
-                Pirmos 7 dienos nemokamos. Visų kontorų kainos, siūloma suma ir statymų sekimas.
+                Nemokama paskyra rodo signalus iki 2 % vertės. Septynių dienų bandymas atrakina visus.
               </p>
               <Link
                 href="/registracija"
                 className="mt-4 flex h-12 items-center justify-center rounded-xl bg-night font-semibold text-chalk transition-transform hover:bg-stand active:scale-[0.98]"
               >
-                Išbandyti nemokamai
+                Sukurti nemokamą paskyrą
               </Link>
             </div>
           </div>

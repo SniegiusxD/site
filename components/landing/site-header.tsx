@@ -54,8 +54,8 @@ export function SiteHeader() {
             href="/registracija"
             className="flex min-h-11 items-center rounded-[14px] bg-floodlight px-4 text-[0.9375rem] font-semibold whitespace-nowrap text-night transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.97] sm:px-[18px]"
           >
-            <span className="sm:hidden">Išbandyti</span>
-            <span className="hidden sm:inline">Išbandyti 7 dienas</span>
+            <span className="sm:hidden">Pradėti</span>
+            <span className="hidden sm:inline">Nemokama paskyra</span>
           </Link>
         </div>
       </div>

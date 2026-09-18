@@ -9,37 +9,52 @@ const days = (n: number) => new Date(NOW.getTime() + n * 24 * 60 * 60 * 1000)
 
 describe('accessFrom', () => {
   it('gives a fresh trial 7 days of access', () => {
-    const access = accessFrom({ status: 'trialing', trialEndsAt: trialEndFrom(NOW), currentPeriodEnd: null }, NOW)
+    const access = accessFrom({ status: 'trialing', trialEndsAt: trialEndFrom(NOW), trialStartedAt: NOW, currentPeriodEnd: null }, NOW)
     expect(access).toMatchObject({ state: 'trial', hasAccess: true, daysLeft: 7 })
   })
 
   it('rounds partial days up while the trial runs', () => {
-    const access = accessFrom({ status: 'trialing', trialEndsAt: days(0.2), currentPeriodEnd: null }, NOW)
+    const access = accessFrom({ status: 'trialing', trialEndsAt: days(0.2), trialStartedAt: days(-6.8), currentPeriodEnd: null }, NOW)
     expect(access.daysLeft).toBe(1)
   })
 
   it('expires the trial at its end', () => {
-    const access = accessFrom({ status: 'trialing', trialEndsAt: days(-0.01), currentPeriodEnd: null }, NOW)
+    const access = accessFrom({ status: 'trialing', trialEndsAt: days(-0.01), trialStartedAt: days(-7.01), currentPeriodEnd: null }, NOW)
     expect(access).toMatchObject({ state: 'expired', hasAccess: false, daysLeft: 0 })
   })
 
   it('keeps access for an active plan until its period ends', () => {
-    expect(accessFrom({ status: 'active', trialEndsAt: days(-30), currentPeriodEnd: days(12) }, NOW)).toMatchObject({
+    expect(accessFrom({ status: 'active', trialEndsAt: days(-30), trialStartedAt: days(-37), currentPeriodEnd: days(12) }, NOW)).toMatchObject({
       state: 'active',
       hasAccess: true,
       daysLeft: 12,
     })
-    expect(accessFrom({ status: 'active', trialEndsAt: days(-30), currentPeriodEnd: days(-1) }, NOW).hasAccess).toBe(false)
+    expect(accessFrom({ status: 'active', trialEndsAt: days(-30), trialStartedAt: days(-37), currentPeriodEnd: days(-1) }, NOW).hasAccess).toBe(false)
   })
 
   it('lets a canceled plan run to the end of the paid period', () => {
-    expect(accessFrom({ status: 'canceled', trialEndsAt: days(-30), currentPeriodEnd: days(3) }, NOW)).toMatchObject({
+    expect(accessFrom({ status: 'canceled', trialEndsAt: days(-30), trialStartedAt: days(-37), currentPeriodEnd: days(3) }, NOW)).toMatchObject({
       state: 'ending',
       hasAccess: true,
     })
-    expect(accessFrom({ status: 'canceled', trialEndsAt: days(-30), currentPeriodEnd: days(-3) }, NOW).state).toBe('expired')
+    expect(accessFrom({ status: 'canceled', trialEndsAt: days(-30), trialStartedAt: days(-37), currentPeriodEnd: days(-3) }, NOW).state).toBe('expired')
+  })
+
+  it('starts a new account on the free tier with the trial still available', () => {
+    expect(accessFrom({ status: 'free', trialEndsAt: null, trialStartedAt: null, currentPeriodEnd: null }, NOW)).toMatchObject({
+      state: 'free',
+      tier: 'free',
+      hasAccess: false,
+      canStartTrial: true,
+    })
+  })
+
+  it('drops to the free tier, not a locked door, once the trial is used', () => {
+    const access = accessFrom({ status: 'trialing', trialEndsAt: days(-1), trialStartedAt: days(-8), currentPeriodEnd: null }, NOW)
+    expect(access).toMatchObject({ state: 'expired', tier: 'free', canStartTrial: false })
   })
 })
+
 
 describe('parsePreferences', () => {
   const valid = { ...DEFAULT_PREFERENCES, bookLimits: { TopSport: 50 } }

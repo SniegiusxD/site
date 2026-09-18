@@ -3,7 +3,7 @@ import { AuthForm } from '@/components/auth/auth-form'
 import { brand } from '@/lib/brand'
 
 export const metadata: Metadata = {
-  title: `Registracija: 7 dienos nemokamai | ${brand.name}`,
+  title: `Nemokama paskyra | ${brand.name}`,
 }
 
 export default function RegistrationPage() {

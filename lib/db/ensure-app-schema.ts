@@ -44,6 +44,20 @@ export function ensureAppSchema(): Promise<void> {
         "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
 
+      -- Free accounts: signing up takes no trial, so the trial dates start
+      -- empty and "trialStartedAt" records the one time they are used.
+      ALTER TABLE subscription
+        ADD COLUMN IF NOT EXISTS "trialStartedAt" TIMESTAMPTZ;
+      ALTER TABLE subscription
+        ALTER COLUMN "trialEndsAt" DROP NOT NULL,
+        ALTER COLUMN status SET DEFAULT 'free';
+      ALTER TABLE subscription DROP CONSTRAINT IF EXISTS subscription_status_check;
+      ALTER TABLE subscription ADD CONSTRAINT subscription_status_check
+        CHECK (status IN ('free', 'trialing', 'active', 'canceled', 'expired'));
+      -- Accounts from before the free tier all took a trial on sign-up.
+      UPDATE subscription SET "trialStartedAt" = "createdAt"
+        WHERE "trialStartedAt" IS NULL AND status <> 'free';
+
       CREATE TABLE IF NOT EXISTS bankroll_entry (
         id TEXT PRIMARY KEY,
         "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,

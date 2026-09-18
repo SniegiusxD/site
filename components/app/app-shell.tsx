@@ -71,6 +71,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {trialNote && (
             <p className="rounded-xl bg-pitch-soft px-3 py-2 text-[0.85rem] font-medium text-pitch">{trialNote}</p>
           )}
+          {access.tier === 'free' && (
+            <Link
+              href="/atrakinti"
+              className="flex items-center justify-between gap-2 rounded-xl bg-stand px-3 py-2.5 text-[0.85rem] font-medium hairline transition-colors hover:bg-stand-hover"
+            >
+              <span className="text-haze">Nemokamas planas</span>
+              <span className="text-floodlight">Atrakinti</span>
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setBankrollOpen(true)}

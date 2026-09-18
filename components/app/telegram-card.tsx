@@ -1,11 +1,13 @@
 'use client'
 
-import { Check, Loader2, Send } from 'lucide-react'
+import { Check, Loader2, Lock, Send } from 'lucide-react'
+import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import type { TelegramState } from '@/lib/telegram'
 import { TELEGRAM_EDGE_CHOICES, TELEGRAM_HOUR_CHOICES, type TelegramSettings } from '@/lib/telegram-settings'
+import { useAccount } from './account-provider'
 import { ChipGroup } from './chip-group'
 
 const SAVE_DELAY_MS = 600
@@ -15,6 +17,7 @@ const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 const hourLabel = (hour: number) => `${String(hour).padStart(2, '0')}:00`
 
 export function TelegramCard() {
+  const { account } = useAccount()
   const [state, setState] = useState<TelegramState | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -34,8 +37,8 @@ export function TelegramCard() {
   }, [])
 
   useEffect(() => {
-    load()
-  }, [load])
+    if (account.access.hasAccess) load()
+  }, [load, account.access.hasAccess])
 
   useEffect(() => () => {
     if (saveTimer.current) window.clearTimeout(saveTimer.current)
@@ -105,6 +108,24 @@ export function TelegramCard() {
     setTesting(false)
     if (response.ok) setNotice('Išsiųsta. Patikrink Telegram.')
     else setError(body?.error ?? 'Nepavyko išsiųsti.')
+  }
+
+  // Alerts carry the whole signal, so the free tier cannot connect one.
+  if (!account.access.hasAccess) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <p className="flex max-w-[30rem] items-start gap-3 text-haze">
+          <Lock className="mt-1 size-5 shrink-0" aria-hidden />
+          Telegram pranešimai ateina su pilna prieiga: kiekvienas naujas signalas su kaina, verte ir suma.
+        </p>
+        <Link
+          href="/atrakinti"
+          className="inline-flex h-11 items-center rounded-xl bg-floodlight px-5 font-semibold text-night transition-colors hover:bg-pitch"
+        >
+          Atrakinti
+        </Link>
+      </div>
+    )
   }
 
   if (!state) {
