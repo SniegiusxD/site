@@ -3,7 +3,7 @@
 import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion, useDragControls } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
-import { AlertTriangle, ArrowDown, ArrowUp, Bell, Check, ChevronDown, Eye, Lock, RefreshCw, SlidersHorizontal, X } from 'lucide-react'
+import { AlertTriangle, ArrowDown, ArrowUp, Bell, Check, ChevronDown, Eye, Lock, RefreshCw, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -26,11 +26,20 @@ import {
   timeUntilLabel,
 } from '@/lib/live-view'
 import { DAILY_BET_CHOICES } from '@/lib/preferences'
+import {
+  bandFor,
+  MARKET_FAMILIES,
+  marketLabel,
+  ODDS_BANDS,
+  PERIODS,
+  periodLabel,
+} from '@/lib/signal-taxonomy'
 import { sportName } from '@/lib/sports-lt'
 import type { Access } from '@/lib/subscription'
 import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
 import { useAccount } from './account-provider'
 import { ChipGroup } from './chip-group'
+import { FilterChip, FilterOption } from './filter-chip'
 import { SignalDetail } from './signal-detail'
 
 const POLL_MS = 60_000
@@ -112,7 +121,9 @@ export function SignalBoard({
   const [refreshing, setRefreshing] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [sport, setSport] = useState<string | null>(null)
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [sportsPicked, setSportsPicked] = useState<string[]>([])
+  const [markets, setMarkets] = useState<string[]>([])
+  const [periods, setPeriods] = useState<string[]>([])
   const [showClosed, setShowClosed] = useState(false)
   const [showHidden, setShowHidden] = useState(false)
   const [selected, setSelected] = useState<BoardRow | null>(null)
@@ -195,6 +206,9 @@ export function SignalBoard({
     maxOdds: freeTier ? Math.min(prefs.maxOdds, FREE_MAX_ODDS) : prefs.maxOdds,
     maxHoursToStart: prefs.maxHoursToStart,
     sport,
+    sports: sportsPicked,
+    markets,
+    periods,
   }
   const rows = useMemo(() => boardRows(board.signals, filters, now), [board.signals, JSON.stringify(filters), now]) // eslint-disable-line react-hooks/exhaustive-deps
   const visible = useMemo(() => rows.open.filter((row) => !hidden.has(row.signal.id)), [rows.open, hidden])
@@ -263,6 +277,15 @@ export function SignalBoard({
     [refreshBets],
   )
 
+  const onBoard = sportsIn(board.signals)
+  const band = bandFor(prefs.minOdds, prefs.maxOdds) ?? bandFor(prefs.minOdds, 100)
+  const listLabel = (keys: string[], label: (key: string) => string, all: string) =>
+    keys.length === 0 ? all : keys.length <= 2 ? keys.map(label).join(', ') : `${keys.length} pasirinkti`
+  const booksValue = prefs.books.length === BOOKS.length ? 'visos kontoros' : prefs.books.join(', ')
+  const sportsValue = sport ? sportName(sport) : listLabel(sportsPicked, sportName, 'visi sportai')
+  const marketsValue = listLabel(markets, marketLabel, 'visos rinkos')
+  const periodsValue = listLabel(periods, periodLabel, 'visi periodai')
+
   const status = board.status
   const stale = status ? isStale(status.publishedAt, now) : false
   const best = visible[0]?.price.edge
@@ -322,16 +345,6 @@ export function SignalBoard({
                 >
                   <RefreshCw className={`size-5 ${refreshing ? 'animate-spin' : ''}`} aria-hidden />
                 </button>
-                <button
-                  type="button"
-                  aria-expanded={filtersOpen}
-                  onClick={() => setFiltersOpen((value) => !value)}
-                  className={`ml-1 inline-flex h-10 items-center justify-center gap-2 rounded-xl font-medium transition-colors max-xl:w-10 xl:px-3 ${filtersOpen ? 'bg-chalk text-night' : 'bg-stand text-chalk hairline hover:bg-stand-hover'}`}
-                >
-                  <SlidersHorizontal className="size-4" aria-hidden />
-                  {/* The list column is narrow; the word only fits on wide screens. */}
-                  <span className="max-xl:sr-only">Filtrai</span>
-                </button>
               </div>
             </div>
             <p className="mt-1 text-[0.9rem] text-haze">
@@ -345,79 +358,107 @@ export function SignalBoard({
 
             <DailyTarget bets={bets} now={now} target={prefs.dailyBets} onChange={(dailyBets) => updateSettings({ dailyBets })} />
 
-            <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Kontoros">
-              {BOOKS.map((book) => {
-                const on = prefs.books.includes(book)
-                return (
-                  <button
-                    key={book}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => toggleBook(book)}
-                    className={`inline-flex items-center gap-2 rounded-full py-1 pr-3 pl-1 text-[0.9rem] font-medium transition-[background-color,color,opacity] ${on ? 'bg-rail text-chalk' : 'text-haze hover:text-chalk'}`}
-                  >
-                    <BookMark book={book} size="sm" />
-                    {book}
-                  </button>
-                )
-              })}
-            </div>
+            {/* Always visible, the way a member actually works: narrow, look, widen. */}
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              <FilterChip label="Kontoros" value={prefs.books.length < BOOKS.length ? booksValue : 'Kontoros'} active={prefs.books.length < BOOKS.length}>
+                {BOOKS.map((book) => (
+                  <FilterOption key={book} label={book} multiple checked={prefs.books.includes(book)} onChange={() => toggleBook(book)} />
+                ))}
+              </FilterChip>
 
-            <AnimatePresence initial={false}>
-              {filtersOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: reduced ? 0 : 0.3, ease: EASE }}
-                  className="overflow-hidden"
-                >
-                  <div className="space-y-4 pt-5">
-                    {freeTier ? (
-                      <p className="text-[0.9rem] text-haze">
-                        Nemokamame plane vertės riba nustatyta: rodom viską iki {formatEdge(FREE_MAX_EDGE)} ir iki{' '}
-                        {formatOdds(FREE_MAX_ODDS)} koeficiento.
-                      </p>
-                    ) : (
-                      <ChipGroup
-                        label="Mažiausia vertė"
-                        options={EDGE_CHOICES.map((value) => ({ value, label: `nuo ${Math.round(value * 100)} %` }))}
-                        value={prefs.minEdge}
-                        onChange={(minEdge) => updateSettings({ minEdge })}
-                      />
-                    )}
-                    <ChipGroup
-                      label="Iki rungtynių"
-                      options={HOUR_CHOICES}
-                      value={prefs.maxHoursToStart}
-                      onChange={(maxHoursToStart) => updateSettings({ maxHoursToStart })}
+              <FilterChip label="Sportas" value={sportsPicked.length || sport ? sportsValue : 'Sportas'} active={sportsPicked.length > 0 || sport !== null}>
+                <FilterOption
+                  label="Visi sportai"
+                  checked={sportsPicked.length === 0}
+                  onChange={() => {
+                    setSportsPicked([])
+                    setSport(null)
+                  }}
+                />
+                {onBoard.map((key) => (
+                  <FilterOption
+                    key={key}
+                    label={sportName(key)}
+                    multiple
+                    checked={sportsPicked.includes(key)}
+                    onChange={() => {
+                      setSport(null)
+                      setSportsPicked((current) => (current.includes(key) ? current.filter((item) => item !== key) : [...current, key]))
+                    }}
+                  />
+                ))}
+              </FilterChip>
+
+              <FilterChip label="Laikas iki rungtynių" value={`${prefs.maxHoursToStart} val.`} active>
+                {HOUR_CHOICES.map((choice) => (
+                  <FilterOption
+                    key={choice.value}
+                    label={`per ${choice.label}`}
+                    checked={prefs.maxHoursToStart === choice.value}
+                    onChange={() => updateSettings({ maxHoursToStart: choice.value })}
+                  />
+                ))}
+              </FilterChip>
+
+              {freeTier ? (
+                <span className="inline-flex min-h-11 items-center rounded-full px-4 text-[0.9rem] text-haze hairline">
+                  vertė iki {formatEdge(FREE_MAX_EDGE)}
+                </span>
+              ) : (
+                <FilterChip label="Vertė" value={`${Math.round(prefs.minEdge * 100)} %+`} active>
+                  {EDGE_CHOICES.map((value) => (
+                    <FilterOption
+                      key={value}
+                      label={`${Math.round(value * 100)} %+`}
+                      checked={Math.abs(prefs.minEdge - value) < 0.0001}
+                      onChange={() => updateSettings({ minEdge: value })}
                     />
-                    <ChipGroup
-                      label="Koeficientai"
-                      options={[
-                        { value: '1.3-6', label: 'Visi' },
-                        { value: '1.3-3', label: 'Iki 3,00' },
-                        { value: '1.5-2.5', label: '1,50–2,50' },
-                      ]}
-                      value={`${prefs.minOdds}-${prefs.maxOdds}`}
-                      onChange={(range) => {
-                        const [minOdds, maxOdds] = range.split('-').map(Number)
-                        updateSettings({ minOdds, maxOdds })
-                      }}
-                    />
-                    {sports.length > 1 && (
-                      <ChipGroup
-                        label="Sporto šaka"
-                        options={[{ value: '', label: 'Visos' }, ...sports.map((value) => ({ value, label: sportName(value) }))]}
-                        value={sport ?? ''}
-                        onChange={(value) => setSport(value || null)}
-                      />
-                    )}
-                    {saveError && <p className="text-[0.9rem] text-brick">{saveError}</p>}
-                  </div>
-                </motion.div>
+                  ))}
+                </FilterChip>
               )}
-            </AnimatePresence>
+
+              <FilterChip label="Koeficientai" value={band && band.key !== 'all' ? band.label : 'Koef.'} active={band?.key !== 'all'}>
+                {ODDS_BANDS.map((option) => (
+                  <FilterOption
+                    key={option.key}
+                    label={option.label}
+                    checked={band?.key === option.key}
+                    onChange={() => updateSettings({ minOdds: option.min, maxOdds: option.key === 'all' ? 6 : option.max })}
+                  />
+                ))}
+              </FilterChip>
+
+              <FilterChip label="Rinka" value={markets.length ? marketsValue : 'Rinka'} active={markets.length > 0}>
+                <FilterOption label="Visos rinkos" checked={markets.length === 0} onChange={() => setMarkets([])} />
+                {MARKET_FAMILIES.map((family) => (
+                  <FilterOption
+                    key={family.key}
+                    label={family.label}
+                    multiple
+                    checked={markets.includes(family.key)}
+                    onChange={() =>
+                      setMarkets((current) => (current.includes(family.key) ? current.filter((item) => item !== family.key) : [...current, family.key]))
+                    }
+                  />
+                ))}
+              </FilterChip>
+
+              <FilterChip label="Periodas" value={periods.length ? periodsValue : 'Periodas'} active={periods.length > 0}>
+                <FilterOption label="Visi periodai" checked={periods.length === 0} onChange={() => setPeriods([])} />
+                {PERIODS.map((period) => (
+                  <FilterOption
+                    key={period.key}
+                    label={period.label}
+                    multiple
+                    checked={periods.includes(period.key)}
+                    onChange={() =>
+                      setPeriods((current) => (current.includes(period.key) ? current.filter((item) => item !== period.key) : [...current, period.key]))
+                    }
+                  />
+                ))}
+              </FilterChip>
+            </div>
+            {saveError && <p className="mt-3 text-[0.9rem] text-brick">{saveError}</p>}
           </div>
 
           {status && !status.sharpAvailable && (

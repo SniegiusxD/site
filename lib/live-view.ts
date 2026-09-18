@@ -1,9 +1,17 @@
 import type { BookName } from '@/lib/landing-signals'
+import { MARKET_FAMILIES, PART_MARKETS } from '@/lib/signal-taxonomy'
 import type { LivePrice, LiveSignal } from '@/lib/live-signals'
 import type { Settings } from '@/lib/preferences'
 
 export type BoardFilters = Pick<Settings, 'books' | 'minEdge' | 'minOdds' | 'maxOdds' | 'maxHoursToStart'> & {
+  /** One sport, or null for all. Kept for the old sport row. */
   sport: string | null
+  /** Sport keys; empty means every sport. */
+  sports?: string[]
+  /** Market family keys (lib/signal-taxonomy.ts); empty means every market. */
+  markets?: string[]
+  /** 'full' and/or 'part'; empty means both. */
+  periods?: string[]
 }
 
 export type BoardRow = { signal: LiveSignal; price: LivePrice }
@@ -30,8 +38,19 @@ export function boardRows(signals: LiveSignal[], filters: BoardFilters, now: Dat
   const nowMs = now.getTime()
   const horizon = nowMs + filters.maxHoursToStart * 3_600_000
 
+  const allowedMarkets = filters.markets?.length
+    ? new Set<string>(MARKET_FAMILIES.filter((family) => filters.markets!.includes(family.key)).flatMap((family) => [...family.markets]))
+    : null
+
   for (const signal of signals) {
     if (filters.sport && signal.sport !== filters.sport) continue
+    if (filters.sports?.length && !filters.sports.includes(signal.sport)) continue
+    if (allowedMarkets && !allowedMarkets.has(signal.market)) continue
+    if (filters.periods?.length) {
+      const isPart = (PART_MARKETS as readonly string[]).includes(signal.market)
+      if (isPart && !filters.periods.includes('part')) continue
+      if (!isPart && !filters.periods.includes('full')) continue
+    }
     const start = new Date(signal.startsAt).getTime()
     if (signal.status === 'open' && start > nowMs) {
       if (start > horizon) continue
