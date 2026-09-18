@@ -111,7 +111,16 @@ export function SignalDetail({
 
       <div className="mt-5 flex items-start justify-between gap-3">
         <h2 className="text-[2.1rem] sm:text-[2.6rem]">{eventLabel(price.eventName)}</h2>
-        <CopyButton text={price.eventName} label={`${price.book}: ${price.eventName}`} className="mt-1 shrink-0" />
+        <span className="mt-1 flex shrink-0 items-center gap-1">
+          <CopyButton text={price.eventName} label={`${price.book}: ${price.eventName}`} />
+          {/* The event name alone is what a bookmaker's search wants; a note
+              wants the market and the price as well. */}
+          <CopyButton
+            text={`${price.eventName} — ${ltSelection(price.selectionLabel)} — ${price.book} ${formatOdds(price.odds)}`}
+            label="Kopijuoti su rinka ir koeficientu"
+            icon="full"
+          />
+        </span>
       </div>
 
       {!open && (
@@ -314,10 +323,14 @@ export function SignalDetail({
               type="button"
               onClick={() => track()}
               disabled={tracking === 'pending'}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-floodlight text-[1.05rem] font-semibold text-night transition-transform hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70"
+              className={`flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-[1.05rem] font-semibold transition-transform hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 ${
+                open ? 'bg-floodlight text-night' : 'bg-stand text-chalk hairline'
+              }`}
             >
               {tracking === 'pending' && <Loader2 className="size-5 animate-spin" aria-hidden />}
-              Pastačiau {formatEuro(stake)} už {formatOdds(price.odds)}
+              {open
+                ? `Pastačiau ${formatEuro(stake)} už ${formatOdds(price.odds)}`
+                : `Vis tiek pažymėti ${formatEuro(stake)} už ${formatOdds(price.odds)}`}
             </button>
 
             {/* The book does not always give the screen price. Recording what it

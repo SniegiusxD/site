@@ -1,17 +1,20 @@
 'use client'
 
-import { Check, Copy } from 'lucide-react'
+import { Check, ClipboardList, Copy } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export function CopyButton({
   text,
   label,
   className = '',
+  icon,
 }: {
   text: string
   /** What is being copied, for screen readers: "Kopijuoti: {label}". */
   label: string
   className?: string
+  /** 'full' copies the whole bet and shows no word, to sit beside the plain one. */
+  icon?: 'full'
 }) {
   const [copied, setCopied] = useState(false)
 
@@ -41,8 +44,8 @@ export function CopyButton({
         copied ? 'bg-pitch-soft text-pitch' : 'text-haze hover:bg-stand-hover hover:text-chalk'
       } ${className}`}
     >
-      {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
-      <span>{copied ? 'Nukopijuota' : 'Kopijuoti'}</span>
+      {copied ? <Check className="size-4" aria-hidden /> : icon === 'full' ? <ClipboardList className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
+      {icon === 'full' ? null : <span>{copied ? 'Nukopijuota' : 'Kopijuoti'}</span>}
     </button>
   )
 }

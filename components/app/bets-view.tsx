@@ -20,6 +20,7 @@ import {
   verdict,
 } from '@/lib/bet-value'
 import { betsToCsv, csvFileName } from '@/lib/bets-csv'
+import { breakdown, type BreakdownKind } from '@/lib/breakdowns'
 import { executionStats } from '@/lib/execution'
 import { formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
@@ -223,6 +224,7 @@ export function BetsView() {
           <StatGrid stats={stats} bets={scoped} />
           <ValueCard series={series} stats={stats} />
           <ProfitCalendar bets={scoped} />
+          <Breakdowns bets={scoped} />
           <History pending={pending} settled={settled} tab={tab} onTab={setTab} onChanged={load} />
         </div>
       )}
@@ -448,6 +450,49 @@ function ValueCard({ series, stats }: { series: ValuePoint[]; stats: BetStats })
           <p>CLV rodo, kiek tavo koeficientas buvo geresnis už tikrąją kainą rungtynių pradžioje. Nuolat teigiamas CLV yra geriausias ženklas, kad statai teisingai.</p>
         </div>
       </details>
+    </section>
+  )
+}
+
+/** Where the results came from: by bookmaker, sport or market family. */
+function Breakdowns({ bets }: { bets: ActiveBet[] }) {
+  const [kind, setKind] = useState<BreakdownKind>('book')
+  const rows = breakdown(bets, kind)
+  if (rows.length === 0) return null
+
+  return (
+    <section aria-labelledby="breakdown-title" className="mt-10">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <h2 id="breakdown-title" className="text-[1.6rem]">
+          Iš kur rezultatas
+        </h2>
+        <Segmented
+          label="Grupuoti"
+          options={[
+            { value: 'book', label: 'Kontoros' },
+            { value: 'sport', label: 'Sportas' },
+            { value: 'market', label: 'Rinkos' },
+          ]}
+          value={kind}
+          onChange={setKind}
+        />
+      </div>
+      <ul className="mt-4 divide-y divide-rail overflow-hidden rounded-2xl bg-stand hairline">
+        {rows.map((row) => (
+          <li key={row.label} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3.5 sm:px-5">
+            <span className="font-medium">{row.label}</span>
+            <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[0.9rem] text-haze tnum">
+              <span>
+                {row.settled} {ltPlural(row.settled, 'statymas', 'statymai', 'statymų')}
+              </span>
+              <span>{formatEuro(row.staked)} pastatyta</span>
+              <span>grąža {row.roi === null ? '–' : formatEdge(row.roi)}</span>
+              <span>CLV {row.clv === null ? '–' : formatEdge(row.clv)}</span>
+              <span className={`font-semibold ${tone(row.profit)}`}>{signedEuro(row.profit)}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
     </section>
   )
 }
