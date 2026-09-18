@@ -39,12 +39,24 @@ describe('parseBetInput', () => {
     expect(parseBetInput({ ...valid, odds: 'nine' }).ok).toBe(false)
   })
 
-  it('falls back on unknown sports and markets instead of storing them', () => {
-    const result = parseBetInput({ ...valid, sport: 'curling', marketType: 'made_up' })
+  it('keeps sports and markets the VM adds later, in the stored casing', () => {
+    // Boxing, MMA and cricket bets already exist; markets grow every round.
+    const result = parseBetInput({ ...valid, sport: 'basketball', marketType: 'moneyline_reg' })
     expect(result.ok).toBe(true)
     if (result.ok) {
-      expect(result.value.sport).toBe('OTHER')
-      expect(result.value.marketType).toBe('other')
+      expect(result.value.sport).toBe('BASKETBALL')
+      expect(result.value.marketType).toBe('moneyline_reg')
+    }
+    const boxing = parseBetInput({ ...valid, sport: 'BOXING' })
+    expect(boxing.ok && boxing.value.sport).toBe('BOXING')
+  })
+
+  it('refuses a sport or market that is not a plain token', () => {
+    const junk = parseBetInput({ ...valid, sport: '<script>alert(1)</script>', marketType: 'a b c' })
+    expect(junk.ok).toBe(true)
+    if (junk.ok) {
+      expect(junk.value.sport).toBe('OTHER')
+      expect(junk.value.marketType).toBe('other')
     }
   })
 

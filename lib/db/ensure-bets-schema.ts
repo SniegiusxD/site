@@ -50,7 +50,14 @@ export async function ensureBetsSchema() {
       ADD COLUMN IF NOT EXISTS "canonicalOutcome" TEXT,
       ADD COLUMN IF NOT EXISTS "resultSource" TEXT,
       ADD COLUMN IF NOT EXISTS "homeScore" INTEGER,
-      ADD COLUMN IF NOT EXISTS "awayScore" INTEGER;
+      ADD COLUMN IF NOT EXISTS "awayScore" INTEGER,
+      -- Execution: the price we displayed, what the book actually gave, and how
+      -- long the member took. Without these, CLV and ROI describe our screen
+      -- rather than their account.
+      ADD COLUMN IF NOT EXISTS "shownOdds" DOUBLE PRECISION,
+      ADD COLUMN IF NOT EXISTS "shownStake" DOUBLE PRECISION,
+      ADD COLUMN IF NOT EXISTS placement TEXT NOT NULL DEFAULT 'accepted',
+      ADD COLUMN IF NOT EXISTS "delaySeconds" INTEGER;
 
     CREATE INDEX IF NOT EXISTS user_bet_user_idx ON user_bet ("userId", "placedAt" DESC);
     CREATE INDEX IF NOT EXISTS user_bet_pending_idx ON user_bet ("userId", status) WHERE status = 'laukia';

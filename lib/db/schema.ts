@@ -93,6 +93,12 @@ export const userBet = pgTable('user_bet', {
   eventKey: text('eventKey'),
   closingFairProb: doublePrecision('closingFairProb'),
   closingCapturedAt: timestamp('closingCapturedAt', { withTimezone: true }),
+  shownOdds: doublePrecision('shownOdds'),
+  shownStake: doublePrecision('shownStake'),
+  /** 'accepted' | 'limited' | 'rejected': what the bookmaker did with it. */
+  placement: text('placement').notNull().default('accepted'),
+  /** Seconds between the price capture we showed and the bet being recorded. */
+  delaySeconds: integer('delaySeconds'),
   canonicalOutcome: text('canonicalOutcome'),
   resultSource: text('resultSource'),
   homeScore: integer('homeScore'),

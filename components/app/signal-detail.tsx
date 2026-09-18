@@ -58,6 +58,9 @@ export function SignalDetail({
     setStakeText(String(clamped))
   }
   const step = stake < 20 ? 1 : 5
+  const [other, setOther] = useState(false)
+  const [otherOdds, setOtherOdds] = useState(() => formatOdds(price.odds))
+  const [otherStake, setOtherStake] = useState(() => String(stake))
 
   const prices = [...signal.prices].sort((a, b) => b.odds - a.odds)
   const low = Math.min(signal.fairOdds, ...prices.map((p) => p.odds)) * 0.94
@@ -65,17 +68,17 @@ export function SignalDetail({
   const at = (odds: number) => ((odds - low) / (high - low)) * 100
   const fairAt = at(signal.fairOdds)
 
-  async function track() {
+  async function track(actual?: { odds?: number; stake?: number; placement?: 'accepted' | 'limited' | 'rejected' }) {
     if (stake <= 0) {
       setError('Įrašyk sumą.')
       return
     }
     setTracking('pending')
     setError(null)
-    const result = await trackBet(signal, price, stake)
+    const result = await trackBet(signal, price, stake, actual)
     if (result.ok) {
       setTracking('done')
-      toast.success(`Pridėta: ${formatEuro(stake)} už ${formatOdds(price.odds)}`, {
+      toast.success(`Pridėta: ${formatEuro(actual?.stake ?? stake)} už ${formatOdds(actual?.odds ?? price.odds)}`, {
         description: `${price.book}, ${ltSelection(price.selectionLabel)}`,
       })
       onTracked?.(toBoardBet(result.bet))
@@ -293,15 +296,78 @@ export function SignalDetail({
             </Link>
           </p>
         ) : (
-          <button
-            type="button"
-            onClick={track}
-            disabled={tracking === 'pending'}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-floodlight text-[1.05rem] font-semibold text-night transition-transform hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70"
-          >
-            {tracking === 'pending' && <Loader2 className="size-5 animate-spin" aria-hidden />}
-            Pastačiau {formatEuro(stake)} už {formatOdds(price.odds)}
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => track()}
+              disabled={tracking === 'pending'}
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-floodlight text-[1.05rem] font-semibold text-night transition-transform hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70"
+            >
+              {tracking === 'pending' && <Loader2 className="size-5 animate-spin" aria-hidden />}
+              Pastačiau {formatEuro(stake)} už {formatOdds(price.odds)}
+            </button>
+
+            {/* The book does not always give the screen price. Recording what it
+                actually gave is what keeps CLV and grąža about your account. */}
+            {other ? (
+              <div className="mt-3 rounded-2xl bg-stand p-4 hairline">
+                <p className="text-[0.9rem] text-haze">Kontora davė kitaip?</p>
+                <div className="mt-3 flex flex-wrap items-end gap-3">
+                  <label className="text-[0.85rem] text-haze">
+                    Koeficientas
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={otherOdds}
+                      onChange={(event) => setOtherOdds(event.target.value)}
+                      className="mt-1 block h-11 w-24 rounded-xl bg-night px-3 text-[1rem] text-chalk tnum hairline"
+                    />
+                  </label>
+                  <label className="text-[0.85rem] text-haze">
+                    Suma, €
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={otherStake}
+                      onChange={(event) => setOtherStake(event.target.value)}
+                      className="mt-1 block h-11 w-24 rounded-xl bg-night px-3 text-[1rem] text-chalk tnum hairline"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    disabled={tracking === 'pending'}
+                    onClick={() => {
+                      const odds = Number(otherOdds.replace(',', '.'))
+                      const amount = Number(otherStake.replace(',', '.'))
+                      if (!Number.isFinite(odds) || odds <= 1 || !Number.isFinite(amount) || amount <= 0) {
+                        setError('Įrašyk koeficientą ir sumą, kuriuos gavai.')
+                        return
+                      }
+                      track({ odds, stake: amount, placement: amount < stake - 0.005 ? 'limited' : 'accepted' })
+                    }}
+                    className="ml-auto h-11 rounded-xl bg-chalk px-4 font-semibold text-night disabled:opacity-70"
+                  >
+                    Įrašyti
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => track({ placement: 'rejected', stake: 0.01 })}
+                  className="mt-3 text-[0.9rem] text-haze underline decoration-rail-strong underline-offset-4 hover:text-chalk"
+                >
+                  Kontora nepriėmė statymo
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setOther(true)}
+                className="mt-2.5 flex h-11 w-full items-center justify-center text-[0.95rem] text-haze underline decoration-rail-strong underline-offset-4 hover:text-chalk"
+              >
+                Gavau kitą koeficientą arba sumą
+              </button>
+            )}
+          </>
         )}
       </div>
     </article>

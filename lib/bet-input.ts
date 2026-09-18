@@ -1,5 +1,4 @@
 import { BOOKS, type BookName } from '@/lib/landing-signals'
-import { MARKET_FAMILIES, SPORT_KEYS } from '@/lib/signal-taxonomy'
 
 /**
  * What POST /api/bets accepts. The route used to coerce whatever arrived with
@@ -25,17 +24,26 @@ export type BetInput = {
   startsAt: Date | null
   entryFairProb: number | null
   eventKey: string | null
+  /** The price on screen when the member pressed the button. */
+  shownOdds: number | null
+  shownStake: number | null
+  placement: Placement
+  delaySeconds: number | null
 }
+
+export const PLACEMENTS = ['accepted', 'limited', 'rejected'] as const
+export type Placement = (typeof PLACEMENTS)[number]
 
 export type BetInputResult = { ok: true; value: BetInput } | { ok: false; error: string }
 
-/** Every market name the publisher writes, plus the families' own keys. */
-const MARKETS = new Set<string>([
-  ...MARKET_FAMILIES.flatMap((family) => [...family.markets]),
-  ...MARKET_FAMILIES.map((family) => family.key),
-])
-
-const SPORTS = new Set<string>([...SPORT_KEYS, 'OTHER'])
+/**
+ * Sports and markets are checked by shape, not against a closed list. The VM
+ * adds sports and market families of its own (boxing, MMA and cricket bets are
+ * already recorded, and markets like moneyline_reg arrive with new rounds), and
+ * a fixed vocabulary here would quietly file them as "other".
+ */
+const SPORT_SHAPE = /^[A-Z][A-Z_]{1,31}$/
+const MARKET_SHAPE = /^[a-z][a-z0-9_]{1,39}$/
 
 const MAX = { name: 200, description: 300, id: 64, key: 128 }
 
@@ -68,11 +76,11 @@ export function parseBetInput(input: unknown): BetInputResult {
     return { ok: false, error: 'Suma turi būti nuo 0,01 € iki 100 000 €.' }
   }
 
-  const sportRaw = typeof raw.sport === 'string' ? raw.sport : 'OTHER'
-  const sport = SPORTS.has(sportRaw) ? sportRaw : 'OTHER'
+  const sportRaw = (typeof raw.sport === 'string' ? raw.sport : '').trim().toUpperCase()
+  const sport = SPORT_SHAPE.test(sportRaw) ? sportRaw : 'OTHER'
 
-  const marketRaw = typeof raw.marketType === 'string' ? raw.marketType : 'moneyline'
-  const marketType = MARKETS.has(marketRaw) ? marketRaw : 'other'
+  const marketRaw = (typeof raw.marketType === 'string' ? raw.marketType : '').trim().toLowerCase()
+  const marketType = MARKET_SHAPE.test(marketRaw) ? marketRaw : 'other'
 
   const line = raw.line == null ? null : Number(raw.line)
   if (line !== null && (!Number.isFinite(line) || Math.abs(line) > LIMITS.line)) {
@@ -93,6 +101,25 @@ export function parseBetInput(input: unknown): BetInputResult {
       return { ok: false, error: 'Rungtynių laikas per toli nuo šiandienos.' }
     }
     startsAt = parsed
+  }
+
+  const shownRaw = Number(raw.shownOdds)
+  const shown = Number.isFinite(shownRaw) && shownRaw >= LIMITS.odds.min && shownRaw <= LIMITS.odds.max ? shownRaw : odds
+  const shownStakeRaw = Number(raw.shownStake)
+  const shownStake =
+    Number.isFinite(shownStakeRaw) && shownStakeRaw >= LIMITS.stake.min && shownStakeRaw <= LIMITS.stake.max ? shownStakeRaw : stake
+
+  const placement: Placement = PLACEMENTS.includes(raw.placement as Placement) ? (raw.placement as Placement) : 'accepted'
+
+  // The delay is measured from the capture we showed, on the server's clock:
+  // a client clock can be wrong by hours.
+  let delay: number | null = null
+  if (typeof raw.capturedAt === 'string') {
+    const captured = new Date(raw.capturedAt)
+    if (!Number.isNaN(captured.getTime())) {
+      const seconds = Math.round((Date.now() - captured.getTime()) / 1000)
+      if (seconds >= 0 && seconds < 7 * 24 * 3600) delay = seconds
+    }
   }
 
   const entryFairProb = Number(raw.entryFairProb)
@@ -117,6 +144,10 @@ export function parseBetInput(input: unknown): BetInputResult {
       startsAt,
       entryFairProb: fair,
       eventKey: text(raw.eventKey, MAX.id),
+      shownOdds: shown,
+      shownStake: shownStake,
+      placement,
+      delaySeconds: delay,
     },
   }
 }

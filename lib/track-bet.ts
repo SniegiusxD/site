@@ -13,7 +13,15 @@ function splitEvent(eventName: string): [string, string] | null {
  * The /api/bets body for a bet placed from a live signal. Names follow the
  * book the user bet at; the grader matches names loosely, so any spelling works.
  */
-export function betPayload(signal: LiveSignal, price: LivePrice, stake: number) {
+export type Placement = 'accepted' | 'limited' | 'rejected'
+
+export function betPayload(
+  signal: LiveSignal,
+  price: LivePrice,
+  stake: number,
+  /** What the book actually gave, when it differed from the screen. */
+  actual?: { odds?: number; stake?: number; placement?: Placement },
+) {
   const names = splitEvent(price.eventName)
   const home = names?.[0] ?? signal.home ?? ''
   const away = names?.[1] ?? signal.away ?? ''
@@ -25,8 +33,12 @@ export function betPayload(signal: LiveSignal, price: LivePrice, stake: number) 
     match: `${home} vs ${away}`,
     betDescription: price.selectionLabel,
     bookmaker: price.book,
-    odds: price.odds,
-    stake,
+    odds: actual?.odds ?? price.odds,
+    stake: actual?.stake ?? stake,
+    shownOdds: price.odds,
+    shownStake: stake,
+    placement: actual?.placement ?? 'accepted',
+    capturedAt: price.capturedAt,
     marketType: signal.market,
     pickName,
     line: signal.line,
@@ -43,12 +55,13 @@ export async function trackBet(
   signal: LiveSignal,
   price: LivePrice,
   stake: number,
+  actual?: { odds?: number; stake?: number; placement?: Placement },
 ): Promise<{ ok: true; bet: ActiveBet } | { ok: false; error: string }> {
   try {
     const response = await fetch('/api/bets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(betPayload(signal, price, stake)),
+      body: JSON.stringify(betPayload(signal, price, stake, actual)),
     })
     const body = await response.json().catch(() => null)
     if (!response.ok || !body?.bet) {
