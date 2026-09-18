@@ -1,5 +1,7 @@
 import { pool } from '@/lib/db'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
+import { loadMovement, recordObservations } from '@/lib/price-history'
+import type { MovementMap } from '@/lib/price-movement'
 
 /**
  * Live signals written by the VM after each cycle (aggregator
@@ -70,6 +72,8 @@ export type LockedSignal = {
 export type LiveBoard = {
   signals: LiveSignal[]
   status: RunnerStatus | null
+  /** Where each signal's price started, for the ones seen in two cycles or more. */
+  movement?: MovementMap
   /** Only on the free tier: what a subscription would unlock. */
   locked?: LockedSignal[]
   tier?: 'free' | 'full'
@@ -156,7 +160,15 @@ export async function loadLiveBoard(): Promise<LiveBoard> {
         }
       : null
 
-    return { signals, status, tier: 'full' }
+    // Keep the captures before reading them back, so a signal's first cycle is
+    // already stored when the next one arrives.
+    await recordObservations().catch((error) => console.error('[price-history] record', error))
+    const movement = await loadMovement(signals.map((signal) => signal.id)).catch((error) => {
+      console.error('[price-history] read', error)
+      return {} as MovementMap
+    })
+
+    return { signals, status, tier: 'full', movement }
   } catch (error) {
     // Tables not created yet (fresh database): an empty board, not a crash.
     if ((error as { code?: string }).code === '42P01') return { signals: [], status: null, tier: 'full' }

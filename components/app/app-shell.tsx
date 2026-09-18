@@ -129,7 +129,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Phone bottom navigation */}
       <nav
         aria-label="Programėlė"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-rail bg-night/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid border-t border-rail bg-night/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
+        style={{ gridTemplateColumns: `repeat(${NAV.length}, minmax(0, 1fr))` }}
       >
         {NAV.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href)

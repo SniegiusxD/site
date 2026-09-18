@@ -14,6 +14,7 @@ import { formatEdge, formatEuro, formatOdds, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { FREE_MAX_EDGE, FREE_MAX_ODDS } from '@/lib/free-tier'
 import type { LiveBoard, LiveSignal, LockedSignal } from '@/lib/live-signals'
+import { driftOf, DRIFT_FLOOR, type Movement } from '@/lib/price-movement'
 import {
   agoLabel,
   type BoardFilters,
@@ -124,6 +125,7 @@ export function SignalBoard({
   const [sportsPicked, setSportsPicked] = useState<string[]>([])
   const [markets, setMarkets] = useState<string[]>([])
   const [periods, setPeriods] = useState<string[]>([])
+  const [drift, setDrift] = useState<'all' | 'down' | 'up'>('all')
   const [showClosed, setShowClosed] = useState(false)
   const [showHidden, setShowHidden] = useState(false)
   const [selected, setSelected] = useState<BoardRow | null>(null)
@@ -211,7 +213,16 @@ export function SignalBoard({
     periods,
   }
   const rows = useMemo(() => boardRows(board.signals, filters, now), [board.signals, JSON.stringify(filters), now]) // eslint-disable-line react-hooks/exhaustive-deps
-  const visible = useMemo(() => rows.open.filter((row) => !hidden.has(row.signal.id)), [rows.open, hidden])
+  const visible = useMemo(() => {
+    const kept = rows.open.filter((row) => !hidden.has(row.signal.id))
+    if (drift === 'all') return kept
+    return kept.filter((row) => {
+      const movement = board.movement?.[row.signal.id]?.[row.price.book]
+      if (!movement) return false
+      const change = driftOf(movement)
+      return drift === 'down' ? change <= -DRIFT_FLOOR : change >= DRIFT_FLOOR
+    })
+  }, [rows.open, hidden, drift, board.movement])
   const hiddenRows = useMemo(() => rows.open.filter((row) => hidden.has(row.signal.id)), [rows.open, hidden])
   const looseCount = useMemo(
     () =>
@@ -290,6 +301,8 @@ export function SignalBoard({
   const stale = status ? isStale(status.publishedAt, now) : false
   const best = visible[0]?.price.edge
 
+  const movementFor = (row: BoardRow) => board.movement?.[row.signal.id]?.[row.price.book]
+
   function renderRow(row: BoardRow, options: { isHidden?: boolean } = {}) {
     const exposure = exposureFor(row.signal, bets, signalsById)
     const { suggested } = boardStake(prefs, row.signal, row.price, exposure)
@@ -305,6 +318,7 @@ export function SignalBoard({
         sameMatch={exposure.match.count}
         isHidden={options.isHidden}
         pulse={pulses.get(row.signal.id) ?? pulses.get(`${row.signal.id}:${row.price.book}`)}
+        movement={movementFor(row)}
         onSelect={() => setSelected(row)}
         onToggleHidden={row.signal.status === 'open' ? () => (options.isHidden ? unhide(row) : hide(row)) : undefined}
       />
@@ -443,6 +457,16 @@ export function SignalBoard({
                 ))}
               </FilterChip>
 
+              <FilterChip
+                label="Kainos judėjimas"
+                value={drift === 'all' ? 'Judėjimas' : drift === 'down' ? 'Krenta' : 'Kyla'}
+                active={drift !== 'all'}
+              >
+                <FilterOption label="Visos" checked={drift === 'all'} onChange={() => setDrift('all')} />
+                <FilterOption label="Kaina krenta" checked={drift === 'down'} onChange={() => setDrift('down')} />
+                <FilterOption label="Kaina kyla" checked={drift === 'up'} onChange={() => setDrift('up')} />
+              </FilterChip>
+
               <FilterChip label="Periodas" value={periods.length ? periodsValue : 'Periodas'} active={periods.length > 0}>
                 <FilterOption label="Visi periodai" checked={periods.length === 0} onChange={() => setPeriods([])} />
                 {PERIODS.map((period) => (
@@ -491,7 +515,9 @@ export function SignalBoard({
                 {status ? 'Šiuo metu signalų nėra' : 'Signalai dar neskelbiami'}
               </p>
               <p className="mx-auto mt-3 max-w-[22rem] text-haze">
-                {!status
+                {drift !== 'all'
+                  ? 'Kainų judėjimą matom tik tuose signaluose, kuriuos matėm bent dviejuose skenavimuose. Palauk kito skenavimo arba grąžink filtrą į „Visos“.'
+                  : !status
                   ? 'Kai tik ateis pirmas skenavimas, signalai atsiras čia patys.'
                   : hiddenRows.length > 0 && rows.open.length === hiddenRows.length
                     ? 'Visus atvirus signalus paslėpei. Juos grąžinsi apačioje.'
@@ -702,6 +728,7 @@ function SignalRow({
   sameMatch,
   isHidden,
   pulse,
+  movement,
   onSelect,
   onToggleHidden,
 }: {
@@ -717,11 +744,16 @@ function SignalRow({
   isHidden?: boolean
   /** Set for a few seconds after a poll: the signal is new, or this book's price moved. */
   pulse?: Pulse
+  /** Where this book's price started, once we have seen two cycles. */
+  movement?: Movement
   onSelect: () => void
   onToggleHidden?: () => void
 }) {
   const { signal, price } = row
   const open = signal.status === 'open'
+  // Movement is only shown once it is real: two cycles and at least half a point.
+  const drift = movement ? driftOf(movement) : null
+  const moved = drift !== null && Math.abs(drift) >= DRIFT_FLOOR
   return (
     <motion.li
       layout="position"
@@ -762,6 +794,18 @@ function SignalRow({
           <span className={`mt-1 block text-[0.9rem] font-semibold ${open ? 'text-floodlight' : 'text-haze-dim line-through'}`}>
             {formatEdge(price.edge)}
           </span>
+          {moved && (
+            <span
+              className={`mt-1 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[0.75rem] font-semibold tnum ${
+                drift < 0 ? 'bg-brick-soft text-brick' : 'bg-pitch-soft text-pitch'
+              }`}
+              title={`Nuo pirmo skenavimo: ${formatOdds(movement!.first)} → ${formatOdds(movement!.last)}`}
+            >
+              {drift < 0 ? <ArrowDown className="size-3" aria-hidden /> : <ArrowUp className="size-3" aria-hidden />}
+              <span className="sr-only">{drift < 0 ? 'Kaina krito nuo ' : 'Kaina pakilo nuo '}</span>
+              {formatOdds(movement!.first)}
+            </span>
+          )}
         </span>
         <span className="col-span-2 col-start-2 mt-2 flex min-w-0 items-center gap-2 pr-8 text-[0.85rem]">
           {pulse === 'new' && <span className="shrink-0 rounded-full bg-pitch-soft px-1.5 py-0.5 text-[0.75rem] font-semibold text-pitch">Naujas</span>}

@@ -99,6 +99,19 @@ export function ensureAppSchema(): Promise<void> {
         "expiresAt" TIMESTAMPTZ NOT NULL
       );
 
+      -- Our own price history. The VM overwrites live_signal_price every cycle,
+      -- so movement can only be known if we keep the captures ourselves.
+      CREATE TABLE IF NOT EXISTS price_observation (
+        "signalId" TEXT NOT NULL,
+        book TEXT NOT NULL,
+        odds DOUBLE PRECISION NOT NULL,
+        edge DOUBLE PRECISION NOT NULL,
+        "capturedAt" TIMESTAMPTZ NOT NULL,
+        PRIMARY KEY ("signalId", book, "capturedAt")
+      );
+      CREATE INDEX IF NOT EXISTS price_observation_captured_idx
+        ON price_observation ("capturedAt" DESC);
+
       CREATE TABLE IF NOT EXISTS telegram_sent (
         "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
         "signalId" TEXT NOT NULL,
