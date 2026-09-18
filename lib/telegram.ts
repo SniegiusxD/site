@@ -67,6 +67,11 @@ type AccountRow = {
   minEdge: number
   maxHoursToStart: number
   books: string[]
+  sports: string[]
+  markets: string[]
+  periods: string[]
+  minOdds: number
+  maxOdds: number
   quietStart: number | null
   quietEnd: number | null
 }
@@ -75,7 +80,7 @@ export async function loadTelegramState(userId: string): Promise<TelegramState> 
   await ensureAppSchema()
   const { rows } = await pool.query<AccountRow>(
     `SELECT "chatId"::text AS "chatId", username, "linkedAt", enabled, "minEdge", "maxHoursToStart",
-            books, "quietStart", "quietEnd"
+            books, sports, markets, periods, "minOdds", "maxOdds", "quietStart", "quietEnd"
        FROM telegram_account WHERE "userId" = $1`,
     [userId],
   )
@@ -93,6 +98,11 @@ export async function loadTelegramState(userId: string): Promise<TelegramState> 
           minEdge: row.minEdge,
           maxHoursToStart: row.maxHoursToStart,
           books: row.books as BookName[],
+          sports: row.sports ?? [],
+          markets: row.markets ?? [],
+          periods: row.periods ?? [],
+          minOdds: row.minOdds ?? 1,
+          maxOdds: row.maxOdds ?? 100,
           quietStart: row.quietStart,
           quietEnd: row.quietEnd,
         }
@@ -119,11 +129,14 @@ export async function createLinkUrl(userId: string): Promise<string | null> {
 export async function saveTelegramSettings(userId: string, settings: TelegramSettings): Promise<void> {
   await ensureAppSchema()
   await pool.query(
-    `INSERT INTO telegram_account ("userId", enabled, "minEdge", "maxHoursToStart", books, "quietStart", "quietEnd", "updatedAt")
-     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+    `INSERT INTO telegram_account ("userId", enabled, "minEdge", "maxHoursToStart", books, sports, markets,
+                                   periods, "minOdds", "maxOdds", "quietStart", "quietEnd", "updatedAt")
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
      ON CONFLICT ("userId") DO UPDATE SET
        enabled = EXCLUDED.enabled, "minEdge" = EXCLUDED."minEdge",
        "maxHoursToStart" = EXCLUDED."maxHoursToStart", books = EXCLUDED.books,
+       sports = EXCLUDED.sports, markets = EXCLUDED.markets, periods = EXCLUDED.periods,
+       "minOdds" = EXCLUDED."minOdds", "maxOdds" = EXCLUDED."maxOdds",
        "quietStart" = EXCLUDED."quietStart", "quietEnd" = EXCLUDED."quietEnd", "updatedAt" = NOW()`,
     [
       userId,
@@ -131,6 +144,11 @@ export async function saveTelegramSettings(userId: string, settings: TelegramSet
       settings.minEdge,
       settings.maxHoursToStart,
       settings.books,
+      settings.sports,
+      settings.markets,
+      settings.periods,
+      settings.minOdds,
+      settings.maxOdds,
       settings.quietStart,
       settings.quietEnd,
     ],

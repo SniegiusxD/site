@@ -1,14 +1,23 @@
 'use client'
 
-import { Check, Loader2, Lock, Send } from 'lucide-react'
+import { Bell, Check, Loader2, Lock, Send } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { BookMark } from '@/components/landing/book-mark'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
+import {
+  bandFor,
+  MARKET_FAMILIES,
+  marketLabel,
+  ODDS_BANDS,
+  PERIODS,
+  periodLabel,
+  SPORTS,
+  sportLabel,
+} from '@/lib/signal-taxonomy'
 import type { TelegramState } from '@/lib/telegram'
 import { TELEGRAM_EDGE_CHOICES, TELEGRAM_HOUR_CHOICES, type TelegramSettings } from '@/lib/telegram-settings'
 import { useAccount } from './account-provider'
-import { ChipGroup } from './chip-group'
+import { FilterChip, FilterOption } from './filter-chip'
 
 const SAVE_DELAY_MS = 600
 const LINK_POLL_MS = 3000
@@ -134,6 +143,27 @@ export function TelegramCard() {
 
   const s = state.settings
   const quietOn = s.quietStart !== null && s.quietEnd !== null
+  const band = bandFor(s.minOdds, s.maxOdds)
+  const list = (keys: string[], label: (key: string) => string, all: string) =>
+    keys.length === 0 ? all : keys.length <= 2 ? keys.map(label).join(', ') : `${keys.length} pasirinkti`
+  const sportsValue = list(s.sports, sportLabel, 'visi sportai')
+  const marketsValue = list(s.markets, marketLabel, 'visos rinkos')
+  const periodsValue = list(s.periods, periodLabel, 'visi periodai')
+  const oddsValue = band ? (band.key === 'all' ? 'visi koef.' : `koef. ${band.label}`) : 'koef. pasirinkti'
+  const booksValue = s.books.length === BOOKS.length ? 'visos kontoros' : s.books.join(', ')
+  // Lithuanian cases make a single flowing sentence read badly here, so the
+  // rule is one sentence and the narrowing is a list.
+  const clauses = [
+    s.sports.length ? `sportas: ${sportsValue.toLowerCase()}` : null,
+    s.markets.length ? `rinkos: ${marketsValue.toLowerCase()}` : null,
+    s.periods.length ? `periodas: ${periodsValue.toLowerCase()}` : null,
+    band && band.key !== 'all' ? `koeficientai ${band.label}` : null,
+    s.books.length < BOOKS.length ? `kontoros: ${s.books.join(', ')}` : null,
+    `rungtynės prasideda per ${s.maxHoursToStart} val.`,
+  ].filter(Boolean)
+  const detail = clauses.join(' · ')
+  const summary = `Gausi pranešimą, kai atsiras ${Math.round(s.minEdge * 100)} %+ vertė. ${detail.charAt(0).toUpperCase()}${detail.slice(1)}.`
+  const toggleKey = (keys: string[], key: string) => (keys.includes(key) ? keys.filter((item) => item !== key) : [...keys, key])
   const toggleBook = (book: BookName) => {
     const next = s.books.includes(book) ? s.books.filter((b) => b !== book) : BOOKS.filter((b) => b === book || s.books.includes(b))
     if (next.length) update({ books: next })
@@ -192,40 +222,94 @@ export function TelegramCard() {
             className="size-5 accent-[var(--pitch)]"
           />
         </label>
-        <ChipGroup
-          size="md"
-          label="Mažiausia vertė"
-          options={TELEGRAM_EDGE_CHOICES.map((value) => ({ value, label: `nuo ${Math.round(value * 100)} %` }))}
-          value={s.minEdge as (typeof TELEGRAM_EDGE_CHOICES)[number]}
-          onChange={(minEdge) => update({ minEdge })}
-        />
-        <ChipGroup
-          size="md"
-          label="Laikas iki rungtynių"
-          options={TELEGRAM_HOUR_CHOICES.map((value) => ({ value, label: `${value} val.` }))}
-          value={s.maxHoursToStart as (typeof TELEGRAM_HOUR_CHOICES)[number]}
-          onChange={(maxHoursToStart) => update({ maxHoursToStart })}
-        />
-        <fieldset>
-          <legend className="font-medium">Kontoros</legend>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {BOOKS.map((book) => {
-              const on = s.books.includes(book)
-              return (
-                <button
-                  key={book}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => toggleBook(book)}
-                  className={`inline-flex items-center gap-2 rounded-full py-1 pr-3.5 pl-1 font-medium transition-colors ${on ? 'bg-rail text-chalk' : 'text-haze hover:text-chalk'}`}
-                >
-                  <BookMark book={book} size="sm" />
-                  {book}
-                </button>
-              )
-            })}
+        <div>
+          <p className="text-[0.75rem] tracking-[0.06em] text-haze-dim uppercase">Ką siųsti</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <FilterChip label="Sportas" value={sportsValue} active={s.sports.length > 0}>
+              <FilterOption label="Visi sportai" checked={s.sports.length === 0} onChange={() => update({ sports: [] })} />
+              {SPORTS.map((sport) => (
+                <FilterOption
+                  key={sport.key}
+                  label={sport.label}
+                  multiple
+                  checked={s.sports.includes(sport.key)}
+                  onChange={() => update({ sports: toggleKey(s.sports, sport.key) })}
+                />
+              ))}
+            </FilterChip>
+
+            <FilterChip label="Laikas iki rungtynių" value={`per ${s.maxHoursToStart} val.`} active>
+              {TELEGRAM_HOUR_CHOICES.map((hours) => (
+                <FilterOption
+                  key={hours}
+                  label={`per ${hours} val.`}
+                  checked={s.maxHoursToStart === hours}
+                  onChange={() => update({ maxHoursToStart: hours })}
+                />
+              ))}
+            </FilterChip>
+
+            <FilterChip label="Vertė" value={`vertė ${Math.round(s.minEdge * 100)} %+`} active>
+              {TELEGRAM_EDGE_CHOICES.map((edge) => (
+                <FilterOption
+                  key={edge}
+                  label={`${Math.round(edge * 100)} %+`}
+                  checked={Math.abs(s.minEdge - edge) < 0.0001}
+                  onChange={() => update({ minEdge: edge })}
+                />
+              ))}
+            </FilterChip>
+
+            <FilterChip label="Koeficientai" value={oddsValue} active={band?.key !== 'all'}>
+              {ODDS_BANDS.map((option) => (
+                <FilterOption
+                  key={option.key}
+                  label={option.label}
+                  checked={band?.key === option.key}
+                  onChange={() => update({ minOdds: option.min, maxOdds: option.max })}
+                />
+              ))}
+            </FilterChip>
+
+            <FilterChip label="Rinka" value={marketsValue} active={s.markets.length > 0}>
+              <FilterOption label="Visos rinkos" checked={s.markets.length === 0} onChange={() => update({ markets: [] })} />
+              {MARKET_FAMILIES.map((family) => (
+                <FilterOption
+                  key={family.key}
+                  label={family.label}
+                  multiple
+                  checked={s.markets.includes(family.key)}
+                  onChange={() => update({ markets: toggleKey(s.markets, family.key) })}
+                />
+              ))}
+            </FilterChip>
+
+            <FilterChip label="Periodas" value={periodsValue} active={s.periods.length > 0}>
+              <FilterOption label="Visi periodai" checked={s.periods.length === 0} onChange={() => update({ periods: [] })} />
+              {PERIODS.map((period) => (
+                <FilterOption
+                  key={period.key}
+                  label={period.label}
+                  multiple
+                  checked={s.periods.includes(period.key)}
+                  onChange={() => update({ periods: toggleKey(s.periods, period.key) })}
+                />
+              ))}
+            </FilterChip>
+
+            <FilterChip label="Kontoros" value={booksValue} active={s.books.length < BOOKS.length}>
+              {BOOKS.map((book) => (
+                <FilterOption key={book} label={book} multiple checked={s.books.includes(book)} onChange={() => toggleBook(book)} />
+              ))}
+            </FilterChip>
           </div>
-        </fieldset>
+
+          <p className="mt-4 flex gap-2.5 rounded-xl bg-floodlight-soft px-3.5 py-3 text-[0.9rem] text-chalk">
+            <Bell className="mt-0.5 size-4 shrink-0 text-floodlight" aria-hidden />
+            <span>{summary}</span>
+          </p>
+        </div>
+
         <fieldset>
           <legend className="flex w-full items-center justify-between gap-4 font-medium">
             Tylos valandos

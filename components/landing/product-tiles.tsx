@@ -15,19 +15,19 @@ const EASE = [0.22, 1, 0.36, 1] as const
 const threeBook = landingSignals.find((signal) => signal.id === 'breogan-rilski-hcp-home')!
 const betsson = landingSignals.find((signal) => signal.id === 'vef-absheron-total-171')!
 
-const CARD = 'group flex h-full min-w-0 flex-col rounded-[20px] bg-stand p-[clamp(20px,2.6vw,28px)] shadow-[inset_0_0_0_1px_var(--rail)] transition-transform duration-150 hover:-translate-y-0.5'
-const H3 = 'text-[clamp(1.375rem,2vw,1.75rem)] tracking-[-0.02em]'
-const BODY = 'mt-2.5 text-[0.9375rem] text-haze'
+const CARD = 'group flex h-full min-w-0 flex-col rounded-[20px] bg-white p-[clamp(20px,2.6vw,28px)] text-ink shadow-[0_1px_2px_rgb(11_31_23/0.06),inset_0_0_0_1px_rgb(11_31_23/0.08)] transition-transform duration-150 hover:-translate-y-0.5'
+const H3 = 'text-[clamp(1.375rem,2vw,1.75rem)] tracking-[-0.02em] text-ink'
+const BODY = 'mt-2.5 text-[0.9375rem] text-moss'
 
 export function ProductTiles({ stats }: { stats: PublicStats | null }) {
   return (
-    <section id="viduje" className="scroll-mt-16 bg-night px-5 py-[clamp(80px,10vw,160px)] sm:px-8">
+    <section id="viduje" className="scroll-mt-16 bg-cream px-5 py-[clamp(80px,10vw,160px)] text-ink sm:px-8">
       <div className="mx-auto max-w-[80rem]">
         <Reveal>
-          <h2 className="text-[clamp(2.25rem,4.5vw,4rem)] leading-[0.95]">Kas laukia viduje</h2>
+          <h2 className="text-[clamp(2.25rem,4.5vw,4rem)] leading-[0.95] text-ink">Kas laukia viduje</h2>
         </Reveal>
         <Reveal delay={80}>
-          <p className="mt-5 max-w-[60ch] text-[clamp(1.05rem,1.4vw,1.25rem)] text-haze">Visa tai veikia ir čia. Spaudinėk.</p>
+          <p className="mt-5 max-w-[60ch] text-[clamp(1.05rem,1.4vw,1.25rem)] text-moss">Visa tai veikia ir čia. Spaudinėk.</p>
         </Reveal>
         <div className="mt-[clamp(40px,5vw,72px)] grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Reveal variant="scale" className="md:col-span-2">
@@ -79,13 +79,13 @@ function PricesTile() {
       <h3 className={H3}>Visų kontorų kainos prie kiekvieno signalo</h3>
       <p className={BODY}>Matai ne tik geriausią kainą, o visą eilę ir tikrąją kainą tarp jų. Turi kelias paskyras? Statai ten, kur moka daugiausia.</p>
       <p className="mt-4 text-[0.875rem]">
-        {event.event} <span className="text-haze">· {threeBook.market}: {event.selection}</span>
+        {event.event} <span className="text-moss">· {threeBook.market}: {event.selection}</span>
       </p>
 
       <div ref={ref} className="relative mt-5 grid flex-1 content-start gap-2.5">
         {/* The true price: everything in this card is read against this line. */}
         <div className="pointer-events-none absolute inset-y-0 z-10" style={{ left: `${at(fair)}%` }} aria-hidden>
-          <div className="h-full w-px border-l border-dashed border-chalk/45" />
+          <div className="h-full w-px border-l border-dashed border-ink/40" />
         </div>
 
         {sorted.map((price, index) => {
@@ -93,20 +93,20 @@ function PricesTile() {
           const value = delta > 0
           return (
             <div key={price.book} className="grid grid-cols-[4.5rem_1fr] items-center gap-3">
-              <span className="truncate text-[0.875rem] text-haze">{price.book}</span>
-              <div className="relative h-11 rounded-[10px] bg-night">
+              <span className="truncate text-[0.875rem] text-moss">{price.book}</span>
+              <div className="relative h-11 rounded-[10px] bg-ink/[0.06]">
                 <div
-                  className={`absolute inset-y-0 left-0 rounded-[10px] ${value ? 'bg-floodlight/20 shadow-[inset_0_0_0_1px_var(--floodlight)]' : 'bg-rail/45'}`}
+                  className={`absolute inset-y-0 left-0 rounded-[10px] ${value ? 'bg-field/12 shadow-[inset_0_0_0_1px_var(--field)]' : 'bg-ink/[0.08]/45'}`}
                   style={{
                     width: seen ? `${at(price.odds)}%` : '0%',
                     transition: `width 900ms cubic-bezier(0.22,1,0.36,1) ${index * 90}ms`,
                   }}
                 />
                 <div className="relative flex h-full items-center justify-between gap-2 px-3">
-                  <span className={`font-display text-[1.05rem] font-bold tnum ${value ? 'text-floodlight' : 'text-chalk'}`}>
+                  <span className="font-display text-[1.05rem] font-bold text-ink tnum">
                     {formatOdds(price.odds)}
                   </span>
-                  <span className={`text-[0.8125rem] font-semibold tnum ${value ? 'text-floodlight' : 'text-haze'}`}>
+                  <span className={`text-[0.8125rem] font-semibold tnum ${value ? 'text-field' : 'text-moss'}`}>
                     <NumberFlow
                       value={seen ? delta : 0}
                       locales="lt-LT"
@@ -120,10 +120,10 @@ function PricesTile() {
         })}
 
         <div className="grid grid-cols-[4.5rem_1fr] items-center gap-3">
-          <span className="text-[0.875rem] text-haze">Tikroji</span>
+          <span className="text-[0.875rem] text-moss">Tikroji</span>
           <div className="relative h-5">
             <span
-              className="absolute top-0 -translate-x-1/2 text-[0.8125rem] whitespace-nowrap text-chalk tnum"
+              className="absolute top-0 -translate-x-1/2 text-[0.8125rem] whitespace-nowrap text-ink tnum"
               style={{ left: `${at(fair)}%` }}
             >
               {formatOdds(fair)}
@@ -132,7 +132,7 @@ function PricesTile() {
         </div>
       </div>
 
-      <p className="mt-4 text-[0.875rem] text-haze">
+      <p className="mt-4 text-[0.875rem] text-moss">
         Tikroji kaina — Pinnacle kaina be maržos. Pinnacle šitą siūlo už {formatOdds(threeBook.pinnacleOdds)}; išėmus maržą lieka {formatOdds(fair)}.
         Kas moka daugiau, tas moka per daug.
       </p>
@@ -167,7 +167,7 @@ function MyBooksTile({ stats }: { stats: PublicStats | null }) {
                 })
               }
               className={`min-h-11 rounded-full px-[15px] text-[0.875rem] font-semibold transition-[transform,background-color,color] duration-150 active:scale-[0.97] ${
-                on ? 'bg-chalk text-night' : 'text-haze shadow-[inset_0_0_0_1px_var(--rail)] hover:text-chalk'
+                on ? 'bg-ink text-cream' : 'text-moss shadow-[inset_0_0_0_1px_rgb(11_31_23/0.16)] hover:text-ink'
               }`}
             >
               {book}
@@ -179,14 +179,14 @@ function MyBooksTile({ stats }: { stats: PublicStats | null }) {
         <p className="font-display text-[2.25rem] leading-none font-extrabold tracking-[-0.03em]">
           <NumberFlow value={count} locales="lt-LT" />
         </p>
-        <p className="mt-1 text-[0.8125rem] text-haze">
+        <p className="mt-1 text-[0.8125rem] text-moss">
           {stats ? `${ltPlural(count, 'signalas', 'signalai', 'signalų')} per parą su tokiu pasirinkimu` : 'pavyzdiniai signalai su tokiu pasirinkimu'}
         </p>
         <div aria-hidden className="mt-3 flex h-2 gap-1 overflow-hidden rounded-full">
           {BOOKS.map((book) => (
             <span
               key={book}
-              className={`h-2 rounded-full transition-[flex-grow,opacity] duration-500 ${enabled.has(book) ? 'bg-floodlight' : 'bg-rail'}`}
+              className={`h-2 rounded-full transition-[flex-grow,opacity] duration-500 ${enabled.has(book) ? 'bg-field' : 'bg-ink/[0.08]'}`}
               style={{ flexGrow: perBook(book) / total }}
             />
           ))}
@@ -215,21 +215,21 @@ function CopyTile() {
               if (navigator.clipboard) navigator.clipboard.writeText(price.event).then(done, done)
               else done()
             }}
-            className="flex min-h-11 w-full items-center justify-between gap-3 rounded-[14px] bg-night px-3.5 py-3 text-left transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.98]"
+            className="flex min-h-11 w-full items-center justify-between gap-3 rounded-[14px] bg-ink/[0.05] px-3.5 py-3 text-left transition-transform duration-150 hover:-translate-y-0.5 active:scale-[0.98]"
           >
             <span className="grid min-w-0 gap-0.5">
-              <span className="text-[0.75rem] text-haze">{price.book}</span>
+              <span className="text-[0.75rem] text-moss">{price.book}</span>
               <span className="truncate text-[0.875rem]">{price.event}</span>
             </span>
             {copied === price.book ? (
-              <Check className="size-4 shrink-0 text-floodlight" aria-hidden />
+              <Check className="size-4 shrink-0 text-field" aria-hidden />
             ) : (
-              <Copy className="size-4 shrink-0 text-haze" aria-hidden />
+              <Copy className="size-4 shrink-0 text-moss" aria-hidden />
             )}
           </button>
         ))}
       </div>
-      <p aria-live="polite" className="mt-auto min-h-5 pt-3 text-[0.8125rem] text-floodlight">
+      <p aria-live="polite" className="mt-auto min-h-5 pt-3 text-[0.8125rem] text-field">
         {copied ? `Nukopijuota ${copied} rašyba` : ''}
       </p>
     </article>
@@ -239,13 +239,13 @@ function CopyTile() {
 function Stepper({ label, value, onDown, onUp }: { label: string; value: string; onDown: () => void; onUp: () => void }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-[0.875rem] text-haze">{label}</span>
+      <span className="text-[0.875rem] text-moss">{label}</span>
       <span className="flex items-center gap-2">
         <button
           type="button"
           onClick={onDown}
           aria-label={`Mažinti: ${label.toLowerCase()}`}
-          className="grid size-11 place-items-center rounded-[14px] shadow-[inset_0_0_0_1px_var(--rail)] transition-transform hover:bg-stand-hover active:scale-95"
+          className="grid size-11 place-items-center rounded-[14px] shadow-[inset_0_0_0_1px_rgb(11_31_23/0.16)] transition-transform hover:bg-ink/[0.06] active:scale-95"
         >
           <Minus className="size-4" aria-hidden />
         </button>
@@ -254,7 +254,7 @@ function Stepper({ label, value, onDown, onUp }: { label: string; value: string;
           type="button"
           onClick={onUp}
           aria-label={`Didinti: ${label.toLowerCase()}`}
-          className="grid size-11 place-items-center rounded-[14px] shadow-[inset_0_0_0_1px_var(--rail)] transition-transform hover:bg-stand-hover active:scale-95"
+          className="grid size-11 place-items-center rounded-[14px] shadow-[inset_0_0_0_1px_rgb(11_31_23/0.16)] transition-transform hover:bg-ink/[0.06] active:scale-95"
         >
           <Plus className="size-4" aria-hidden />
         </button>
@@ -294,25 +294,25 @@ function LimitTile() {
         />
       </div>
       <div aria-hidden className="mt-5">
-        <div className="relative h-3 rounded-full bg-night">
+        <div className="relative h-3 rounded-full bg-ink/[0.06]">
           <span
-            className="absolute inset-y-0 left-0 rounded-full bg-rail-strong transition-[width] duration-500"
+            className="absolute inset-y-0 left-0 rounded-full bg-ink/25 transition-[width] duration-500"
             style={{ width: `${Math.min(100, (kelly / scale) * 100)}%` }}
           />
           <span
-            className="absolute inset-y-0 left-0 rounded-full bg-floodlight transition-[width] duration-500"
+            className="absolute inset-y-0 left-0 rounded-full bg-field transition-[width] duration-500"
             style={{ width: `${Math.min(100, (stake / scale) * 100)}%` }}
           />
-          <span className="absolute -inset-y-1 w-0.5 bg-chalk transition-[left] duration-500" style={{ left: `${Math.min(100, (limit / scale) * 100)}%` }} />
+          <span className="absolute -inset-y-1 w-0.5 bg-ink transition-[left] duration-500" style={{ left: `${Math.min(100, (limit / scale) * 100)}%` }} />
         </div>
-        <div className="mt-2 flex flex-wrap justify-between gap-2 text-[0.8125rem] text-haze">
+        <div className="mt-2 flex flex-wrap justify-between gap-2 text-[0.8125rem] text-moss">
           <span>Siūloma suma</span>
           <span>Pilnas ketvirtis Kelly {kelly.toFixed(2).replace('.', ',')} €</span>
           <span>Limitas {limit} €</span>
         </div>
       </div>
-      <div className="mt-auto flex flex-wrap items-baseline justify-between gap-2.5 border-t border-rail pt-3.5">
-        <span className={`text-[0.875rem] ${capped ? 'text-floodlight' : 'text-haze'}`}>
+      <div className="mt-auto flex flex-wrap items-baseline justify-between gap-2.5 border-t border-ink/10 pt-3.5">
+        <span className={`text-[0.875rem] ${capped ? 'text-field' : 'text-moss'}`}>
           {capped ? 'Apkirpta pagal kontoros limitą' : `Ketvirtis Kelly, ${((stake / bankroll) * 100).toFixed(2).replace('.', ',')} % bankrollo`}
         </span>
         <span className="font-display text-[1.75rem] font-extrabold tracking-[-0.03em]">
@@ -353,7 +353,7 @@ function BankrollTile() {
             key={amount}
             type="button"
             onClick={() => add(amount)}
-            className="min-h-11 flex-1 rounded-[14px] bg-rail px-3 text-[0.875rem] font-medium transition-[transform,background-color] hover:bg-rail-strong active:scale-[0.97]"
+            className="min-h-11 flex-1 rounded-[14px] bg-ink/[0.08] px-3 text-[0.875rem] font-medium transition-[transform,background-color] hover:bg-ink/25 active:scale-[0.97]"
           >
             {amount > 0 ? 'Įnešti 100 €' : 'Išimti 100 €'}
           </button>
@@ -374,8 +374,8 @@ function BankrollTile() {
                 transition={{ duration: 0.3, ease: EASE }}
                 className="flex justify-between gap-3"
               >
-                <span className="truncate text-haze">{entry.label}</span>
-                <span className={`font-semibold tnum ${entry.id === 0 ? '' : entry.amount > 0 ? 'text-floodlight' : 'text-brick'}`}>
+                <span className="truncate text-moss">{entry.label}</span>
+                <span className={`font-semibold tnum ${entry.id === 0 ? '' : entry.amount > 0 ? 'text-field' : 'text-coral'}`}>
                   {entry.id > 0 && entry.amount > 0 ? '+' : ''}
                   {entry.amount.toLocaleString('lt-LT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                 </span>
@@ -387,14 +387,14 @@ function BankrollTile() {
   )
 }
 
-const FILTERS = ['Nuo +2 %', 'Krepšinis', 'Tenisas', 'Tik 7BET', 'Tyla 00–08']
+const FILTERS = ['Vertė 2 %+', 'Krepšinis', 'Tenisas', 'Suminis', 'Koef. iki 2,00', 'Visos rungtynės', 'Tik 7BET', 'Tyla 00–08']
 
 function TelegramTile() {
   const [on, setOn] = useState<Set<string>>(() => new Set(['Nuo +2 %', 'Krepšinis']))
   return (
     <article className={CARD}>
       <h3 className={H3}>Signalai į Telegram</h3>
-      <p className={BODY}>Pasirenki mažiausią vertę, sportą, kontoras ir tylos valandas. Kas netinka filtrams, neateina.</p>
+      <p className={BODY}>Filtruoji pagal sportą, rinką, periodą, koeficientą, vertę, kontorą ir laiką iki rungtynių. Kas netinka, neateina.</p>
       <div className="mt-5 flex flex-wrap gap-2" role="group" aria-label="Pranešimų filtrai">
         {FILTERS.map((filter) => {
           const active = on.has(filter)
@@ -412,7 +412,7 @@ function TelegramTile() {
                 })
               }
               className={`min-h-11 rounded-full px-3.5 text-[0.8125rem] font-medium transition-[transform,background-color,color] duration-150 active:scale-[0.97] ${
-                active ? 'bg-floodlight-soft text-floodlight shadow-[inset_0_0_0_1px_var(--floodlight)]' : 'text-haze shadow-[inset_0_0_0_1px_var(--rail)] hover:text-chalk'
+                active ? 'bg-field/10 text-field shadow-[inset_0_0_0_1px_var(--field)]' : 'text-moss shadow-[inset_0_0_0_1px_rgb(11_31_23/0.16)] hover:text-ink'
               }`}
             >
               {filter}
@@ -420,8 +420,8 @@ function TelegramTile() {
           )
         })}
       </div>
-      <p className="mt-auto pt-5 text-[0.8125rem] text-haze">
-        Įjungta {on.size} iš {FILTERS.length}. Filtrus keiti profilyje, kada nori.
+      <p className="mt-auto pt-5 text-[0.8125rem] text-moss">
+        Įjungta {on.size} iš {FILTERS.length}. Visus filtrus nustatai profilyje, kada nori.
       </p>
     </article>
   )
@@ -436,7 +436,7 @@ function ClosedTile() {
     <article className={CARD}>
       <h3 className={H3}>Kai kaina pasikeičia</h3>
       <p className={BODY}>Kontora pataisė koeficientą? Signalas iškart pažymimas užsidariusiu, kad nestatytum be vertės.</p>
-      <div className="mt-5 rounded-[14px] bg-night p-4">
+      <div className="mt-5 rounded-[14px] bg-ink/[0.05] p-4">
         <div className="flex items-center justify-between gap-3">
           <p className="truncate text-[0.9375rem] font-medium">{price.event}</p>
           <AnimatePresence mode="wait" initial={false}>
@@ -446,13 +446,13 @@ function ClosedTile() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.25 }}
-              className={`font-display text-[1.375rem] font-bold tnum ${closed ? 'text-haze line-through' : 'text-floodlight'}`}
+              className={`font-display text-[1.375rem] font-bold tnum ${closed ? 'text-moss line-through' : 'text-field'}`}
             >
               {formatEdge(edge)}
             </motion.p>
           </AnimatePresence>
         </div>
-        <p className="mt-1 text-[0.8125rem] text-haze">
+        <p className="mt-1 text-[0.8125rem] text-moss">
           {betsson.market}: {price.selection}, {price.book} {formatOdds(price.odds)}
         </p>
         <AnimatePresence initial={false}>
@@ -464,7 +464,7 @@ function ClosedTile() {
               transition={{ duration: 0.35, ease: EASE }}
               className="flex items-center gap-2 overflow-hidden pt-3 text-[0.875rem]"
             >
-              <Clock className="size-4 text-haze" aria-hidden />
+              <Clock className="size-4 text-moss" aria-hidden />
               Vertė užsidarė. Paskutinį kartą matyta 13:36.
             </motion.p>
           )}
@@ -473,7 +473,7 @@ function ClosedTile() {
       <button
         type="button"
         onClick={() => setClosed((value) => !value)}
-        className="mt-auto min-h-11 w-full rounded-[14px] bg-rail px-3 text-[0.875rem] font-medium transition-[transform,background-color] hover:bg-rail-strong active:scale-[0.97] [margin-top:max(1rem,auto)]"
+        className="mt-auto min-h-11 w-full rounded-[14px] bg-ink/[0.08] px-3 text-[0.875rem] font-medium transition-[transform,background-color] hover:bg-ink/25 active:scale-[0.97] [margin-top:max(1rem,auto)]"
       >
         {closed ? 'Grąžinti' : 'Atnaujinti kainas'}
       </button>

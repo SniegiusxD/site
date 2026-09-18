@@ -85,6 +85,14 @@ export function ensureAppSchema(): Promise<void> {
         "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
 
+      -- Alert filters added 2026-09-18. An empty array means no restriction.
+      ALTER TABLE telegram_account
+        ADD COLUMN IF NOT EXISTS sports TEXT[] NOT NULL DEFAULT '{}',
+        ADD COLUMN IF NOT EXISTS markets TEXT[] NOT NULL DEFAULT '{}',
+        ADD COLUMN IF NOT EXISTS periods TEXT[] NOT NULL DEFAULT '{}',
+        ADD COLUMN IF NOT EXISTS "minOdds" DOUBLE PRECISION NOT NULL DEFAULT 1,
+        ADD COLUMN IF NOT EXISTS "maxOdds" DOUBLE PRECISION NOT NULL DEFAULT 100;
+
       CREATE TABLE IF NOT EXISTS telegram_link_token (
         token TEXT PRIMARY KEY,
         "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
