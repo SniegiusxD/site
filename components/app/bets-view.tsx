@@ -19,6 +19,7 @@ import {
   valueSeries,
   verdict,
 } from '@/lib/bet-value'
+import { executionStats } from '@/lib/execution'
 import { formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { kickoffLabel, ltSelection } from '@/lib/live-view'
@@ -218,7 +219,7 @@ export function BetsView() {
 
           <AnimatePresence>{since && <SinceLastVisit summary={since} onClose={() => setSince(null)} />}</AnimatePresence>
           <ThreeNumbers stats={stats} />
-          <StatGrid stats={stats} />
+          <StatGrid stats={stats} bets={scoped} />
           <ValueCard series={series} stats={stats} />
           <ProfitCalendar bets={scoped} />
           <History pending={pending} settled={settled} tab={tab} onTab={setTab} />
@@ -305,8 +306,10 @@ function ThreeNumbers({ stats }: { stats: BetStats }) {
   )
 }
 
-function StatGrid({ stats }: { stats: BetStats }) {
+function StatGrid({ stats, bets }: { stats: BetStats; bets: ActiveBet[] }) {
+  const execution = executionStats(bets)
   return (
+    <>
     <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-rail sm:grid-cols-4">
       <Stat label="Laimėta, pralaimėta, grąžinta">
         {stats.won}–{stats.lost}–{stats.pushed}
@@ -319,6 +322,29 @@ function StatGrid({ stats }: { stats: BetStats }) {
         {stats.beatClose} <span className="font-sans text-base font-normal text-haze">iš {stats.withClose}</span>
       </Stat>
     </dl>
+
+    {/* What the bookmaker actually gave, against what we showed. Only bets
+        recorded since the site began storing the displayed price are counted. */}
+    {execution.recorded > 0 && (
+      <dl className="mt-3 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-rail sm:grid-cols-4">
+        <Stat label="Gavai kitą kainą" note={`iš ${execution.recorded} įrašytų`}>
+          {execution.differed}
+        </Stat>
+        <Stat
+          label="Vidutinis skirtumas"
+          note={execution.averageSlippage !== null && execution.averageSlippage < 0 ? 'blogiau nei rodėm' : 'geriau nei rodėm'}
+        >
+          {execution.averageSlippage === null ? '–' : formatEdge(execution.averageSlippage)}
+        </Stat>
+        <Stat label="Apribota arba atmesta" note={execution.rejected ? `${execution.rejected} atmesta` : undefined}>
+          {execution.limited + execution.rejected}
+        </Stat>
+        <Stat label="Nuo kainos iki statymo" note="mediana">
+          {execution.medianDelayMinutes === null ? '–' : `${execution.medianDelayMinutes} min`}
+        </Stat>
+      </dl>
+    )}
+    </>
   )
 }
 

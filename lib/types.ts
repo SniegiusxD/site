@@ -101,6 +101,11 @@ export interface ActiveBet {
   /** Match key shared by every bet on the same match. */
   eventKey?: string | null
   /** The aggregator's final grade under the exact market contract, when published. */
+  /** What we displayed when the bet was marked, and what the book did with it. */
+  shownOdds?: number | null
+  shownStake?: number | null
+  placement?: 'accepted' | 'limited' | 'rejected'
+  delaySeconds?: number | null
   canonicalOutcome?: 'won' | 'half_won' | 'push' | 'void' | 'half_lost' | 'lost' | null
   /** The period score that grade used. */
   homeScore?: number | null
