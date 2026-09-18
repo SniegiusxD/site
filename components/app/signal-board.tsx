@@ -456,7 +456,7 @@ export function SignalBoard({
                     ? 'Visus atvirus signalus paslėpei. Juos grąžinsi apačioje.'
                     : looseCount > 0
                       ? `Pagal tavo filtrus nieko nėra, bet iš viso atviri ${looseCount} ${ltPlural(looseCount, 'signalas', 'signalai', 'signalų')}. Pakeisk filtrus arba kontoras.`
-                      : 'Naujas skenavimas vyksta kas pusvalandį. Puslapis atsinaujins pats.'}
+                      : 'Naujas skenavimas vyksta maždaug kas 40 minučių. Puslapis atsinaujins pats.'}
               </p>
             </div>
           ) : (

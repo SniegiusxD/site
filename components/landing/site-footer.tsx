@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { MotionToggle } from '@/components/motion-toggle'
 import { brand } from '@/lib/brand'
 import { formatEuro } from '@/lib/format-lt'
 import { EURO_PER_SECOND, LPT_REPORT_Q1_2026, REMOTE_BETTING_GGR_Q1_2026 } from '@/lib/lpt'
@@ -36,6 +37,7 @@ export function SiteFooter() {
                   {link.label}
                 </Link>
               ))}
+              <MotionToggle />
             </nav>
           </div>
           <div className="max-w-[26rem] sm:text-right">

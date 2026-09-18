@@ -1,15 +1,14 @@
 /**
  * Motion has two modes, held on <html data-motion>:
  *
- *   full  every animation runs
- *   calm  animations are collapsed (the old prefers-reduced-motion behaviour)
+ *   full  every animation runs (the default for everyone)
+ *   calm  animations are collapsed
  *
- * The OS preference picks the default, but a visitor can override it and the
- * choice sticks. That override matters here: Windows "adjust for best
- * performance" (and every gaming tweak tool that sets MinAnimate=0) turns off
- * client-area animation, Chrome reports prefers-reduced-motion: reduce, and the
- * whole site goes still with no way back. `data-motion-os="calm"` marks that
- * case so the site can offer the switch instead of just looking dead.
+ * The site does NOT follow the operating system's reduced-motion flag, because
+ * Windows "adjust for best performance" and every gaming tweak tool turn it on
+ * (MinAnimate=0), Chrome reports prefers-reduced-motion, and a normal visitor
+ * would land on a page that looks broken with no idea why. Anyone who actually
+ * wants stillness switches it off in the footer, and that choice is remembered.
  */
 export const MOTION_KEY = 'kr-motion'
 
@@ -17,8 +16,5 @@ export type MotionMode = 'full' | 'calm'
 
 /** Runs before paint, so the first frame already has the right mode. */
 export const MOTION_BOOT_SCRIPT = `(function(){var d=document.documentElement;try{
-var o=localStorage.getItem('${MOTION_KEY}');
-var r=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-d.dataset.motion=(o==='full'||o==='calm')?o:(r?'calm':'full');
-if(r&&!o)d.dataset.motionOs='calm';
+d.dataset.motion=localStorage.getItem('${MOTION_KEY}')==='calm'?'calm':'full';
 }catch(e){d.dataset.motion='full'}})()`

@@ -136,7 +136,7 @@ export function eventLabel(name: string): string {
   return name.replace(/ – /g, `${String.fromCharCode(160)}– `)
 }
 
-/** A scan older than this is shown as stale. The runner cycles every ~30 minutes. */
+/** A scan older than this is shown as stale. Measured cycle gap: ~41 min (median, 2026-09-18). */
 export const STALE_AFTER_MINUTES = 75
 
 export function isStale(cycleAt: string | undefined, now: Date): boolean {

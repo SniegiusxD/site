@@ -6,53 +6,63 @@ import { useEffect, useState } from 'react'
 import { edgeOf, formatEdge, formatEuro, formatOdds } from '@/lib/format-lt'
 import { landingSignals } from '@/lib/landing-signals'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { BookMark } from './book-mark'
 import { Reveal, useInViewOnce } from './motion-primitives'
 
-// Real captured signals: one with all three books priced, one Betsson total for the alert.
+// Real captured signals: one with all three books priced, plus two more for the alerts.
 const scan = landingSignals.find((signal) => signal.id === 'breogan-rilski-hcp-home')!
 const alert = landingSignals.find((signal) => signal.id === 'vef-absheron-total-171')!
 const alertPrice = alert.prices.find((price) => price.book === alert.valueBook)!
 const alertEdge = edgeOf(alertPrice.odds, alert.fairOdds)
 
 const rows = [...scan.prices].sort((a, b) => b.odds - a.odds)
-const previous = scan.prices.find((price) => price.book === scan.valueBook)!
 
-/**
- * Two consecutive scans of the same selection. The section replays the gap
- * opening: the book drifts up while the true price stays where it is.
- */
+/** The three alerts of one cycle, newest last. */
+const FEED = landingSignals
+  .filter((signal) => signal.id !== scan.id)
+  .slice(0, 3)
+  .map((signal) => {
+    const price = signal.prices.find((entry) => entry.book === signal.valueBook)!
+    return {
+      id: signal.id,
+      book: signal.valueBook,
+      event: price.event,
+      selection: `${signal.market}: ${price.selection}`,
+      odds: price.odds,
+      edge: edgeOf(price.odds, signal.fairOdds),
+    }
+  })
+
+// The scan replays the gap opening: the books drift up, the true price does not.
 const DRIFT: Record<string, number> = { TopSport: -0.07, Betsson: -0.04, '7BET': -0.03 }
 
 const STAKE = 7.5
 const PAYOUT = STAKE * alertPrice.odds
-const PROFIT = PAYOUT - STAKE
 const CLV = 0.041
 
-/** One beat of the loop. Four beats: scan, alert, bet, result. */
 const BEAT_MS = 3400
 const STEP_OF_BEAT = [0, 1, 2, 2]
 
-const CARD = 'relative flex h-full min-w-0 flex-col overflow-hidden rounded-[20px] p-6 transition-[background-color,box-shadow,transform] duration-500'
-const CARD_ON = 'bg-stand shadow-[inset_0_0_0_1px_var(--rail-strong),0_24px_60px_-40px_rgb(0_0_0/0.9)] sm:-translate-y-1'
-const CARD_OFF = 'bg-stand/70 shadow-[inset_0_0_0_1px_var(--rail)]'
+const CARD =
+  'relative flex h-full min-w-0 flex-col overflow-hidden rounded-[22px] bg-stand p-6 transition-[box-shadow,transform] duration-500 sm:p-7'
+const CARD_ON = 'shadow-[inset_0_0_0_1px_var(--rail-strong),0_30px_70px_-45px_rgb(91_229_132/0.5)] sm:-translate-y-1.5'
+const CARD_OFF = 'shadow-[inset_0_0_0_1px_var(--rail)]'
+const PANEL = 'rounded-[16px] bg-night-deep p-3.5 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.04)]'
 
 export function Journey() {
   const [ref, seen] = useInViewOnce<HTMLDivElement>()
   const calm = useReducedMotion()
   const [beat, setBeat] = useState(0)
 
-  // The loop runs once the section has been reached, so the visitor arrives
-  // mid-story rather than watching it play to an empty screen.
   useEffect(() => {
     if (!seen || calm) return
     const id = setInterval(() => setBeat((current) => (current + 1) % 4), BEAT_MS)
     return () => clearInterval(id)
   }, [seen, calm])
 
-  // Calm motion shows the finished state of every card instead of a loop.
   const step = calm ? 2 : STEP_OF_BEAT[beat]
   const scanning = !calm && beat === 0
-  const settled = calm || beat === 3
+  const placed = calm || beat === 3
 
   return (
     <section ref={ref} className="bg-night-alt px-5 py-[clamp(80px,10vw,160px)] sm:px-8">
@@ -62,116 +72,161 @@ export function Journey() {
         </Reveal>
         <Reveal delay={80}>
           <p className="mt-5 max-w-[62ch] text-[clamp(1.05rem,1.4vw,1.25rem)] text-haze">
-            Skenuojam maždaug kas 30 minučių. Tikro laiko nežadam: jei kaina pasikeitė, signalas pažymimas kaip užsidaręs.
+            Vienas ciklas: nuskenuojam visas kontoras, palyginam su Pinnacle kaina be maržos ir atsiunčiam tai, kas verta. Tikro laiko
+            nežadam — jei kaina pasikeitė, signalas pažymimas kaip užsidaręs.
           </p>
         </Reveal>
 
         <ol className="mt-[clamp(40px,5vw,72px)] grid gap-5 lg:grid-cols-3">
-          <Step index={0} title="Skenuojam kainas" active={step === 0} beat={beat}
-            blurb="Trys kontoros prieš Pinnacle kainą be maržos, visose rungtynėse, kurias jos pačios siūlo.">
-            <div className="relative mt-auto grid gap-2 overflow-hidden rounded-[14px] bg-night p-3">
-              {scanning && (
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-x-0 h-10 animate-[kr-scan_1.7s_cubic-bezier(.45,0,.55,1)_infinite] bg-[linear-gradient(180deg,transparent,rgb(91_229_132/0.18),transparent)]"
-                />
-              )}
-              <p className="truncate text-[0.8125rem] text-haze">
-                {scan.market}: {scan.prices[0].selection}
-              </p>
-              {rows.map((price) => {
-                const odds = scanning ? price.odds + (DRIFT[price.book] ?? 0) : price.odds
-                const beats = odds > scan.fairOdds
-                return (
-                  <div key={price.book} className="flex items-center justify-between gap-2.5 text-[0.875rem]">
-                    <span className="text-haze">{price.book}</span>
-                    <span className="flex items-center gap-2">
+          <Step
+            index={0}
+            title="Randam, kur kontora permoka"
+            blurb="Trys kontoros prieš Pinnacle kainą be maržos, visose rungtynėse, kurias jos pačios siūlo."
+            active={step === 0}
+            beat={beat}
+          >
+            <div className={`${PANEL} mt-auto`}>
+              <div className="flex items-center justify-between gap-3 px-1 pb-3">
+                <p className="flex items-center gap-2 text-[0.8125rem] text-haze">
+                  <span className="relative flex size-1.5">
+                    {scanning && <span className="absolute inline-flex size-full animate-[kr-ring_1.6s_ease-out_infinite] rounded-full bg-floodlight" />}
+                    <span className="relative inline-flex size-1.5 rounded-full bg-floodlight" />
+                  </span>
+                  {scanning ? 'Skenuojam' : 'Rasta'}
+                </p>
+                <p className="truncate text-[0.8125rem] text-haze-dim">{scan.prices[0].event}</p>
+              </div>
+              <div className="grid gap-1.5">
+                {rows.map((price) => {
+                  const odds = scanning ? price.odds + (DRIFT[price.book] ?? 0) : price.odds
+                  const beats = odds > scan.fairOdds
+                  return (
+                    <div
+                      key={price.book}
+                      className={`flex min-w-0 items-center gap-3 rounded-[12px] px-2.5 py-2 transition-colors duration-500 ${
+                        beats && !scanning ? 'bg-floodlight/15 shadow-[inset_0_0_0_1px_var(--floodlight)]' : 'bg-night'
+                      }`}
+                    >
+                      <BookMark book={price.book} size="sm" />
+                      <span className="min-w-0 flex-1 truncate text-[0.875rem]">{price.book}</span>
                       {beats && !scanning && (
-                        <span className="kr-pop rounded-full bg-floodlight/15 px-2 py-0.5 text-[0.75rem] font-semibold text-floodlight tnum">
+                        <span className="kr-pop rounded-full bg-floodlight px-2 py-0.5 text-[0.75rem] font-bold text-night tnum">
                           {formatEdge(edgeOf(odds, scan.fairOdds))}
                         </span>
                       )}
-                      <span className={`font-semibold tnum ${beats ? 'text-floodlight' : 'text-chalk'}`}>
+                      <span className={`font-display text-[1.0625rem] font-bold tnum ${beats && !scanning ? 'text-floodlight' : ''}`}>
                         <NumberFlow value={odds} locales="lt-LT" format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
                       </span>
-                    </span>
-                  </div>
-                )
-              })}
-              <div className="flex justify-between gap-2.5 border-t border-rail pt-2 text-[0.875rem]">
-                <span className="text-haze">Tikroji kaina</span>
-                <span className="text-haze tnum">{formatOdds(scan.fairOdds)}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              <p className="mt-3 flex justify-between gap-2 border-t border-rail/70 px-2.5 pt-2.5 text-[0.8125rem] text-haze">
+                <span>Tikroji kaina be maržos</span>
+                <span className="font-semibold text-chalk tnum">{formatOdds(scan.fairOdds)}</span>
+              </p>
+            </div>
+          </Step>
+
+          <Step
+            index={1}
+            title="Atsiunčiam tau signalą"
+            blurb="Rungtynės, kontora, koeficientas, vertė ir suma. Pavadinimas toks, kokį rašo ta kontora."
+            active={step === 1}
+            beat={beat}
+          >
+            <div className={`${PANEL} mt-auto`}>
+              <p className="pb-3 text-center text-[0.8125rem] text-haze-dim">
+                <span className="block font-display text-[1.25rem] font-bold text-chalk tnum">13:36</span>
+                Ketvirtadienis, rugsėjo 18
+              </p>
+              <div className="grid gap-2">
+                {/* The newest arrives on the beat. Older ones step back through
+                    their ground and scale, never by dimming the text: faded text
+                    cannot hold its contrast. */}
+                {FEED.slice(0, calm || beat >= 1 ? 3 : 2).map((item, position, shown) => {
+                  const newest = position === shown.length - 1
+                  const depth = shown.length - 1 - position
+                  return (
+                    <div
+                      key={item.id}
+                      className={`flex min-w-0 origin-bottom items-center gap-2.5 rounded-[14px] px-3 py-2.5 ${
+                        newest ? 'bg-stand-hover shadow-[inset_0_0_0_1px_var(--floodlight)]' : 'bg-stand'
+                      } ${newest && beat === 1 && !calm ? 'kr-row-drop' : ''}`}
+                      style={{ transform: `scale(${1 - depth * 0.025})` }}
+                    >
+                      <BookMark book={item.book} size="sm" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[0.8125rem] text-haze">
+                          Statyk · naujas signalas <span className={newest ? 'text-floodlight' : ''}>dabar</span>
+                        </span>
+                        <span className="block truncate text-[0.875rem]">
+                          {item.event} · {item.book} {formatOdds(item.odds)}
+                        </span>
+                      </span>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[0.75rem] font-bold tnum ${
+                          newest ? 'bg-floodlight text-night' : 'bg-floodlight/15 text-floodlight'
+                        }`}
+                      >
+                        {formatEdge(item.edge)}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </Step>
 
-          <Step index={1} title="Signalas į Telegram" active={step === 1} beat={beat}
-            blurb="Rungtynės, kontora, koeficientas, vertė ir suma. Pavadinimas toks, kokį rašo ta kontora.">
-            <div className="mt-auto grid gap-2">
-              <div className="rounded-[14px] bg-night px-3.5 py-3 text-[0.875rem] text-haze transition-opacity duration-500" style={{ opacity: step === 1 ? 0.55 : 1 }}>
-                {previous.event}, {previous.book} {formatOdds(previous.odds)}
-              </div>
-              {step === 0 ? (
-                <div aria-hidden className="flex h-11 items-center gap-[5px] px-1.5">
-                  {[0, 0.16, 0.32].map((delay) => (
-                    <span
-                      key={delay}
-                      className="size-[6px] animate-[kr-dots_1.3s_ease-in-out_infinite] rounded-full bg-rail-strong"
-                      style={{ animationDelay: `${delay}s` }}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="kr-row-drop rounded-[14px] bg-stand-hover p-3.5 shadow-[inset_0_0_0_1px_var(--rail-strong)]">
-                  <p className="text-[0.875rem]">{alertPrice.event}</p>
-                  <p className="mt-1 text-[0.8125rem] text-haze">
-                    {alert.market}: {alertPrice.selection}
-                  </p>
-                  <div className="mt-2.5 flex items-baseline justify-between gap-2.5">
-                    <span className="font-display text-[1.25rem] font-bold tnum">
-                      {alertPrice.book} {formatOdds(alertPrice.odds)}
-                    </span>
-                    <span className="text-[0.9375rem] font-semibold text-floodlight tnum">{formatEdge(alertEdge)}</span>
-                  </div>
-                  {step > 1 && (
-                    <p className="kr-fade mt-2 flex items-center gap-1.5 text-[0.8125rem] text-haze">
-                      <Check className="size-3.5 text-floodlight" aria-hidden /> Pristatyta
+          <Step
+            index={2}
+            title="Pastatai ir sekam"
+            blurb="Suma jau suskaičiuota pagal tavo banką. Rezultatą ir uždarymo kainą užpildom automatiškai."
+            active={step === 2}
+            beat={beat}
+          >
+            <div className={`${PANEL} relative mt-auto`}>
+              <div className={`transition-all duration-500 ${placed ? 'opacity-30 blur-[2px]' : ''}`}>
+                <div className="flex items-start gap-3">
+                  <BookMark book={alertPrice.book} size="lg" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[0.9375rem] font-medium">{alertPrice.event}</p>
+                    <p className="truncate text-[0.8125rem] text-haze">
+                      {alert.market}: {alertPrice.selection}
                     </p>
-                  )}
+                  </div>
+                  <p className="font-display text-[1.25rem] font-bold tnum">{formatOdds(alertPrice.odds)}</p>
+                </div>
+                <dl className="mt-3.5 grid gap-1.5 border-t border-rail/70 pt-3 text-[0.875rem]">
+                  <div className="flex justify-between gap-2 text-haze">
+                    <dt>Statymo suma (¼ Kelly)</dt>
+                    <dd className="font-semibold text-chalk tnum">{formatEuro(STAKE, 2)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-2 text-haze">
+                    <dt>Galimas laimėjimas</dt>
+                    <dd className="font-semibold text-floodlight tnum">{formatEuro(PAYOUT, 2)}</dd>
+                  </div>
+                </dl>
+                <p className="mt-4 flex h-11 items-center justify-center rounded-xl bg-floodlight font-semibold text-night">
+                  Statyti {formatEuro(STAKE, 2)}
+                </p>
+              </div>
+
+              {placed && (
+                <div className="kr-fade absolute inset-0 grid place-content-center justify-items-center gap-2.5 rounded-[16px] bg-night-deep/92 px-5 text-center">
+                  <span className="kr-pop grid size-12 place-items-center rounded-full bg-floodlight">
+                    <Check className="size-6 text-night" strokeWidth={3} aria-hidden />
+                  </span>
+                  <p className="font-display text-[1.25rem] font-bold">Statymas įrašytas</p>
+                  <p className="rounded-full bg-floodlight/15 px-3 py-1 text-[0.875rem] font-semibold text-floodlight tnum">
+                    {formatEuro(STAKE, 2)} @ {formatOdds(alertPrice.odds)} · {formatEdge(alertEdge)} vertė
+                  </p>
+                  <p className="text-[0.8125rem] text-haze">
+                    Rezultatas ir uždarymo kaina užpildomi patys · CLV{' '}
+                    <span className="font-semibold text-floodlight tnum">{formatEdge(CLV)}</span>
+                  </p>
                 </div>
               )}
-            </div>
-          </Step>
-
-          <Step index={2} title="Pastatai ir sekam" active={step === 2} beat={beat}
-            blurb="Statymas įrašomas su tavo kaina. Rezultatą ir uždarymo kainą užpildom automatiškai.">
-            <div className="mt-auto grid gap-2.5 rounded-[14px] bg-night p-3.5 text-[0.875rem]">
-              <Line label="Suma">
-                <Money value={step === 2 ? STAKE : 0} />
-              </Line>
-              <Line label={settled ? 'Išmokėta' : 'Galimas laimėjimas'}>
-                <Money value={step === 2 ? PAYOUT : 0} />
-              </Line>
-              <div className="h-px bg-rail" />
-              <Line label="Būsena">
-                {settled ? (
-                  <span className="kr-pop rounded-full bg-floodlight px-2.5 py-1 text-[0.8125rem] font-semibold text-night">Laimėta</span>
-                ) : (
-                  <span className="rounded-full bg-rail px-2.5 py-1 text-[0.8125rem] font-medium text-chalk">Laukia</span>
-                )}
-              </Line>
-              <Line label="CLV">
-                <span className="font-semibold text-floodlight tnum">
-                  <NumberFlow
-                    value={step === 2 ? CLV : 0}
-                    locales="lt-LT"
-                    format={{ style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' }}
-                  />
-                </span>
-              </Line>
-              <p className="min-h-[1.25rem] text-[0.8125rem] text-haze">
-                {settled ? <span className="kr-fade">Pelnas {formatEuro(PROFIT, 2)} · rezultatas įrašytas automatiškai</span> : null}
-              </p>
             </div>
           </Step>
         </ol>
@@ -201,37 +256,22 @@ function Step({
         {/* The bar drains through the beat, so the section always has a clock running. */}
         <span aria-hidden className="absolute inset-x-0 top-0 h-[2px] bg-rail/60">
           {active && (
-            <span
-              key={beat}
-              className="block h-full origin-left bg-floodlight"
-              style={{ animation: `kr-fill ${BEAT_MS}ms linear forwards` }}
-            />
+            <span key={beat} className="block h-full origin-left bg-floodlight" style={{ animation: `kr-fill ${BEAT_MS}ms linear forwards` }} />
           )}
         </span>
-        <p className={`font-display text-[0.9375rem] font-bold transition-colors duration-500 ${active ? 'text-floodlight' : 'text-haze'}`}>
-          0{index + 1}
-        </p>
-        <h3 className="mt-2.5 text-[clamp(1.375rem,2vw,1.75rem)] tracking-[-0.02em]">{title}</h3>
-        <p className="mt-2.5 mb-5 text-[0.9375rem] text-haze">{blurb}</p>
+        <div className="flex items-center gap-3">
+          <span
+            className={`grid size-8 shrink-0 place-items-center rounded-full font-display text-[0.9375rem] font-bold transition-colors duration-500 ${
+              active ? 'bg-floodlight text-night' : 'bg-rail/60 text-haze'
+            }`}
+          >
+            {index + 1}
+          </span>
+          <h3 className="text-[clamp(1.25rem,1.8vw,1.5rem)] tracking-[-0.02em]">{title}</h3>
+        </div>
+        <p className="mt-3.5 mb-6 text-[0.9375rem] text-haze">{blurb}</p>
         {children}
       </Reveal>
     </li>
-  )
-}
-
-function Line({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-2.5 text-haze">
-      <span>{label}</span>
-      {children}
-    </div>
-  )
-}
-
-function Money({ value }: { value: number }) {
-  return (
-    <span className="font-semibold text-chalk tnum">
-      <NumberFlow value={value} locales="lt-LT" format={{ style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }} />
-    </span>
   )
 }

@@ -112,12 +112,11 @@ function BookRotator() {
   }, [])
 
   useEffect(() => {
-    if (reduced) return
     const timer = window.setInterval(() => {
       if (!document.hidden) setIndex((current) => (current + 1) % WORDS.length)
     }, 3400)
     return () => window.clearInterval(timer)
-  }, [reduced])
+  }, [])
 
   const width = widths?.[index]
   return (
@@ -129,7 +128,7 @@ function BookRotator() {
         style={{ width: width ? Math.ceil(width) + 2 : undefined }}
       >
         <span
-          className="flex flex-col items-start transition-transform duration-[560ms] ease-[cubic-bezier(.76,0,.24,1)]"
+          className={`flex flex-col items-start ${reduced ? '' : 'transition-transform duration-[560ms] ease-[cubic-bezier(.76,0,.24,1)]'}`}
           style={{ transform: `translateY(${-index * 1.05}em)` }}
         >
           {WORDS.map((word, position) => (
@@ -138,7 +137,7 @@ function BookRotator() {
               ref={(element) => {
                 words.current[position] = element
               }}
-              className="block h-[1.05em] w-max leading-[1.05] whitespace-nowrap"
+              className={`block h-[1.05em] w-max leading-[1.05] whitespace-nowrap ${position === 0 ? '' : 'text-floodlight'}`}
             >
               {word}
             </span>

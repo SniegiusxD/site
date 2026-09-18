@@ -45,7 +45,7 @@ const QUESTIONS: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Kaip greitai ateina signalai?',
-    a: 'Kontoras ir Pinnacle skenuojam maždaug kas pusvalandį. Naujas signalas atsiranda programėlėje ir Telegram iškart po skenavimo. Kainos kartais pasikeičia greičiau, todėl prieš statydamas patikrink koeficientą kontoroje.',
+    a: 'Kontoras ir Pinnacle skenuojam maždaug kas 40 minučių (vienas ciklas trunka apie 25 minutes). Naujas signalas atsiranda programėlėje ir Telegram iškart po skenavimo. Kainos kartais pasikeičia greičiau, todėl prieš statydamas patikrink koeficientą kontoroje.',
   },
   {
     q: 'Ką daryti, jei kontora mane jau apribojo?',

@@ -6,6 +6,7 @@ import { edgeOf, formatEdge, formatOdds } from '@/lib/format-lt'
 import { landingSignals } from '@/lib/landing-signals'
 import type { PublicStats } from '@/lib/public-stats'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { BookMark } from './book-mark'
 
 /** Newest first, the way the feed delivers them. */
 const FEED = landingSignals.map((signal) => {
@@ -58,7 +59,7 @@ export function AuthAside({ stats }: { stats: PublicStats | null }) {
           {!calm && <span className="absolute inline-flex size-full animate-[kr-ring_2s_ease-out_infinite] rounded-full bg-floodlight" />}
           <span className="relative inline-flex size-2 rounded-full bg-floodlight" />
         </span>
-        Skenuojam kas 30 minučių
+        Skenuojam maždaug kas 40 minučių
       </div>
 
       <h2 className="mt-4 text-[clamp(1.75rem,2.4vw,2.4rem)] leading-[1.02]">
@@ -94,7 +95,10 @@ export function AuthAside({ stats }: { stats: PublicStats | null }) {
               </p>
             </div>
             <div className="mt-3.5 flex items-center justify-between gap-3 border-t border-rail pt-3 text-[0.875rem]">
-              <span className="rounded-full bg-night px-2.5 py-1 text-[0.8125rem] font-semibold">{signal.book}</span>
+              <span className="flex items-center gap-2 font-medium">
+                <BookMark book={signal.book} size="sm" />
+                {signal.book}
+              </span>
               <span className="text-haze">
                 koef. <span className="font-semibold text-chalk tnum">{formatOdds(signal.odds)}</span> · tikroji{' '}
                 <span className="tnum">{formatOdds(signal.fairOdds)}</span>
