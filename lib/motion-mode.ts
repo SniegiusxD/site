@@ -10,7 +10,10 @@
  * would land on a page that looks broken with no idea why. Anyone who actually
  * wants stillness switches it off in the footer, and that choice is remembered.
  */
-export const MOTION_KEY = 'kr-motion'
+// v2: the first build asked visitors whether to keep the OS setting, and anyone
+// who answered "Palikti" had 'calm' stored forever. Animations are the default
+// now, so that old answer is ignored and only the footer switch writes this key.
+export const MOTION_KEY = 'kr-motion-v2'
 
 export type MotionMode = 'full' | 'calm'
 

@@ -40,7 +40,7 @@ const STAKE = 7.5
 const PAYOUT = STAKE * alertPrice.odds
 const CLV = 0.041
 
-const BEAT_MS = 3400
+const BEAT_MS = 2800
 const STEP_OF_BEAT = [0, 1, 2, 2]
 
 const CARD =
@@ -52,13 +52,16 @@ const PANEL = 'rounded-[16px] bg-night-deep p-3.5 shadow-[inset_0_0_0_1px_rgb(25
 export function Journey() {
   const [ref, seen] = useInViewOnce<HTMLDivElement>()
   const calm = useReducedMotion()
-  const [beat, setBeat] = useState(0)
+  const [tick, setTick] = useState(0)
 
   useEffect(() => {
     if (!seen || calm) return
-    const id = setInterval(() => setBeat((current) => (current + 1) % 4), BEAT_MS)
+    const id = setInterval(() => setTick((current) => current + 1), BEAT_MS)
     return () => clearInterval(id)
   }, [seen, calm])
+
+  const beat = tick % 4
+  const cycle = Math.floor(tick / 4)
 
   const step = calm ? 2 : STEP_OF_BEAT[beat]
   const scanning = !calm && beat === 0
@@ -96,7 +99,13 @@ export function Journey() {
                 </p>
                 <p className="truncate text-[0.8125rem] text-haze-dim">{scan.prices[0].event}</p>
               </div>
-              <div className="grid gap-1.5">
+              <div className="relative grid gap-1.5 overflow-hidden rounded-[12px]">
+                {scanning && (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 z-10 h-12 animate-[kr-scan_1.4s_cubic-bezier(.45,0,.55,1)_infinite] bg-[linear-gradient(180deg,transparent,rgb(91_229_132/0.22),transparent)]"
+                  />
+                )}
                 {rows.map((price) => {
                   const odds = scanning ? price.odds + (DRIFT[price.book] ?? 0) : price.odds
                   const beats = odds > scan.fairOdds
@@ -110,7 +119,10 @@ export function Journey() {
                       <BookMark book={price.book} size="sm" />
                       <span className="min-w-0 flex-1 truncate text-[0.875rem]">{price.book}</span>
                       {beats && !scanning && (
-                        <span className="kr-pop rounded-full bg-floodlight px-2 py-0.5 text-[0.75rem] font-bold text-night tnum">
+                        <span
+                          key={cycle}
+                          className="kr-rise rounded-full bg-floodlight px-2 py-0.5 text-[0.75rem] font-bold text-night tnum"
+                        >
                           {formatEdge(edgeOf(odds, scan.fairOdds))}
                         </span>
                       )}
@@ -144,16 +156,16 @@ export function Journey() {
                 {/* The newest arrives on the beat. Older ones step back through
                     their ground and scale, never by dimming the text: faded text
                     cannot hold its contrast. */}
-                {FEED.slice(0, calm || beat >= 1 ? 3 : 2).map((item, position, shown) => {
+                {(calm || beat >= 1 ? FEED : []).map((item, position, shown) => {
                   const newest = position === shown.length - 1
-                  const depth = shown.length - 1 - position
                   return (
                     <div
-                      key={item.id}
+                      // Keyed by the loop, so every pass replays the arrivals.
+                      key={`${item.id}-${cycle}`}
+                      style={{ animationDelay: `${position * 260}ms` }}
                       className={`flex min-w-0 origin-bottom items-center gap-2.5 rounded-[14px] px-3 py-2.5 ${
                         newest ? 'bg-stand-hover shadow-[inset_0_0_0_1px_var(--floodlight)]' : 'bg-stand'
-                      } ${newest && beat === 1 && !calm ? 'kr-row-drop' : ''}`}
-                      style={{ transform: `scale(${1 - depth * 0.025})` }}
+                      } ${calm ? '' : 'kr-row-drop'}`}
                     >
                       <BookMark book={item.book} size="sm" />
                       <span className="min-w-0 flex-1">
@@ -207,7 +219,7 @@ export function Journey() {
                     <dd className="font-semibold text-floodlight tnum">{formatEuro(PAYOUT, 2)}</dd>
                   </div>
                 </dl>
-                <p className="mt-4 flex h-11 items-center justify-center rounded-xl bg-floodlight font-semibold text-night">
+                <p className={`mt-4 flex h-11 items-center justify-center rounded-xl bg-floodlight font-semibold text-night ${placed ? '' : 'kr-cta-glow'}`}>
                   Statyti {formatEuro(STAKE, 2)}
                 </p>
               </div>

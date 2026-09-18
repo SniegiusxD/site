@@ -114,7 +114,7 @@ function BookRotator() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       if (!document.hidden) setIndex((current) => (current + 1) % WORDS.length)
-    }, 3400)
+    }, 2200)
     return () => window.clearInterval(timer)
   }, [])
 
@@ -128,7 +128,7 @@ function BookRotator() {
         style={{ width: width ? Math.ceil(width) + 2 : undefined }}
       >
         <span
-          className={`flex flex-col items-start ${reduced ? '' : 'transition-transform duration-[560ms] ease-[cubic-bezier(.76,0,.24,1)]'}`}
+          className={`flex flex-col items-start ${reduced ? '' : 'transition-transform duration-[420ms] ease-[cubic-bezier(.76,0,.24,1)]'}`}
           style={{ transform: `translateY(${-index * 1.05}em)` }}
         >
           {WORDS.map((word, position) => (
