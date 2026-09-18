@@ -3,7 +3,7 @@
 import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion, useDragControls } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
-import { AlertTriangle, ArrowDown, ArrowUp, Bell, Check, ChevronDown, Eye, Lock, RefreshCw, Search, X } from 'lucide-react'
+import { AlertTriangle, ArrowDown, ArrowUp, Bell, Check, ChevronDown, Eye, Lock, RefreshCw, Search, Sparkles, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -54,6 +54,7 @@ const HOUR_CHOICES = [
 ]
 const HIDDEN_KEY = 'hidden-signals'
 const VIEW_KEY = 'board-view'
+const SEEN_KEY = 'board-last-visit'
 
 type SortKey = 'value' | 'new' | 'soon' | 'moving'
 const SORTS: Array<{ key: SortKey; label: string }> = [
@@ -137,6 +138,20 @@ export function SignalBoard({
   const [drift, setDrift] = useState<'all' | 'down' | 'up'>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortKey>('value')
+  const [onlyNew, setOnlyNew] = useState(false)
+  // The moment this member last had the board open, on this device. Read once,
+  // then frozen for the visit so rows do not stop being new while being read.
+  const [lastVisit, setLastVisit] = useState<number | null>(null)
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(SEEN_KEY)
+      setLastVisit(raw ? Number(raw) : null)
+      window.localStorage.setItem(SEEN_KEY, String(Date.now()))
+    } catch {
+      // Without storage every signal is simply not marked as new.
+    }
+  }, [])
 
   // The board a member left is the board they expect to come back to. Their own
   // device only: these are view choices, not account settings.
@@ -261,6 +276,8 @@ export function SignalBoard({
       })
     }
 
+    if (onlyNew && lastVisit) kept = kept.filter((row) => Date.parse(row.signal.firstSeenAt) > lastVisit)
+
     const needle = search.trim().toLowerCase()
     if (needle) {
       kept = kept.filter((row) =>
@@ -278,7 +295,13 @@ export function SignalBoard({
     if (sort === 'soon') sorted.sort((a, b) => new Date(a.signal.startsAt).getTime() - new Date(b.signal.startsAt).getTime())
     if (sort === 'moving') sorted.sort((a, b) => movementOf(b) - movementOf(a))
     return sorted
-  }, [rows.open, hidden, drift, board.movement, search, sort])
+  }, [rows.open, hidden, drift, board.movement, search, sort, onlyNew, lastVisit])
+
+  // How many the member has not seen yet, whether or not the filter is on.
+  const newCount = useMemo(
+    () => (lastVisit ? rows.open.filter((row) => Date.parse(row.signal.firstSeenAt) > lastVisit).length : 0),
+    [rows.open, lastVisit],
+  )
   const hiddenRows = useMemo(() => rows.open.filter((row) => hidden.has(row.signal.id)), [rows.open, hidden])
   const looseCount = useMemo(
     () =>
@@ -345,6 +368,19 @@ export function SignalBoard({
   )
 
   const onBoard = sportsIn(board.signals)
+
+  // What each choice would leave, with every other filter still applied, so a
+  // member can see that "Tenisas" is empty before choosing it.
+  const counts = useMemo(() => {
+    const countWith = (patch: Partial<BoardFilters>) => boardRows(board.signals, { ...filters, ...patch }, now).open.length
+    return {
+      sports: Object.fromEntries(onBoard.map((key) => [key, countWith({ sports: [key], sport: null })])),
+      markets: Object.fromEntries(MARKET_FAMILIES.map((family) => [family.key, countWith({ markets: [family.key] })])),
+      periods: Object.fromEntries(PERIODS.map((period) => [period.key, countWith({ periods: [period.key] })])),
+      books: Object.fromEntries(BOOKS.map((book) => [book, countWith({ books: [book] })])),
+    }
+  }, [board.signals, JSON.stringify(filters), now, onBoard]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const band = bandFor(prefs.minOdds, prefs.maxOdds) ?? bandFor(prefs.minOdds, 100)
   const listLabel = (keys: string[], label: (key: string) => string, all: string) =>
     keys.length === 0 ? all : keys.length <= 2 ? keys.map(label).join(', ') : `${keys.length} pasirinkti`
@@ -440,6 +476,19 @@ export function SignalBoard({
                   className="h-11 w-full rounded-full bg-stand pr-3 pl-9 text-[0.95rem] text-chalk hairline placeholder:text-haze-dim"
                 />
               </label>
+              {newCount > 0 && (
+                <button
+                  type="button"
+                  aria-pressed={onlyNew}
+                  onClick={() => setOnlyNew((value) => !value)}
+                  className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[0.9rem] font-medium transition-colors ${
+                    onlyNew ? 'bg-floodlight text-night' : 'bg-stand text-chalk hairline hover:bg-stand-hover'
+                  }`}
+                >
+                  <Sparkles className="size-4" aria-hidden />
+                  Nauji {newCount}
+                </button>
+              )}
               <FilterChip label="Rikiuoti" value={SORTS.find((option) => option.key === sort)!.label} active={sort !== 'value'}>
                 {SORTS.map((option) => (
                   <FilterOption
@@ -456,7 +505,14 @@ export function SignalBoard({
             <div className="mt-2.5 flex flex-wrap gap-1.5">
               <FilterChip label="Kontoros" value={prefs.books.length < BOOKS.length ? booksValue : 'Kontoros'} active={prefs.books.length < BOOKS.length}>
                 {BOOKS.map((book) => (
-                  <FilterOption key={book} label={book} multiple checked={prefs.books.includes(book)} onChange={() => toggleBook(book)} />
+                  <FilterOption
+                    key={book}
+                    label={book}
+                    multiple
+                    count={counts.books[book]}
+                    checked={prefs.books.includes(book)}
+                    onChange={() => toggleBook(book)}
+                  />
                 ))}
               </FilterChip>
 
@@ -474,6 +530,7 @@ export function SignalBoard({
                     key={key}
                     label={sportName(key)}
                     multiple
+                    count={counts.sports[key]}
                     checked={sportsPicked.includes(key)}
                     onChange={() => {
                       setSport(null)
@@ -529,6 +586,7 @@ export function SignalBoard({
                     key={family.key}
                     label={family.label}
                     multiple
+                    count={counts.markets[family.key]}
                     checked={markets.includes(family.key)}
                     onChange={() =>
                       setMarkets((current) => (current.includes(family.key) ? current.filter((item) => item !== family.key) : [...current, family.key]))
@@ -554,6 +612,7 @@ export function SignalBoard({
                     key={period.key}
                     label={period.label}
                     multiple
+                    count={counts.periods[period.key]}
                     checked={periods.includes(period.key)}
                     onChange={() =>
                       setPeriods((current) => (current.includes(period.key) ? current.filter((item) => item !== period.key) : [...current, period.key]))
@@ -595,7 +654,9 @@ export function SignalBoard({
                 {status ? 'Šiuo metu signalų nėra' : 'Signalai dar neskelbiami'}
               </p>
               <p className="mx-auto mt-3 max-w-[22rem] text-haze">
-                {search.trim()
+                {onlyNew
+                  ? 'Nuo paskutinio apsilankymo naujų signalų nėra. Išjunk „Nauji“, kad matytum visus.'
+                  : search.trim()
                   ? `Pagal „${search.trim()}“ nieko neradom. Pabandyk kitą komandos pavadinimą.`
                   : drift !== 'all'
                   ? 'Kainų judėjimą matom tik tuose signaluose, kuriuos matėm bent dviejuose skenavimuose. Palauk kito skenavimo arba grąžink filtrą į „Visos“.'

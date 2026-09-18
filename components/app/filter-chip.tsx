@@ -71,11 +71,14 @@ export function FilterOption({
   label,
   checked,
   multiple = false,
+  count,
   onChange,
 }: {
   label: string
   checked: boolean
   multiple?: boolean
+  /** How many signals this choice would leave. Hidden when unknown. */
+  count?: number
   onChange: () => void
 }) {
   return (
@@ -88,7 +91,10 @@ export function FilterOption({
         checked ? 'bg-floodlight-soft text-floodlight' : 'text-chalk hover:bg-stand-hover'
       }`}
     >
-      {label}
+      <span className="flex min-w-0 items-baseline gap-2">
+        <span className="truncate">{label}</span>
+        {count !== undefined && <span className="shrink-0 text-[0.8rem] text-haze-dim tnum">{count}</span>}
+      </span>
       <span
         aria-hidden
         className={`grid size-5 shrink-0 place-items-center rounded-md ${
