@@ -793,6 +793,14 @@ function SignalRow({
             {open && limit !== undefined && <span className="text-haze-dim">limitas {formatEuro(limit)}</span>}
           </span>
         </span>
+        {/* How far past the true price this book sits, against a 10 % rail: the
+            whole list can be read without looking at a single number. */}
+        <span aria-hidden className="col-span-3 mt-2.5 block h-[3px] rounded-full bg-night-deep">
+          <span
+            className={`block h-full rounded-full transition-[width] duration-700 ease-[cubic-bezier(.22,1,.36,1)] ${open ? 'bg-floodlight' : 'bg-steel'}`}
+            style={{ width: `${Math.max(4, Math.min(100, (price.edge / 0.1) * 100))}%` }}
+          />
+        </span>
       </button>
       {onToggleHidden && (
         <button
