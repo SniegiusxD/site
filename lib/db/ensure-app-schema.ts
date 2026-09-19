@@ -105,7 +105,23 @@ export function ensureAppSchema(): Promise<void> {
         ADD COLUMN IF NOT EXISTS markets TEXT[] NOT NULL DEFAULT '{}',
         ADD COLUMN IF NOT EXISTS periods TEXT[] NOT NULL DEFAULT '{}',
         ADD COLUMN IF NOT EXISTS "minOdds" DOUBLE PRECISION NOT NULL DEFAULT 1,
-        ADD COLUMN IF NOT EXISTS "maxOdds" DOUBLE PRECISION NOT NULL DEFAULT 100;
+        ADD COLUMN IF NOT EXISTS "maxOdds" DOUBLE PRECISION NOT NULL DEFAULT 100,
+        -- A pause with an end: alerts come back on their own, so nobody has to
+        -- remember that they switched them off during a match.
+        ADD COLUMN IF NOT EXISTS "pausedUntil" TIMESTAMPTZ;
+
+      -- Saved alert rules a member can switch between ("Krepšinis 4 %+",
+      -- "Tik TopSport"). Applying one writes into the same columns the bot
+      -- already reads, so the preset is a site-side idea only.
+      CREATE TABLE IF NOT EXISTS telegram_preset (
+        id TEXT PRIMARY KEY,
+        "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        settings JSONB NOT NULL,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS telegram_preset_name_idx
+        ON telegram_preset ("userId", lower(name));
 
       CREATE TABLE IF NOT EXISTS telegram_link_token (
         token TEXT PRIMARY KEY,

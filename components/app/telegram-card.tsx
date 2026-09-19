@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Check, Loader2, Lock, Send } from 'lucide-react'
+import { Bell, Check, Loader2, Lock, Send, X } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
@@ -16,6 +16,7 @@ import {
 } from '@/lib/signal-taxonomy'
 import type { TelegramState } from '@/lib/telegram'
 import { TELEGRAM_EDGE_CHOICES, TELEGRAM_HOUR_CHOICES, type TelegramSettings } from '@/lib/telegram-settings'
+import { clockLabel } from '@/lib/live-view'
 import { useAccount } from './account-provider'
 import { FilterChip, FilterOption } from './filter-chip'
 
@@ -25,6 +26,13 @@ const LINK_POLL_LIMIT = 60
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 const hourLabel = (hour: number) => `${String(hour).padStart(2, '0')}:00`
 
+/** How long the member can silence alerts for. */
+const PAUSES = [
+  { value: 'hour', label: '1 valandai', done: 'Tyla valandai.' },
+  { value: 'tomorrow', label: 'Iki rytojaus', done: 'Tyla iki ryto.' },
+  { value: 'forever', label: 'Kol įjungsiu', done: 'Pranešimai sustabdyti.' },
+]
+
 export function TelegramCard() {
   const { account } = useAccount()
   const [state, setState] = useState<TelegramState | null>(null)
@@ -32,6 +40,7 @@ export function TelegramCard() {
   const [notice, setNotice] = useState<string | null>(null)
   const [linking, setLinking] = useState(false)
   const [testing, setTesting] = useState(false)
+  const [presetName, setPresetName] = useState('')
   const saveTimer = useRef<number | null>(null)
 
   const load = useCallback(async () => {
@@ -69,6 +78,19 @@ export function TelegramCard() {
       if (!response.ok) setError(body?.error ?? 'Nepavyko išsaugoti.')
       else setError(null)
     }, SAVE_DELAY_MS)
+  }
+
+  /** Pause, resume, save a preset or apply one: each answers with the new state. */
+  async function command(path: string, init: RequestInit, message?: string) {
+    setError(null)
+    const response = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...init })
+    const body = await response.json().catch(() => null)
+    if (!response.ok) {
+      setError(body?.error ?? 'Nepavyko.')
+      return
+    }
+    setState(body)
+    setNotice(message ?? null)
   }
 
   async function connect() {
@@ -222,6 +244,97 @@ export function TelegramCard() {
             className="size-5 accent-[var(--pitch)]"
           />
         </label>
+
+        {/* A pause with an end, so switching alerts off during a match does not
+            quietly switch them off for a week. */}
+        <div>
+          <p className="text-[0.75rem] tracking-[0.06em] text-haze-dim uppercase">Pristabdyti</p>
+          {state.pausedUntil ? (
+            <p className="mt-2 flex flex-wrap items-center gap-3 text-[0.95rem] text-haze">
+              Tyla iki {clockLabel(state.pausedUntil)}.
+              <button
+                type="button"
+                onClick={() => command('/api/telegram/pause', { method: 'POST', body: JSON.stringify({ until: 'resume' }) }, 'Pranešimai vėl įjungti.')}
+                className="min-h-11 rounded-lg bg-rail px-3 font-medium hover:bg-rail-strong"
+              >
+                Įjungti dabar
+              </button>
+            </p>
+          ) : (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {PAUSES.map((pause) => (
+                <button
+                  key={pause.value}
+                  type="button"
+                  onClick={() => command('/api/telegram/pause', { method: 'POST', body: JSON.stringify({ until: pause.value }) }, pause.done)}
+                  className="min-h-11 rounded-lg bg-stand px-3.5 text-[0.95rem] hairline hover:bg-stand-hover"
+                >
+                  {pause.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Saved rules: "Krepšinis 4 %+", "Tik TopSport". Applying one writes
+            into the same settings the bot reads. */}
+        <div>
+          <p className="text-[0.75rem] tracking-[0.06em] text-haze-dim uppercase">Rinkiniai</p>
+          {state.presets.length > 0 && (
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {state.presets.map((preset) => (
+                <li key={preset.id} className="flex items-center rounded-lg bg-stand hairline">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      command(
+                        '/api/telegram/presets',
+                        { method: 'POST', body: JSON.stringify({ apply: true, settings: preset.settings }) },
+                        `Pritaikyta: ${preset.name}.`,
+                      )
+                    }
+                    className="min-h-11 rounded-l-lg px-3.5 text-[0.95rem] hover:bg-stand-hover"
+                  >
+                    {preset.name}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Ištrinti rinkinį ${preset.name}`}
+                    onClick={() => command(`/api/telegram/presets?id=${preset.id}`, { method: 'DELETE' }, 'Rinkinys ištrintas.')}
+                    className="min-h-11 rounded-r-lg px-2.5 text-haze hover:text-brick"
+                  >
+                    <X className="size-4" aria-hidden />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              type="text"
+              value={presetName}
+              maxLength={40}
+              placeholder="Pavadinimas, pvz. „Krepšinis 4 %+“"
+              onChange={(event) => setPresetName(event.target.value)}
+              className="h-11 min-w-[14rem] flex-1 rounded-lg bg-stand px-3 text-[0.95rem] text-chalk hairline placeholder:text-haze-dim"
+            />
+            <button
+              type="button"
+              disabled={!presetName.trim()}
+              onClick={async () => {
+                await command(
+                  '/api/telegram/presets',
+                  { method: 'POST', body: JSON.stringify({ name: presetName.trim(), settings: s }) },
+                  `Išsaugota: ${presetName.trim()}.`,
+                )
+                setPresetName('')
+              }}
+              className="h-11 rounded-lg bg-rail px-3.5 font-medium hover:bg-rail-strong disabled:opacity-50"
+            >
+              Išsaugoti šiuos filtrus
+            </button>
+          </div>
+        </div>
         <div>
           <p className="text-[0.75rem] tracking-[0.06em] text-haze-dim uppercase">Ką siųsti</p>
           <div className="mt-3 flex flex-wrap gap-2">

@@ -20,7 +20,12 @@ export type TelegramState = {
   linkedAt: string | null
   botUsername: string | null
   settings: TelegramSettings
+  /** When a timed pause ends, while one is running. */
+  pausedUntil: string | null
+  presets: TelegramPreset[]
 }
+
+export type TelegramPreset = { id: string; name: string; settings: TelegramSettings }
 
 function botToken(): string | null {
   return process.env.TELEGRAM_BOT_TOKEN?.trim() || null
@@ -74,18 +79,54 @@ type AccountRow = {
   maxOdds: number
   quietStart: number | null
   quietEnd: number | null
+  pausedUntil: Date | null
+}
+
+/**
+ * Ends the pauses whose time is up. A member who paused alerts for an hour
+ * should not have to come back and switch them on, and the bot only reads
+ * `enabled`, so the flag has to be put back here.
+ */
+export async function resumeExpiredPauses(userId?: string): Promise<number> {
+  await ensureAppSchema()
+  const { rowCount } = await pool.query(
+    `UPDATE telegram_account SET enabled = TRUE, "pausedUntil" = NULL, "updatedAt" = NOW()
+      WHERE "pausedUntil" IS NOT NULL AND "pausedUntil" <= NOW()${userId ? ' AND "userId" = $1' : ''}`,
+    userId ? [userId] : [],
+  )
+  return rowCount ?? 0
+}
+
+/** Stop alerts until a moment, or until the member turns them back on. */
+export async function pauseTelegram(userId: string, until: Date | null): Promise<void> {
+  await ensureAppSchema()
+  await pool.query(
+    `INSERT INTO telegram_account ("userId", enabled, "pausedUntil", "updatedAt") VALUES ($1, FALSE, $2, NOW())
+     ON CONFLICT ("userId") DO UPDATE SET enabled = FALSE, "pausedUntil" = EXCLUDED."pausedUntil", "updatedAt" = NOW()`,
+    [userId, until],
+  )
+}
+
+/** Start them again now, whatever the pause said. */
+export async function resumeTelegram(userId: string): Promise<void> {
+  await ensureAppSchema()
+  await pool.query(
+    `UPDATE telegram_account SET enabled = TRUE, "pausedUntil" = NULL, "updatedAt" = NOW() WHERE "userId" = $1`,
+    [userId],
+  )
 }
 
 export async function loadTelegramState(userId: string): Promise<TelegramState> {
   await ensureAppSchema()
+  await resumeExpiredPauses(userId)
   const { rows } = await pool.query<AccountRow>(
     `SELECT "chatId"::text AS "chatId", username, "linkedAt", enabled, "minEdge", "maxHoursToStart",
-            books, sports, markets, periods, "minOdds", "maxOdds", "quietStart", "quietEnd"
+            books, sports, markets, periods, "minOdds", "maxOdds", "quietStart", "quietEnd", "pausedUntil"
        FROM telegram_account WHERE "userId" = $1`,
     [userId],
   )
   const row = rows[0]
-  const botUsername = await getBotUsername()
+  const [botUsername, presets] = await Promise.all([getBotUsername(), listTelegramPresets(userId)])
   return {
     configured: Boolean(botToken()),
     connected: Boolean(row?.chatId),
@@ -107,7 +148,33 @@ export async function loadTelegramState(userId: string): Promise<TelegramState> 
           quietEnd: row.quietEnd,
         }
       : DEFAULT_TELEGRAM_SETTINGS,
+    pausedUntil: row?.pausedUntil ? row.pausedUntil.toISOString() : null,
+    presets,
   }
+}
+
+/** The member's saved alert rules, oldest first so the list does not reshuffle. */
+export async function listTelegramPresets(userId: string): Promise<TelegramPreset[]> {
+  const { rows } = await pool.query<{ id: string; name: string; settings: TelegramSettings }>(
+    `SELECT id, name, settings FROM telegram_preset WHERE "userId" = $1 ORDER BY "createdAt"`,
+    [userId],
+  )
+  return rows
+}
+
+/** Saves the current rules under a name, replacing a preset of the same name. */
+export async function saveTelegramPreset(userId: string, name: string, settings: TelegramSettings): Promise<void> {
+  await ensureAppSchema()
+  await pool.query(
+    `INSERT INTO telegram_preset (id, "userId", name, settings) VALUES ($1, $2, $3, $4::jsonb)
+     ON CONFLICT ("userId", lower(name)) DO UPDATE SET settings = EXCLUDED.settings, name = EXCLUDED.name`,
+    [`tp-${randomBytes(12).toString('hex')}`, userId, name, JSON.stringify(settings)],
+  )
+}
+
+export async function deleteTelegramPreset(userId: string, id: string): Promise<void> {
+  await ensureAppSchema()
+  await pool.query(`DELETE FROM telegram_preset WHERE id = $1 AND "userId" = $2`, [id, userId])
 }
 
 /** A one-time deep link. Opening it and pressing Start links the chat to this account. */

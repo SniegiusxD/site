@@ -4,6 +4,7 @@ import { pool } from '@/lib/db'
 import { ensureBetsSchema } from '@/lib/db/ensure-bets-schema'
 import { applyMemberOutcomes } from '@/lib/member-outcomes'
 import { settlePendingBets } from '@/lib/settle-bets'
+import { resumeExpiredPauses } from '@/lib/telegram'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,7 +34,10 @@ export async function GET(req: NextRequest) {
     // grader below then only handles bets without a canonical result.
     const outcomes = await applyMemberOutcomes(pool, null)
     const summary = await settlePendingBets({ debug })
-    return NextResponse.json({ ok: true, outcomes, ...summary })
+    // Timed Telegram pauses end here for members who are not on the site when
+    // theirs runs out; the bot only reads `enabled`, so the flag goes back.
+    const resumed = await resumeExpiredPauses()
+    return NextResponse.json({ ok: true, outcomes, resumed, ...summary })
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : 'settle failed' },
