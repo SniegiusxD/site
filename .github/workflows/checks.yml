@@ -27,3 +27,29 @@ jobs:
         run: pnpm lint
       - name: Tests
         run: pnpm test
+
+  browser:
+    # The public pages in a real browser: they must render from a production
+    # build with no database reachable, keep one h1, never scroll sideways, and
+    # pass axe at 1440 px and on a phone.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

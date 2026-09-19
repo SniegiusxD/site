@@ -19,3 +19,7 @@ node_modules
 # typescript build artefacts
 *.tsbuildinfo
 next-env.d.ts
+
+# playwright
+test-results/
+playwright-report/
