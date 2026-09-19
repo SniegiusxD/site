@@ -193,8 +193,8 @@ function resolveFixture(
   const comp = ev.competitions?.[0]
   if (!comp?.competitors?.length || !eventFinished(ev)) return null
   const comps = comp.competitors
-  let eHome = comps.find((c) => c.homeAway === 'home') ?? comps[0]
-  let eAway = comps.find((c) => c.homeAway === 'away') ?? comps[1]
+  const eHome = comps.find((c) => c.homeAway === 'home') ?? comps[0]
+  const eAway = comps.find((c) => c.homeAway === 'away') ?? comps[1]
   if (!eHome || !eAway) return null
 
   const eHomeName = competitorName(eHome)
@@ -439,6 +439,11 @@ function multisportKey(sport: string): string | null {
   if (s === 'CRICKET') return 'cricket'
   // Non-NBA basketball (Euroleague, etc.) — ESPN often lacks these.
   if (s === 'BASKETBALL') return 'basketball'
+  // 2026-08-30: ESPN has zero coverage for these three (confirmed via direct
+  // API calls, not assumed) — see AUTO_GRADING_EXPANSION_2026-08-30.md.
+  if (s === 'HANDBALL') return 'handball'
+  if (s === 'RUGBY_LEAGUE') return 'rugby_league'
+  if (s === 'TABLE_TENNIS') return 'table_tennis'
   return null
 }
 

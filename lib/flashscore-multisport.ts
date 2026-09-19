@@ -6,7 +6,9 @@
  * run_flashscore_multisport.py). 5-minute cache, fuzzy team-name matching.
  */
 
-export type MultisportSport = 'volleyball' | 'basketball' | 'hockey' | 'cricket'
+export type MultisportSport =
+  | 'volleyball' | 'basketball' | 'hockey' | 'cricket'
+  | 'handball' | 'rugby_league' | 'table_tennis'
 
 export type MultisportResult = {
   sport: string
@@ -17,11 +19,11 @@ export type MultisportResult = {
   teams: { home?: string; away?: string }
   winner: 'home' | 'away' | null
   start_date?: string
-  // volleyball
+  // volleyball, table_tennis
   home_sets?: number
   away_sets?: number
   sets?: Array<{ home: number; away: number }>
-  // basketball / hockey / cricket
+  // basketball / hockey / cricket / handball / rugby_league
   home_score?: number
   away_score?: number
 }

@@ -1,0 +1,9 @@
+# single-package settings (pnpm 11 reads config from here)
+verifyDepsBeforeRun: false
+onlyBuiltDependencies:
+  - sharp
+  - msw
+allowBuilds:
+  msw: set this to true or false
+  sharp: set this to true or false
+  unrs-resolver: set this to true or false
