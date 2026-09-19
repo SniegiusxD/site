@@ -48,6 +48,7 @@ function rowToActiveBet(row: typeof userBet.$inferSelect): ActiveBet {
     delaySeconds: row.delaySeconds ?? null,
     note: row.note ?? null,
     tags: row.tags ?? [],
+    fairPriceInterpolated: row.fairPriceInterpolated ?? null,
     canonicalOutcome: isCanonicalOutcome(row.canonicalOutcome) ? row.canonicalOutcome : null,
     homeScore: row.homeScore ?? null,
     awayScore: row.awayScore ?? null,

@@ -29,6 +29,8 @@ export type BetInput = {
   shownStake: number | null
   placement: Placement
   delaySeconds: number | null
+  /** Whether the fair price we showed was interpolated between two lines. */
+  fairPriceInterpolated: boolean | null
 }
 
 export const PLACEMENTS = ['accepted', 'limited', 'rejected'] as const
@@ -148,6 +150,9 @@ export function parseBetInput(input: unknown): BetInputResult {
       shownStake: shownStake,
       placement,
       delaySeconds: delay,
+      // Anything other than a boolean means we do not know, and a guess here
+      // would quietly file an interpolated price as an exact one.
+      fairPriceInterpolated: typeof raw.fairPriceInterpolated === 'boolean' ? raw.fairPriceInterpolated : null,
     },
   }
 }

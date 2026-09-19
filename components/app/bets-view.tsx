@@ -563,6 +563,8 @@ function Breakdowns({ bets }: { bets: ActiveBet[] }) {
             { value: 'book', label: 'Kontoros' },
             { value: 'sport', label: 'Sportas' },
             { value: 'market', label: 'Rinkos' },
+            { value: 'edge', label: 'Vertė' },
+            { value: 'pricing', label: 'Linija' },
           ]}
           value={kind}
           onChange={setKind}

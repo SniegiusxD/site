@@ -8,7 +8,21 @@ import type { ActiveBet } from '@/lib/types'
  * family, so a member can see that (say) every loss is in one book rather than
  * reading a single ROI and guessing.
  */
-export type BreakdownKind = 'book' | 'sport' | 'market'
+export type BreakdownKind = 'book' | 'sport' | 'market' | 'edge' | 'pricing'
+
+/** Value at the moment the bet was recorded, in the bands the audit asked for. */
+export const EDGE_BANDS = [
+  { key: 'e0', label: 'iki 2 %', max: 0.02 },
+  { key: 'e2', label: '2–4 %', max: 0.04 },
+  { key: 'e4', label: '4–8 %', max: 0.08 },
+  { key: 'e8', label: 'nuo 8 %', max: Infinity },
+] as const
+
+export function edgeBandOf(bet: Pick<ActiveBet, 'odds' | 'entryFairProb'>) {
+  if (!bet.entryFairProb || bet.entryFairProb <= 0) return null
+  const edge = bet.odds * bet.entryFairProb - 1
+  return EDGE_BANDS.find((band) => edge < band.max) ?? EDGE_BANDS[EDGE_BANDS.length - 1]
+}
 
 export type BreakdownRow = {
   key: string
@@ -30,6 +44,16 @@ function keyFor(bet: ActiveBet, kind: BreakdownKind): { key: string; label: stri
   if (kind === 'sport') {
     const sport = bet.sport ?? 'OTHER'
     return { key: sport, label: sportName(sport.toLowerCase()) }
+  }
+  if (kind === 'edge') {
+    const band = edgeBandOf(bet)
+    return band ? { key: band.key, label: band.label } : { key: 'unknown', label: 'vertė nežinoma' }
+  }
+  if (kind === 'pricing') {
+    // Bets recorded before this was captured say so rather than guessing.
+    if (bet.fairPriceInterpolated === true) return { key: 'interp', label: 'Interpoliuota linija' }
+    if (bet.fairPriceInterpolated === false) return { key: 'exact', label: 'Tiksli linija' }
+    return { key: 'unknown', label: 'Nežinoma' }
   }
   const market = bet.marketType ?? 'other'
   return { key: market, label: familyOf(market) }

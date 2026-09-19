@@ -54,3 +54,31 @@ describe('breakdown', () => {
     expect(breakdown([bet({ sport: 'BASKETBALL' })], 'sport')[0].label).toBe('Krepšinis')
   })
 })
+
+describe('breakdown by value and by line', () => {
+  const at = (odds: number, fair: number, over: Partial<ActiveBet> = {}) =>
+    bet({ odds, entryFairProb: fair, stake: 10, profit: 5, ...over })
+
+  it('files each bet in the value band it was recorded at', () => {
+    // 2.00 at a 0.55 fair probability is a 10 % edge, at 0.505 it is 1 %, and
+    // at 0.515 it is 3 %. A band's upper number belongs to the band above it.
+    const rows = breakdown([at(2, 0.55), at(2, 0.505), at(2, 0.515)], 'edge')
+    expect(rows.map((row) => row.label).sort()).toEqual(['2–4 %', 'iki 2 %', 'nuo 8 %'])
+  })
+
+  it('says a value is unknown rather than guessing it', () => {
+    expect(breakdown([at(2, 0)], 'edge')[0].label).toBe('vertė nežinoma')
+  })
+
+  it('separates exact lines from interpolated ones, and old bets from both', () => {
+    const rows = breakdown(
+      [
+        at(2, 0.55, { fairPriceInterpolated: true }),
+        at(2, 0.55, { fairPriceInterpolated: false }),
+        at(2, 0.55),
+      ],
+      'pricing',
+    )
+    expect(rows.map((row) => row.label).sort()).toEqual(['Interpoliuota linija', 'Nežinoma', 'Tiksli linija'])
+  })
+})

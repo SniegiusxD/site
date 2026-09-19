@@ -61,7 +61,10 @@ export async function ensureBetsSchema() {
       -- A member's own note: why they took it, or what the book did.
       ADD COLUMN IF NOT EXISTS note TEXT,
       -- The member's own labels: "banko testas", "live", whatever they group by.
-      ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'::text[];
+      ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'::text[],
+      -- Whether the fair price behind the bet was interpolated between two
+      -- Pinnacle lines. Null for bets recorded before this was captured.
+      ADD COLUMN IF NOT EXISTS "fairPriceInterpolated" BOOLEAN;
 
     -- Every correction a member makes, so an edited history stays auditable.
     CREATE TABLE IF NOT EXISTS bet_edit (

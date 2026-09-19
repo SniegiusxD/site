@@ -47,6 +47,9 @@ export function betPayload(
     gameKey: signal.id,
     startsAt: signal.startsAt,
     entryFairProb: signal.fairProb,
+    // Kept with the bet so the tracker can separate exact lines from
+    // interpolated ones later, when the results are in.
+    fairPriceInterpolated: price.fairPriceInterpolated ?? null,
     eventKey: signal.eventKey,
   }
 }

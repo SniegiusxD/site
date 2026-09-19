@@ -103,6 +103,8 @@ export const userBet = pgTable('user_bet', {
   note: text('note'),
   /** The member's own labels for grouping bets. */
   tags: text('tags').array().notNull().default([]),
+  /** Whether the fair price behind this bet was interpolated between lines. */
+  fairPriceInterpolated: boolean('fairPriceInterpolated'),
   canonicalOutcome: text('canonicalOutcome'),
   resultSource: text('resultSource'),
   homeScore: integer('homeScore'),

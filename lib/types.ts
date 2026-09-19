@@ -110,6 +110,8 @@ export interface ActiveBet {
   note?: string | null
   /** The member's own labels. */
   tags?: string[]
+  /** Whether the fair price behind this bet was interpolated between lines. */
+  fairPriceInterpolated?: boolean | null
   canonicalOutcome?: 'won' | 'half_won' | 'push' | 'void' | 'half_lost' | 'lost' | null
   /** The period score that grade used. */
   homeScore?: number | null
