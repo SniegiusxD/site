@@ -31,7 +31,9 @@ export const MARKET_FAMILIES = [
   { key: 'spread', label: 'Pranašumas', markets: ['spread', 'spread_1h', 'spreads_sets', 'handicap_3way'] },
   { key: 'total', label: 'Suminis', markets: ['total', 'total_1h'] },
   { key: 'team_total', label: 'Komandos suminis', markets: ['team_total', 'team_totals_1h'] },
-  { key: 'corners', label: 'Kampiniai', markets: ['corner_total'] },
+  // Round 20 on the VM added per-team corner totals; asking for "Kampiniai"
+  // means both the match total and the team ladders.
+  { key: 'corners', label: 'Kampiniai', markets: ['corner_total', 'corner_team_total'] },
 ] as const
 
 export type MarketFamilyKey = (typeof MARKET_FAMILIES)[number]['key']

@@ -38,6 +38,18 @@ describe('breakdown', () => {
     expect(rows[0].clv).toBeNull()
   })
 
+  it('files both corner markets under one family', () => {
+    // Round 20 on the VM publishes corner_team_total beside corner_total;
+    // neither should fall through to "Kita".
+    const rows = breakdown(
+      [bet({ marketType: 'corner_total' }), bet({ marketType: 'corner_team_total' })],
+      'market',
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0].label).toBe('Kampiniai')
+    expect(rows[0].settled).toBe(2)
+  })
+
   it('names sports in Lithuanian', () => {
     expect(breakdown([bet({ sport: 'BASKETBALL' })], 'sport')[0].label).toBe('Krepšinis')
   })
