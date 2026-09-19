@@ -30,6 +30,7 @@ export function SiteFooter() {
             <nav aria-label="Nuorodos" className="mt-4 flex flex-wrap gap-x-6">
               {[
                 { href: '/skaiciuokle', label: 'Skaičiuoklė' },
+                { href: '/metodika', label: 'Kaip mes matuojam' },
                 { href: '/taisykles', label: 'Naudojimosi taisyklės' },
                 { href: '/privatumas', label: 'Privatumo politika' },
               ].map((link) => (

@@ -29,7 +29,7 @@ export function EvidenceStrip() {
           ))}
         </dl>
         <Link
-          href="/#duomenys"
+          href="/metodika"
           className="shrink-0 border-b border-rail py-2 text-[0.9375rem] font-medium text-chalk transition-colors hover:border-chalk"
         >
           Kaip tai išmatuota

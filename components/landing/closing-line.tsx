@@ -89,7 +89,7 @@ export function ClosingLine() {
           </Reveal>
           <Reveal delay={200}>
             <Link
-              href="/#duomenys"
+              href="/metodika"
               className="mt-7 inline-flex border-b border-rail py-2 font-medium transition-colors hover:border-chalk"
             >
               Kaip tai išmatuota

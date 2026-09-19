@@ -12,6 +12,7 @@ const settle = (page: Page) => page.waitForTimeout(1500)
 const PAGES = [
   { path: '/', heading: /pirmas/i },
   { path: '/demo', heading: /signalas/i },
+  { path: '/metodika', heading: /kaip mes matuojam/i },
   { path: '/skaiciuokle', heading: /Pamatyk, kaip atrodo/i },
   { path: '/prisijungti', heading: /sveikas sugrįžęs/i },
   { path: '/registracija', heading: /sukurk nemokamą paskyrą/i },
