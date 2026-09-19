@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { edgeOf, formatEdge, formatEuro, formatInteger, formatOdds, kellyFraction } from '@/lib/format-lt'
 import { type LandingSignal, SIGNALS_CAPTURED_LABEL, landingSignals } from '@/lib/landing-signals'
+import { clockLabel } from '@/lib/live-view'
 import type { PublicStats } from '@/lib/public-stats'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { BookMark } from './book-mark'
@@ -55,11 +56,20 @@ export function HeroBoard({ stats }: { stats: PublicStats | null }) {
           </span>
           <span className="text-[0.875rem] font-medium text-haze">gyvai</span>
         </p>
-        {perDay !== null && (
-          <p className="text-[0.875rem] text-haze">
-            <span className="font-semibold text-chalk tnum">{formatInteger(perDay)}</span> per parą
-          </p>
-        )}
+        <p className="text-[0.875rem] text-haze">
+          {perDay !== null && (
+            <>
+              <span className="font-semibold text-chalk tnum">{formatInteger(perDay)}</span> per parą
+            </>
+          )}
+          {/* The first question a visitor has about live data is how old it is. */}
+          {stats?.lastScanAt && (
+            <>
+              {perDay !== null && ' · '}
+              skenuota <span className="text-chalk tnum">{clockLabel(stats.lastScanAt)}</span>
+            </>
+          )}
+        </p>
       </div>
 
       <ul>

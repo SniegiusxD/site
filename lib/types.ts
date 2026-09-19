@@ -108,6 +108,8 @@ export interface ActiveBet {
   delaySeconds?: number | null
   /** The member's own note. */
   note?: string | null
+  /** The member's own labels. */
+  tags?: string[]
   canonicalOutcome?: 'won' | 'half_won' | 'push' | 'void' | 'half_lost' | 'lost' | null
   /** The period score that grade used. */
   homeScore?: number | null

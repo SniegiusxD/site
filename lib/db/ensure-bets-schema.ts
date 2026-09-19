@@ -59,7 +59,9 @@ export async function ensureBetsSchema() {
       ADD COLUMN IF NOT EXISTS placement TEXT NOT NULL DEFAULT 'accepted',
       ADD COLUMN IF NOT EXISTS "delaySeconds" INTEGER,
       -- A member's own note: why they took it, or what the book did.
-      ADD COLUMN IF NOT EXISTS note TEXT;
+      ADD COLUMN IF NOT EXISTS note TEXT,
+      -- The member's own labels: "banko testas", "live", whatever they group by.
+      ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'::text[];
 
     -- Every correction a member makes, so an edited history stays auditable.
     CREATE TABLE IF NOT EXISTS bet_edit (

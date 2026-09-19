@@ -40,6 +40,19 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   }
 }
 
+/** The member's own labels: at most six, short, lower case, no blanks. */
+function parseTags(raw: unknown): string[] | undefined {
+  if (raw === undefined) return undefined
+  if (!Array.isArray(raw)) return []
+  const cleaned: string[] = []
+  for (const entry of raw) {
+    if (typeof entry !== 'string') continue
+    const tag = entry.trim().toLowerCase().slice(0, 24)
+    if (tag && !cleaned.includes(tag)) cleaned.push(tag)
+  }
+  return cleaned.slice(0, 6)
+}
+
 /** Correct a bet that was recorded wrong: the odds or the stake. */
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getSessionUser()
@@ -53,13 +66,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const note =
     body.note === undefined ? undefined : typeof body.note === 'string' ? body.note.trim().slice(0, 500) || null : null
 
+  // Tags are the member's own labels: at most six, short, lower case, no blanks.
+  const tags = parseTags(body.tags)
+
   if (odds !== undefined && (!Number.isFinite(odds) || odds <= 1 || odds > 1000)) {
     return NextResponse.json({ error: 'Koeficientas turi būti nuo 1,01 iki 1000.' }, { status: 400 })
   }
   if (stake !== undefined && (!Number.isFinite(stake) || stake <= 0 || stake > 100_000)) {
     return NextResponse.json({ error: 'Suma turi būti nuo 0,01 € iki 100 000 €.' }, { status: 400 })
   }
-  if (odds === undefined && stake === undefined && note === undefined) {
+  if (odds === undefined && stake === undefined && note === undefined && tags === undefined) {
     return NextResponse.json({ error: 'Nėra ką keisti.' }, { status: 400 })
   }
 
@@ -78,6 +94,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (odds !== undefined && odds !== row.odds) changes.push({ field: 'odds', from: String(row.odds), to: String(odds) })
     if (stake !== undefined && stake !== row.stake) changes.push({ field: 'stake', from: String(row.stake), to: String(stake) })
     if (note !== undefined && note !== (row.note ?? null)) changes.push({ field: 'note', from: row.note ?? null, to: note })
+    const wasTags = (row.tags ?? []).join(', ')
+    if (tags !== undefined && tags.join(', ') !== wasTags) {
+      changes.push({ field: 'tags', from: wasTags || null, to: tags.join(', ') || null })
+    }
 
     await db
       .update(userBet)
@@ -85,6 +105,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         ...(odds === undefined ? {} : { odds }),
         ...(stake === undefined ? {} : { stake }),
         ...(note === undefined ? {} : { note }),
+        ...(tags === undefined ? {} : { tags }),
       })
       .where(and(eq(userBet.id, id), eq(userBet.userId, user.id)))
 

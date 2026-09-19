@@ -24,6 +24,7 @@ import { betsToCsv, csvFileName } from '@/lib/bets-csv'
 import { breakdown, type BreakdownKind } from '@/lib/breakdowns'
 import { workQueues } from '@/lib/work-queues'
 import { EquityChart } from './equity-chart'
+import { Glossary } from './glossary'
 import { executionStats } from '@/lib/execution'
 import { formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
@@ -77,6 +78,13 @@ const EDIT_LABEL: Record<string, string> = {
   deleted: 'ištrinta',
 }
 
+/** "live, bandymas" becomes ["live", "bandymas"]; the server bounds them again. */
+const splitTags = (text: string) =>
+  text
+    .split(',')
+    .map((tag) => tag.trim().toLowerCase())
+    .filter(Boolean)
+
 const tone = (value: number) => (value > 0.004 ? 'text-pitch' : value < -0.004 ? 'text-brick' : 'text-chalk')
 const timeOf = (bet: ActiveBet) => new Date(betTime(bet) ?? 0).getTime()
 
@@ -88,6 +96,7 @@ export function BetsView() {
   const [book, setBook] = useState('')
   const [sport, setSport] = useState('')
   const [clv, setClv] = useState<ClvFilter>('all')
+  const [tag, setTag] = useState('')
   const [tab, setTab] = useState<StatusTab>('all')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [now, setNow] = useState(() => new Date())
@@ -132,17 +141,25 @@ export function BetsView() {
 
   // Filters scope everything below them; the calendar keeps its own month.
   const scoped = useMemo(
-    () => (bets ?? []).filter((bet) => (!book || bet.bookmaker === book) && (!sport || bet.sport === sport) && matchesClv(bet, clv)),
-    [bets, book, sport, clv],
+    () =>
+      (bets ?? []).filter(
+        (bet) =>
+          (!book || bet.bookmaker === book) &&
+          (!sport || bet.sport === sport) &&
+          (!tag || (bet.tags ?? []).includes(tag)) &&
+          matchesClv(bet, clv),
+      ),
+    [bets, book, sport, clv, tag],
   )
   const inRange = useMemo(() => scoped.filter((bet) => inPeriod(bet, period, now)), [scoped, period, now])
   const stats = useMemo(() => betStats(inRange), [inRange])
   const series = useMemo(() => valueSeries(inRange), [inRange])
   const books = useMemo(() => BOOKS.filter((name) => (bets ?? []).some((bet) => bet.bookmaker === name)), [bets])
   const sports = useMemo(() => [...new Set((bets ?? []).map((bet) => bet.sport))].sort(), [bets])
+  const tags = useMemo(() => [...new Set((bets ?? []).flatMap((bet) => bet.tags ?? []))].sort(), [bets])
   const pending = useMemo(() => inRange.filter((bet) => bet.status === 'laukia').sort((a, b) => timeOf(a) - timeOf(b)), [inRange])
   const settled = useMemo(() => inRange.filter((bet) => bet.status !== 'laukia').sort((a, b) => timeOf(b) - timeOf(a)), [inRange])
-  const activeFilters = (book ? 1 : 0) + (sport ? 1 : 0) + (clv !== 'all' ? 1 : 0)
+  const activeFilters = (book ? 1 : 0) + (sport ? 1 : 0) + (tag ? 1 : 0) + (clv !== 'all' ? 1 : 0)
 
   return (
     <main className="mx-auto max-w-[60rem] px-4 pt-6 pb-16 sm:px-8 lg:pt-10">
@@ -199,6 +216,7 @@ export function BetsView() {
                 onClick={() => {
                   setBook('')
                   setSport('')
+                  setTag('')
                   setClv('all')
                 }}
                 className="px-2 text-[0.95rem] text-haze underline decoration-rail-strong underline-offset-4 hover:text-chalk"
@@ -225,12 +243,21 @@ export function BetsView() {
                   onChange={setSport}
                 />
               )}
+              {tags.length > 0 && (
+                <ChipGroup
+                  label="Žymos"
+                  options={[{ value: '', label: 'Visos' }, ...tags.map((name) => ({ value: name, label: name }))]}
+                  value={tag}
+                  onChange={setTag}
+                />
+              )}
               <ChipGroup label="Uždarymo kaina" options={CLV_CHOICES} value={clv} onChange={setClv} />
             </div>
           )}
 
           <AnimatePresence>{since && <SinceLastVisit summary={since} onClose={() => setSince(null)} />}</AnimatePresence>
           <ThreeNumbers stats={stats} bets={scoped} />
+          <Glossary />
           <StatGrid stats={stats} bets={scoped} />
           <ValueCard series={series} stats={stats} />
           <ProfitCalendar bets={scoped} />
@@ -633,6 +660,7 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
   const [odds, setOdds] = useState(() => formatOdds(bet.odds))
   const [stake, setStake] = useState(() => String(bet.stake))
   const [note, setNote] = useState(() => bet.note ?? '')
+  const [tagText, setTagText] = useState(() => (bet.tags ?? []).join(', '))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [edits, setEdits] = useState<Array<{ field: string; from: string | null; to: string | null; at: string }>>([])
@@ -659,8 +687,8 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
           method === 'PATCH'
             ? JSON.stringify(
                 bet.status === 'laukia'
-                  ? { odds: Number(odds.replace(',', '.')), stake: Number(stake.replace(',', '.')), note }
-                  : { note },
+                  ? { odds: Number(odds.replace(',', '.')), stake: Number(stake.replace(',', '.')), note, tags: splitTags(tagText) }
+                  : { note, tags: splitTags(tagText) },
               )
             : undefined,
       })
@@ -687,6 +715,15 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
           {bet.startsAt ? `, ${kickoffLabel(bet.startsAt)}` : ''}
         </p>
         {bet.note && <p className="mt-1 truncate text-[0.85rem] text-haze-dim italic">„{bet.note}&ldquo;</p>}
+        {(bet.tags ?? []).length > 0 && (
+          <p className="mt-1 flex flex-wrap gap-1.5">
+            {(bet.tags ?? []).map((tag) => (
+              <span key={tag} className="rounded-full bg-rail px-2 py-0.5 text-[0.75rem] text-haze">
+                {tag}
+              </span>
+            ))}
+          </p>
+        )}
         <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.85rem]">
           <span className="text-haze-dim">
             {formatEuro(bet.stake)} už {formatOdds(bet.odds)}, {bet.bookmaker}
@@ -759,6 +796,17 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
                 maxLength={500}
                 placeholder="Kodėl paėmei, ką kontora padarė…"
                 onChange={(event) => setNote(event.target.value)}
+                className="mt-1 block h-10 w-full rounded-lg bg-stand px-2.5 text-[0.95rem] text-chalk hairline placeholder:text-haze-dim"
+              />
+            </label>
+            <label className="min-w-[10rem] flex-1 text-[0.8rem] text-haze">
+              Žymos
+              <input
+                type="text"
+                value={tagText}
+                maxLength={160}
+                placeholder="live, bandymas…"
+                onChange={(event) => setTagText(event.target.value)}
                 className="mt-1 block h-10 w-full rounded-lg bg-stand px-2.5 text-[0.95rem] text-chalk hairline placeholder:text-haze-dim"
               />
             </label>

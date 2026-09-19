@@ -101,6 +101,8 @@ export const userBet = pgTable('user_bet', {
   delaySeconds: integer('delaySeconds'),
   /** The member's own note about this bet. */
   note: text('note'),
+  /** The member's own labels for grouping bets. */
+  tags: text('tags').array().notNull().default([]),
   canonicalOutcome: text('canonicalOutcome'),
   resultSource: text('resultSource'),
   homeScore: integer('homeScore'),
