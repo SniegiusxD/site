@@ -48,6 +48,14 @@ const STATUS: Record<BetStatus, { label: string; tone: string }> = {
   neisspresta: { label: 'Neišspręsta', tone: 'bg-rail text-haze-dim' },
 }
 
+/** What a member may set a result to by hand, in the order they think of it. */
+const CORRECTIONS: Array<{ value: BetStatus; label: string }> = [
+  { value: 'laimeta', label: 'Laimėta' },
+  { value: 'pralaimeta', label: 'Pralaimėta' },
+  { value: 'grazinta', label: 'Grąžinta' },
+  { value: 'laukia', label: 'Grąžinti į laukiančius' },
+]
+
 const PERIODS: Array<{ value: Period; label: string }> = [
   { value: 'week', label: 'Savaitė' },
   { value: 'month', label: 'Mėnuo' },
@@ -75,8 +83,14 @@ const EDIT_LABEL: Record<string, string> = {
   odds: 'koeficientas',
   stake: 'suma',
   note: 'užrašas',
+  tags: 'žymos',
+  status: 'rezultatas',
   deleted: 'ištrinta',
 }
+
+/** Statuses read as their Lithuanian labels in the history, not as keys. */
+const editValue = (field: string, value: string | null) =>
+  field === 'status' && value ? (STATUS[value as BetStatus]?.label ?? value) : (value ?? '–')
 
 /** "live, bandymas" becomes ["live", "bandymas"]; the server bounds them again. */
 const splitTags = (text: string) =>
@@ -661,6 +675,8 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
   const [stake, setStake] = useState(() => String(bet.stake))
   const [note, setNote] = useState(() => bet.note ?? '')
   const [tagText, setTagText] = useState(() => (bet.tags ?? []).join(', '))
+  // Only a bet whose match has begun can have a result worth correcting.
+  const started = bet.status !== 'laukia' || (bet.startsAt ? new Date(bet.startsAt) < new Date() : false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [edits, setEdits] = useState<Array<{ field: string; from: string | null; to: string | null; at: string }>>([])
@@ -676,7 +692,7 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
       })
   }, [editing, bet.id])
 
-  async function send(method: 'PATCH' | 'DELETE') {
+  async function send(method: 'PATCH' | 'DELETE', status?: BetStatus) {
     setBusy(true)
     setError(null)
     try {
@@ -686,9 +702,11 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
         body:
           method === 'PATCH'
             ? JSON.stringify(
-                bet.status === 'laukia'
-                  ? { odds: Number(odds.replace(',', '.')), stake: Number(stake.replace(',', '.')), note, tags: splitTags(tagText) }
-                  : { note, tags: splitTags(tagText) },
+                status
+                  ? { status }
+                  : bet.status === 'laukia'
+                    ? { odds: Number(odds.replace(',', '.')), stake: Number(stake.replace(',', '.')), note, tags: splitTags(tagText) }
+                    : { note, tags: splitTags(tagText) },
               )
             : undefined,
       })
@@ -715,6 +733,9 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
           {bet.startsAt ? `, ${kickoffLabel(bet.startsAt)}` : ''}
         </p>
         {bet.note && <p className="mt-1 truncate text-[0.85rem] text-haze-dim italic">„{bet.note}&ldquo;</p>}
+        {bet.resultSource === 'member' && bet.status !== 'laukia' && (
+          <p className="mt-1 text-[0.8rem] text-haze-dim">rezultatą pataisei pats</p>
+        )}
         {(bet.tags ?? []).length > 0 && (
           <p className="mt-1 flex flex-wrap gap-1.5">
             {(bet.tags ?? []).map((tag) => (
@@ -818,6 +839,26 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
             >
               Išsaugoti
             </button>
+            {/* Automatic settlement is right about nine times in ten. The tenth
+                is the member's to correct, and the correction is recorded. */}
+            {started && (
+              <div className="basis-full text-[0.8rem] text-haze">
+                Rezultatas neteisingas?
+                <span className="mt-1.5 flex flex-wrap gap-1.5">
+                  {CORRECTIONS.filter((choice) => choice.value !== bet.status).map((choice) => (
+                    <button
+                      key={choice.value}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => send('PATCH', choice.value)}
+                      className="h-9 rounded-lg bg-stand px-3 text-[0.9rem] text-chalk hairline transition-colors hover:bg-stand-hover disabled:opacity-60"
+                    >
+                      {choice.label}
+                    </button>
+                  ))}
+                </span>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -847,7 +888,8 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
             <ul className="mt-3 grid gap-1 border-t border-rail pt-2.5 text-[0.8rem] text-haze-dim">
               {edits.slice(0, 4).map((edit) => (
                 <li key={`${edit.field}-${edit.at}`}>
-                  {EDIT_LABEL[edit.field] ?? edit.field}: {edit.from ?? '–'} → {edit.to ?? '–'} ({kickoffLabel(edit.at)})
+                  {EDIT_LABEL[edit.field] ?? edit.field}: {editValue(edit.field, edit.from)} → {editValue(edit.field, edit.to)} (
+                  {kickoffLabel(edit.at)})
                 </li>
               ))}
             </ul>

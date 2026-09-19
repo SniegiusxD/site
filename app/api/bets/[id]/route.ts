@@ -40,6 +40,20 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   }
 }
 
+/** What a member may set a result to by hand, and what it pays. */
+const MANUAL_STATUS = {
+  laimeta: (odds: number, stake: number) => stake * (odds - 1),
+  pralaimeta: (_odds: number, stake: number) => -stake,
+  grazinta: () => 0,
+  neisspresta: () => 0,
+  laukia: () => 0,
+} as const
+
+type ManualStatus = keyof typeof MANUAL_STATUS
+
+const isManualStatus = (value: unknown): value is ManualStatus =>
+  typeof value === 'string' && value in MANUAL_STATUS
+
 /** The member's own labels: at most six, short, lower case, no blanks. */
 function parseTags(raw: unknown): string[] | undefined {
   if (raw === undefined) return undefined
@@ -68,6 +82,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   // Tags are the member's own labels: at most six, short, lower case, no blanks.
   const tags = parseTags(body.tags)
+  // Automatic settlement is right about nine times in ten; the tenth is the
+  // member's to correct, and the correction is recorded like any other edit.
+  const status: ManualStatus | null | undefined =
+    body.status === undefined ? undefined : isManualStatus(body.status) ? body.status : null
+  if (status === null) {
+    return NextResponse.json({ error: 'Nežinomas rezultatas.' }, { status: 400 })
+  }
 
   if (odds !== undefined && (!Number.isFinite(odds) || odds <= 1 || odds > 1000)) {
     return NextResponse.json({ error: 'Koeficientas turi būti nuo 1,01 iki 1000.' }, { status: 400 })
@@ -75,7 +96,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (stake !== undefined && (!Number.isFinite(stake) || stake <= 0 || stake > 100_000)) {
     return NextResponse.json({ error: 'Suma turi būti nuo 0,01 € iki 100 000 €.' }, { status: 400 })
   }
-  if (odds === undefined && stake === undefined && note === undefined && tags === undefined) {
+  if (odds === undefined && stake === undefined && note === undefined && tags === undefined && status === undefined) {
     return NextResponse.json({ error: 'Nėra ką keisti.' }, { status: 400 })
   }
 
@@ -94,6 +115,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (odds !== undefined && odds !== row.odds) changes.push({ field: 'odds', from: String(row.odds), to: String(odds) })
     if (stake !== undefined && stake !== row.stake) changes.push({ field: 'stake', from: String(row.stake), to: String(stake) })
     if (note !== undefined && note !== (row.note ?? null)) changes.push({ field: 'note', from: row.note ?? null, to: note })
+    const settling = status !== undefined && status !== row.status
+    if (settling) changes.push({ field: 'status', from: row.status, to: status })
     const wasTags = (row.tags ?? []).join(', ')
     if (tags !== undefined && tags.join(', ') !== wasTags) {
       changes.push({ field: 'tags', from: wasTags || null, to: tags.join(', ') || null })
@@ -106,6 +129,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         ...(stake === undefined ? {} : { stake }),
         ...(note === undefined ? {} : { note }),
         ...(tags === undefined ? {} : { tags }),
+        ...(settling
+          ? {
+              status,
+              profit: Math.round(MANUAL_STATUS[status](odds ?? row.odds, stake ?? row.stake) * 100) / 100,
+              settledAt: status === 'laukia' ? null : new Date(),
+              // Where the result came from matters when it disagrees with ours.
+              resultSource: status === 'laukia' ? null : 'member',
+            }
+          : {}),
       })
       .where(and(eq(userBet.id, id), eq(userBet.userId, user.id)))
 
