@@ -1,5 +1,12 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test } from '@playwright/test'
+import { expect, type Page, test } from '@playwright/test'
+
+/**
+ * Entrance animations fade text in from nothing, so a contrast check that runs
+ * while they are still going measures half-transparent text. The longest is an
+ * 800 ms animation behind a 520 ms delay.
+ */
+const settle = (page: Page) => page.waitForTimeout(1500)
 
 /** Every page a visitor can reach without an account. */
 const PAGES = [
@@ -26,6 +33,7 @@ for (const page of PAGES) {
     })
 
     const response = await browser.goto(page.path)
+    await settle(browser)
     expect(response?.status(), `${page.path} should answer 200`).toBe(200)
 
     const headings = browser.locator('h1')
@@ -44,6 +52,7 @@ for (const page of PAGES) {
 
   test(`${page.path} passes axe`, async ({ page: browser }) => {
     await browser.goto(page.path)
+    await settle(browser)
     const { violations } = await new AxeBuilder({ page: browser })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze()
