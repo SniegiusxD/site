@@ -41,6 +41,7 @@ import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
 import { useAccount } from './account-provider'
 import { ChipGroup } from './chip-group'
 import { FilterChip, FilterOption } from './filter-chip'
+import { FirstSteps } from './first-steps'
 import { SignalDetail } from './signal-detail'
 
 const POLL_MS = 60_000
@@ -780,6 +781,8 @@ export function SignalBoard({
             </Notice>
           )}
           {loadError && <Notice>{loadError}</Notice>}
+
+          <FirstSteps bets={bets} />
 
           {board.tier === 'free' && (
             <LockedStrip

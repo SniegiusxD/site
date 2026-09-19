@@ -182,6 +182,33 @@ export function SignalDetail({
         <span>{price.fairPriceInterpolated === true ? 'Tikroji kaina interpoliuota tarp Pinnacle linijų' : 'Tikroji kaina — tiksli Pinnacle linija'}</span>
       </p>
 
+      {/* The reasoning in the member's own terms, built from this signal's own
+          numbers rather than a stock sentence. */}
+      <section className="mt-4 rounded-2xl bg-stand p-5 hairline sm:p-6" aria-label="Kodėl šis statymas">
+        <h3 className="text-[1.5rem]">Kodėl šis statymas</h3>
+        <ul className="mt-3 grid gap-2 text-[0.95rem] text-haze">
+          <li>
+            Pinnacle kaina be maržos yra <span className="font-semibold text-chalk tnum">{formatOdds(signal.fairOdds)}</span>, tai yra{' '}
+            <span className="font-semibold text-chalk tnum">{formatPercent(signal.fairProb, 1)}</span> tikimybė.
+          </li>
+          <li>
+            {price.book} siūlo <span className="font-semibold text-chalk tnum">{formatOdds(price.odds)}</span> — už tą patį įvykį moka{' '}
+            <span className="font-semibold text-floodlight tnum">{formatEdge(price.edge)}</span> daugiau, nei jis vertas.
+          </li>
+          <li>
+            Iš {formatEuro(prefs.bankroll)} bankrollo tai{' '}
+            <span className="font-semibold text-chalk tnum">{formatEuro(sizing.suggested)}</span> pagal ketvirtį Kelly
+            {sizing.suggested < sizing.kelly - 0.005 ? ', apkirpta pagal tavo limitą arba jau pastatytą sumą' : ''}.
+          </li>
+          <li>
+            {price.fairPriceInterpolated === true
+              ? 'Pinnacle šitos linijos neturi, todėl tikroji kaina interpoliuota tarp gretimų — vertė čia mažiau tiksli.'
+              : 'Pinnacle turi lygiai tokią pačią liniją, todėl palyginimas tikslus.'}
+          </li>
+          <li>Vertė nieko negarantuoja: ji atsiperka per šimtus statymų, o ne šitame.</li>
+        </ul>
+      </section>
+
       <section className="mt-4 rounded-2xl bg-stand p-5 hairline sm:p-6" aria-label="Kainos visose kontorose">
         <h3 className="text-[1.5rem]">Kainos visose kontorose</h3>
         <div className="mt-5 space-y-4">

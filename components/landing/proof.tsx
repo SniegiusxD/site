@@ -101,6 +101,7 @@ export function Proof() {
             </div>
             <p className="text-[0.875rem] text-haze">
               Kelios dienos nieko neįrodo. Todėl rodom ir CLV: jis matuoja, ar kaina buvo gera, nepriklausomai nuo to, ar statymas laimėjo.
+              {' '}CLV rodo kainos kokybę, o ne pelno garantiją — su tokia imtimi net teigiama grąža dar gali būti sėkmė.
             </p>
           </div>
         </Reveal>
