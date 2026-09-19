@@ -853,6 +853,7 @@ export function SignalBoard({
                 now={now}
                 bets={bets}
                 signalsById={signalsById}
+                movement={movementFor(selectedRow)}
                 onTracked={onTracked}
               />
             </motion.div>
@@ -907,6 +908,7 @@ export function SignalBoard({
               now={now}
               bets={bets}
               signalsById={signalsById}
+              movement={movementFor(selectedRow)}
               onTracked={onTracked}
               onClose={() => setSelected(null)}
             />

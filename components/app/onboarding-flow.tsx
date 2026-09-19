@@ -8,8 +8,8 @@ import { useRouter } from 'next/navigation'
 import { useId, useMemo, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
 import { brand } from '@/lib/brand'
-import { formatEdge, formatEuro, formatInteger, formatOdds, ltPlural } from '@/lib/format-lt'
-import { BOOKS, type BookName } from '@/lib/landing-signals'
+import { edgeOf, formatEdge, formatEuro, formatInteger, formatOdds, kellyFraction, ltPlural } from '@/lib/format-lt'
+import { BOOKS, type BookName, landingSignals } from '@/lib/landing-signals'
 import { PACE_CHOICES, TRACK_RECORD, daysTo, recordPeriodLabel, simulationStake, timeLabel } from '@/lib/pace'
 import { KELLY_CHOICES, type Preferences, suggestedStake } from '@/lib/preferences'
 import type { SignalCounts } from '@/lib/signal-counts'
@@ -152,7 +152,12 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
               {step === 1 && <BooksStep prefs={prefs} update={update} counts={counts} />}
               {step === 2 && <SignalsStep prefs={prefs} update={update} />}
               {step === 3 && <RiskStep prefs={prefs} update={update} />}
-              {step === 4 && <PaceStep prefs={prefs} update={update} />}
+              {step === 4 && (
+                <>
+                  <PaceStep prefs={prefs} update={update} />
+                  <SampleSignal prefs={prefs} />
+                </>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -188,6 +193,52 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
 }
 
 type StepProps = { prefs: Preferences; update: (patch: Partial<Preferences>) => void }
+
+/**
+ * The last thing onboarding shows is a real signal, priced against this
+ * member's own bankroll, so the first board is not the first time they see one.
+ */
+function SampleSignal({ prefs }: { prefs: Preferences }) {
+  const signal = landingSignals.find((entry) => entry.prices.length >= 2) ?? landingSignals[0]
+  const price = signal.prices.find((entry) => entry.book === signal.valueBook) ?? signal.prices[0]
+  const edge = edgeOf(price.odds, signal.fairOdds)
+  const stake = prefs.bankroll * Math.min(0.05, kellyFraction(price.odds, 1 / signal.fairOdds) * prefs.kellyFraction)
+
+  return (
+    <section aria-label="Pavyzdinis signalas" className="mt-8 rounded-2xl bg-stand p-5 hairline sm:p-6">
+      <p className="text-[0.9rem] text-haze">Taip atrodys tavo pirmas signalas</p>
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-medium">{price.event}</p>
+          <p className="mt-0.5 text-[0.9rem] text-haze">
+            {signal.market}: {price.selection}
+          </p>
+        </div>
+        <p className="text-right">
+          <span className="block font-display text-[1.6rem] leading-none font-bold text-floodlight tnum">{formatEdge(edge)}</span>
+          <span className="text-[0.85rem] text-haze">vertė</span>
+        </p>
+      </div>
+      <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-rail pt-3.5 text-[0.9rem]">
+        <div>
+          <dt className="text-haze">{price.book}</dt>
+          <dd className="mt-0.5 font-semibold tnum">{formatOdds(price.odds)}</dd>
+        </div>
+        <div>
+          <dt className="text-haze">Tikroji kaina</dt>
+          <dd className="mt-0.5 font-semibold tnum">{formatOdds(signal.fairOdds)}</dd>
+        </div>
+        <div>
+          <dt className="text-haze">Tavo suma</dt>
+          <dd className="mt-0.5 font-semibold tnum">{formatEuro(stake, 2)}</dd>
+        </div>
+      </dl>
+      <p className="mt-3 text-[0.85rem] text-haze-dim">
+        Tikras signalas iš mūsų skenavimo. Suma suskaičiuota nuo tavo {formatEuro(prefs.bankroll)} banko.
+      </p>
+    </section>
+  )
+}
 
 function StepTitle({ title, body }: { title: string; body: string }) {
   return (

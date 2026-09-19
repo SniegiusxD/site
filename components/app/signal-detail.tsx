@@ -10,9 +10,10 @@ import { BookMark } from '@/components/landing/book-mark'
 import { PriceHistoryChart } from './price-history-chart'
 import { CopyButton } from '@/components/landing/copy-button'
 import { type BoardBet, boardStake, type Exposure, exposureFor, toBoardBet } from '@/lib/exposure'
-import { formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/lib/format-lt'
+import { edgeOf, formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/lib/format-lt'
 import { BOOKS } from '@/lib/landing-signals'
 import type { LivePrice, LiveSignal } from '@/lib/live-signals'
+import type { Movement } from '@/lib/price-movement'
 import { agoLabel, clockLabel, eventLabel, isInterpolatedLabel, kickoffLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
 import { sportName } from '@/lib/sports-lt'
 import { trackBet } from '@/lib/track-bet'
@@ -24,6 +25,7 @@ export function SignalDetail({
   signal,
   price,
   now,
+  movement,
   bets,
   signalsById,
   onTracked,
@@ -32,6 +34,8 @@ export function SignalDetail({
   signal: LiveSignal
   price: LivePrice
   now: Date
+  /** Where this book's price started, once we have seen two cycles. */
+  movement?: Movement
   bets: BoardBet[]
   signalsById: Map<string, LiveSignal>
   onTracked?: (bet: BoardBet) => void
@@ -171,6 +175,15 @@ export function SignalDetail({
           </div>
         </div>
       </div>
+
+      {movement && Math.abs(edgeOf(movement.first, signal.fairOdds) - price.edge) >= 0.005 && (
+        <p className="mt-4 rounded-2xl bg-stand p-4 text-[0.9rem] text-haze hairline">
+          Kai signalą pirmą kartą pamatėm, {price.book} siūlė{' '}
+          <span className="font-semibold text-chalk tnum">{formatOdds(movement.first)}</span> — vertė buvo{' '}
+          <span className="font-semibold text-chalk tnum">{formatEdge(edgeOf(movement.first, signal.fairOdds))}</span>. Dabar{' '}
+          <span className="font-semibold text-chalk tnum">{formatEdge(price.edge)}</span>. Skaičiuoja ta, kurią gausi dabar.
+        </p>
+      )}
 
       <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.875rem] text-haze">
         <span>
