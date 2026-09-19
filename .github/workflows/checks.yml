@@ -3,9 +3,11 @@ name: Checks
 # Types, lint and tests on every push and pull request. The audit's point was
 # that nothing enforced these: a broken lint command had gone unnoticed and a
 # TypeScript escape hatch was sitting in the Next config.
+# Work is pushed to redesign and to main together, so watching both sent two
+# runs — and two emails — for every commit. Production is main.
 on:
   push:
-    branches: [main, redesign]
+    branches: [main]
   pull_request:
 
 jobs:

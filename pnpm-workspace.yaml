@@ -3,7 +3,11 @@ verifyDepsBeforeRun: false
 onlyBuiltDependencies:
   - sharp
   - msw
+# pnpm 11 exits non-zero when a package's build script is neither allowed nor
+# refused, which is what failed every CI run. These three are answered: sharp
+# and unrs-resolver ship native binaries they need to build, msw writes its
+# service worker.
 allowBuilds:
-  msw: set this to true or false
-  sharp: set this to true or false
-  unrs-resolver: set this to true or false
+  msw: true
+  sharp: true
+  unrs-resolver: true
