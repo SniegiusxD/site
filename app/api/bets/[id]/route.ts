@@ -1,8 +1,8 @@
-import { and, eq } from 'drizzle-orm'
+import { and, desc, eq } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { ensureBetsSchema } from '@/lib/db/ensure-bets-schema'
-import { userBet } from '@/lib/db/schema'
+import { betEdit, userBet } from '@/lib/db/schema'
 import { getSessionUser } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
@@ -15,6 +15,29 @@ async function ownPendingBet(id: string, userId: string) {
     .where(and(eq(userBet.id, id), eq(userBet.userId, userId)))
     .limit(1)
   return row ?? null
+}
+
+/** The corrections made to this bet, newest first. */
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getSessionUser()
+  if (!user) return NextResponse.json({ error: 'Prisijunk iš naujo.' }, { status: 401 })
+
+  const { id } = await params
+  try {
+    await ensureBetsSchema()
+    const rows = await db
+      .select()
+      .from(betEdit)
+      .where(and(eq(betEdit.betId, id), eq(betEdit.userId, user.id)))
+      .orderBy(desc(betEdit.at))
+      .limit(20)
+    return NextResponse.json({
+      edits: rows.map((row) => ({ field: row.field, from: row.fromValue, to: row.toValue, at: row.at.toISOString() })),
+    })
+  } catch (error) {
+    console.error('[api/bets edits]', error)
+    return NextResponse.json({ error: 'Nepavyko įkelti pakeitimų.' }, { status: 500 })
+  }
 }
 
 /** Correct a bet that was recorded wrong: the odds or the stake. */
@@ -50,6 +73,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Užbaigto statymo sumos ir koeficiento keisti nebegalima.' }, { status: 409 })
     }
 
+    // What changed, recorded before the change, so the history is auditable.
+    const changes: Array<{ field: string; from: string | null; to: string | null }> = []
+    if (odds !== undefined && odds !== row.odds) changes.push({ field: 'odds', from: String(row.odds), to: String(odds) })
+    if (stake !== undefined && stake !== row.stake) changes.push({ field: 'stake', from: String(row.stake), to: String(stake) })
+    if (note !== undefined && note !== (row.note ?? null)) changes.push({ field: 'note', from: row.note ?? null, to: note })
+
     await db
       .update(userBet)
       .set({
@@ -58,7 +87,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         ...(note === undefined ? {} : { note }),
       })
       .where(and(eq(userBet.id, id), eq(userBet.userId, user.id)))
-    return NextResponse.json({ ok: true })
+
+    if (changes.length) {
+      await db.insert(betEdit).values(
+        changes.map((change) => ({
+          id: `edit-${crypto.randomUUID()}`,
+          betId: id,
+          userId: user.id,
+          field: change.field,
+          fromValue: change.from,
+          toValue: change.to,
+        })),
+      )
+    }
+    return NextResponse.json({ ok: true, changes: changes.length })
   } catch (error) {
     console.error('[api/bets PATCH]', error)
     return NextResponse.json({ error: 'Nepavyko išsaugoti.' }, { status: 500 })
@@ -76,6 +118,15 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     const row = await ownPendingBet(id, user.id)
     if (!row) return NextResponse.json({ error: 'Statymas nerastas.' }, { status: 404 })
     await db.delete(userBet).where(and(eq(userBet.id, id), eq(userBet.userId, user.id)))
+    // The bet is gone; the fact that it existed and was removed is not.
+    await db.insert(betEdit).values({
+      id: `edit-${crypto.randomUUID()}`,
+      betId: id,
+      userId: user.id,
+      field: 'deleted',
+      fromValue: `${row.stake} @ ${row.odds} ${row.bookmaker}`,
+      toValue: null,
+    })
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('[api/bets DELETE]', error)

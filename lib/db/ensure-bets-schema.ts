@@ -61,6 +61,18 @@ export async function ensureBetsSchema() {
       -- A member's own note: why they took it, or what the book did.
       ADD COLUMN IF NOT EXISTS note TEXT;
 
+    -- Every correction a member makes, so an edited history stays auditable.
+    CREATE TABLE IF NOT EXISTS bet_edit (
+      id TEXT PRIMARY KEY,
+      "betId" TEXT NOT NULL,
+      "userId" TEXT NOT NULL,
+      field TEXT NOT NULL,
+      "fromValue" TEXT,
+      "toValue" TEXT,
+      "at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS bet_edit_bet_idx ON bet_edit ("betId", "at" DESC);
+
     CREATE INDEX IF NOT EXISTS user_bet_user_idx ON user_bet ("userId", "placedAt" DESC);
     CREATE INDEX IF NOT EXISTS user_bet_pending_idx ON user_bet ("userId", status) WHERE status = 'laukia';
     -- Settlement and the "starts soon" queries walk a member's open bets by kick-off.

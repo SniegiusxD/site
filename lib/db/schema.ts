@@ -106,3 +106,15 @@ export const userBet = pgTable('user_bet', {
   homeScore: integer('homeScore'),
   awayScore: integer('awayScore'),
 })
+
+/** A correction a member made to a recorded bet. Append-only. */
+export const betEdit = pgTable('bet_edit', {
+  id: text('id').primaryKey(),
+  betId: text('betId').notNull(),
+  userId: text('userId').notNull(),
+  /** 'odds' | 'stake' | 'note' | 'deleted' */
+  field: text('field').notNull(),
+  fromValue: text('fromValue'),
+  toValue: text('toValue'),
+  at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+})

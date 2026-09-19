@@ -70,6 +70,13 @@ const PAGE = 20
 // Per device and account: the newest settlement this member has already seen here.
 const SEEN_KEY = 'bets-seen-settled:'
 
+const EDIT_LABEL: Record<string, string> = {
+  odds: 'koeficientas',
+  stake: 'suma',
+  note: 'užrašas',
+  deleted: 'ištrinta',
+}
+
 const tone = (value: number) => (value > 0.004 ? 'text-pitch' : value < -0.004 ? 'text-brick' : 'text-chalk')
 const timeOf = (bet: ActiveBet) => new Date(betTime(bet) ?? 0).getTime()
 
@@ -628,6 +635,18 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
   const [note, setNote] = useState(() => bet.note ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [edits, setEdits] = useState<Array<{ field: string; from: string | null; to: string | null; at: string }>>([])
+
+  // The corrections, loaded only when the editor is opened.
+  useEffect(() => {
+    if (!editing) return
+    fetch(`/api/bets/${bet.id}`, { cache: 'no-store' })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body) => setEdits(body?.edits ?? []))
+      .catch(() => {
+        // The editor still works without the history.
+      })
+  }, [editing, bet.id])
 
   async function send(method: 'PATCH' | 'DELETE') {
     setBusy(true)
@@ -776,6 +795,15 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
             )}
           </div>
           {error && <p className="mt-2 text-[0.85rem] text-brick">{error}</p>}
+          {edits.length > 0 && (
+            <ul className="mt-3 grid gap-1 border-t border-rail pt-2.5 text-[0.8rem] text-haze-dim">
+              {edits.slice(0, 4).map((edit) => (
+                <li key={`${edit.field}-${edit.at}`}>
+                  {EDIT_LABEL[edit.field] ?? edit.field}: {edit.from ?? '–'} → {edit.to ?? '–'} ({kickoffLabel(edit.at)})
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </li>
