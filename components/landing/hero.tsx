@@ -73,8 +73,8 @@ export function Hero({ stats }: { stats: PublicStats | null }) {
             >
               Sukurti nemokamą paskyrą
             </Link>
-            <Link href="/#tukstantis" className="border-b border-rail py-3 font-medium text-chalk transition-colors hover:border-chalk">
-              Pamatyk, kaip atrodo 1 000 statymų
+            <Link href="/demo" className="border-b border-rail py-3 font-medium text-chalk transition-colors hover:border-chalk">
+              Pažiūrėk tikrą signalą
             </Link>
           </div>
           <p className="kr-fade mt-5 text-[0.9375rem] text-haze" style={{ animationDelay: '520ms' }}>
