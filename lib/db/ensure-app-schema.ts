@@ -31,6 +31,20 @@ export function ensureAppSchema(): Promise<void> {
       CREATE UNIQUE INDEX IF NOT EXISTS user_settings_top_name_idx
         ON user_settings (lower("topName")) WHERE "topName" IS NOT NULL;
 
+      -- Every change a member makes to a bookmaker's stake limit. Lithuanian
+      -- books cut winning accounts down over time, and that history is the
+      -- member's own evidence of it; nothing else in the product keeps it.
+      CREATE TABLE IF NOT EXISTS book_limit_event (
+        id TEXT PRIMARY KEY,
+        "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+        bookmaker TEXT NOT NULL,
+        "fromLimit" INTEGER,
+        "toLimit" INTEGER,
+        "at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS book_limit_event_user_idx
+        ON book_limit_event ("userId", "at" DESC);
+
       CREATE TABLE IF NOT EXISTS subscription (
         "userId" TEXT PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,
         status TEXT NOT NULL DEFAULT 'trialing'

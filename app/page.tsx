@@ -2,6 +2,7 @@ import { EvidenceStrip } from '@/components/landing/evidence-strip'
 import { Faq } from '@/components/landing/faq'
 import { FinalCta } from '@/components/landing/final-cta'
 import { Hero } from '@/components/landing/hero'
+import { ClosingLine } from '@/components/landing/closing-line'
 import { HowItWorks } from '@/components/landing/how-it-works'
 import { Journey } from '@/components/landing/journey'
 import { LiveStrip } from '@/components/landing/live-strip'
@@ -28,6 +29,7 @@ export default async function LandingPage() {
         <OddsTicker />
         <LiveStrip stats={stats} />
         <HowItWorks />
+        <ClosingLine />
         <Journey />
         <ProductTiles stats={stats} />
         <Proof />

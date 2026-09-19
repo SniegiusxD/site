@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({
-  rows: [] as any[],
-  updates: [] as any[],
+  rows: [] as Record<string, unknown>[],
+  updates: [] as Record<string, unknown>[],
 }))
 
 vi.mock('@/lib/db', () => ({
@@ -13,7 +13,7 @@ vi.mock('@/lib/db', () => ({
       }),
     }),
     update: () => ({
-      set: (value: any) => ({
+      set: (value: Record<string, unknown>) => ({
         where: async () => {
           state.updates.push(value)
         },

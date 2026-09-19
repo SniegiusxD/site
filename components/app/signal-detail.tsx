@@ -53,11 +53,27 @@ export function SignalDetail({
 
   const [stake, setStake] = useState(sizing.suggested)
   const [stakeText, setStakeText] = useState(String(sizing.suggested))
+  // The panel stays open while the board polls, so the price under it can move.
+  // An edge beside a stake computed for a different price is the dishonest kind
+  // of stale, so we follow the new price — or say we did not, once the member
+  // has typed their own amount.
+  const [basis, setBasis] = useState(price.odds)
+  const [ownStake, setOwnStake] = useState(false)
+  const [moved, setMoved] = useState<number | null>(null)
+  if (basis !== price.odds) {
+    setBasis(price.odds)
+    if (ownStake) setMoved(basis)
+    else {
+      setStake(sizing.suggested)
+      setStakeText(String(sizing.suggested))
+    }
+  }
   const [tracking, setTracking] = useState<'idle' | 'pending' | 'done'>('idle')
   const [error, setError] = useState<string | null>(null)
 
   const open = signal.status === 'open'
-  const setStakeValue = (value: number) => {
+  const setStakeValue = (value: number, own = true) => {
+    if (own) setOwnStake(true)
     const clamped = Math.max(0, Math.min(max, Math.round(value)))
     setStake(clamped)
     setStakeText(String(clamped))
@@ -307,6 +323,7 @@ export function SignalDetail({
                 value={stakeText}
                 onChange={(event) => {
                   const digits = event.target.value.replace(/\D/g, '')
+                  setOwnStake(true)
                   setStakeText(digits)
                   setStake(Math.min(max, Number(digits || 0)))
                 }}
@@ -330,6 +347,25 @@ export function SignalDetail({
         <p className="mt-1 text-center text-[0.9rem] text-haze">
           {prefs.bankroll > 0 ? `${formatPercent(stake / prefs.bankroll)} bankrollo` : 'Bankrollas tuščias'}
         </p>
+        {moved !== null && Math.abs(moved - price.odds) >= 0.005 && (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-night/60 p-3.5 text-[0.9rem]">
+            <p className="text-haze">
+              Kaina pajudėjo {formatOdds(moved)} → <span className="font-semibold text-chalk tnum">{formatOdds(price.odds)}</span>. Dabar
+              siūlom {formatEuro(sizing.suggested)}.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setStakeValue(sizing.suggested, false)
+                setOwnStake(false)
+                setMoved(null)
+              }}
+              className="min-h-11 shrink-0 rounded-xl bg-rail px-3.5 font-medium transition-colors hover:bg-rail-strong"
+            >
+              Perskaičiuoti
+            </button>
+          </div>
+        )}
         <div className="mt-5 grid grid-cols-2 gap-3 text-[0.95rem]">
           <div className="rounded-xl bg-night/60 p-3.5">
             <p className="text-haze">Galimas laimėjimas</p>

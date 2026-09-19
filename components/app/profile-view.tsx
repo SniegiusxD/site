@@ -17,6 +17,7 @@ import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
 import { useAccount } from './account-provider'
 import { BankrollDialog } from './bankroll-dialog'
 import { ChipGroup } from './chip-group'
+import { LimitHistory } from './limit-history'
 import { TelegramCard } from './telegram-card'
 
 const KELLY_LABEL: Record<(typeof KELLY_CHOICES)[number], string> = { 0.125: '⅛ Kelly', 0.25: '¼ Kelly', 0.5: '½ Kelly' }
@@ -180,6 +181,7 @@ export function ProfileView() {
             />
           ))}
         </div>
+        <LimitHistory />
       </Section>
 
 

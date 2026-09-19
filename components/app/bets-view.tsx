@@ -686,7 +686,7 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
           {ltSelection(bet.betDescription)}
           {bet.startsAt ? `, ${kickoffLabel(bet.startsAt)}` : ''}
         </p>
-        {bet.note && <p className="mt-1 truncate text-[0.85rem] text-haze-dim italic">„{bet.note}"</p>}
+        {bet.note && <p className="mt-1 truncate text-[0.85rem] text-haze-dim italic">„{bet.note}&ldquo;</p>}
         <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.85rem]">
           <span className="text-haze-dim">
             {formatEuro(bet.stake)} už {formatOdds(bet.odds)}, {bet.bookmaker}

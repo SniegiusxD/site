@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { PoolClient } from 'pg'
 import { type BankrollKind, parseBankrollChange } from '@/lib/bankroll'
+import { type BookLimits, type LimitEvent, limitChanges } from '@/lib/book-limits'
 import { pool } from '@/lib/db'
 import { ensureAppSchema } from '@/lib/db/ensure-app-schema'
 import type { BookName } from '@/lib/landing-signals'
@@ -127,6 +128,39 @@ async function syncLegacyBase(q: Queryable, userId: string, current: number) {
   ])
 }
 
+/** Writes one row per bookmaker limit the member actually changed. */
+async function recordLimitChanges(q: Queryable, userId: string, before: BookLimits, after: BookLimits) {
+  for (const change of limitChanges(before, after)) {
+    await q.query(
+      `INSERT INTO book_limit_event (id, "userId", bookmaker, "fromLimit", "toLimit") VALUES ($1, $2, $3, $4, $5)`,
+      [randomUUID(), userId, change.bookmaker, change.from, change.to],
+    )
+  }
+}
+
+/** The member's own record of how each bookmaker's ceiling moved. */
+export async function listBookLimitEvents(userId: string, limit = 30): Promise<LimitEvent[]> {
+  await ensureAppSchema()
+  const { rows } = await pool.query<{
+    id: string
+    bookmaker: string
+    fromLimit: number | null
+    toLimit: number | null
+    at: Date
+  }>(
+    `SELECT id, bookmaker, "fromLimit", "toLimit", "at" FROM book_limit_event
+      WHERE "userId" = $1 ORDER BY "at" DESC LIMIT $2`,
+    [userId, limit],
+  )
+  return rows.map((row) => ({
+    id: row.id,
+    bookmaker: row.bookmaker as LimitEvent['bookmaker'],
+    from: row.fromLimit,
+    to: row.toLimit,
+    at: row.at.toISOString(),
+  }))
+}
+
 async function upsertSettings(q: Queryable, userId: string, settings: Settings, markOnboarded: boolean) {
   await q.query(
     `INSERT INTO user_settings
@@ -192,6 +226,8 @@ export async function completeOnboarding(userId: string, preferences: Preference
   await withTransaction(async (client) => {
     await lockSettingsRow(client, userId)
     const { bankroll, ...settings } = preferences
+    const before = await readSettings(client, userId)
+    await recordLimitChanges(client, userId, before?.bookLimits ?? {}, settings.bookLimits)
     await upsertSettings(client, userId, settings, true)
     const state = await readBankroll(client, userId, null)
     if (state.entries === 0) {
@@ -205,7 +241,12 @@ export async function completeOnboarding(userId: string, preferences: Preference
 
 export async function saveSettings(userId: string, settings: Settings): Promise<void> {
   await ensureAppSchema()
-  await upsertSettings(pool, userId, settings, false)
+  await withTransaction(async (client) => {
+    await lockSettingsRow(client, userId)
+    const before = await readSettings(client, userId)
+    await recordLimitChanges(client, userId, before?.bookLimits ?? {}, settings.bookLimits)
+    await upsertSettings(client, userId, settings, false)
+  })
 }
 
 export async function listBankrollEntries(userId: string, limit = 50): Promise<BankrollEntry[]> {

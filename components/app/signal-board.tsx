@@ -307,8 +307,10 @@ export function SignalBoard({
   }, [router, refreshBets])
 
   useEffect(() => {
-    const poll = window.setInterval(refresh, POLL_MS)
-    const tick = window.setInterval(() => setNow(new Date()), 30_000)
+    // A background tab does not need fresh odds: it polls again the moment it
+    // comes back, so a hidden board stops asking.
+    const poll = window.setInterval(() => document.visibilityState === 'visible' && refresh(), POLL_MS)
+    const tick = window.setInterval(() => document.visibilityState === 'visible' && setNow(new Date()), 30_000)
     const onFocus = () => document.visibilityState === 'visible' && refresh()
     document.addEventListener('visibilitychange', onFocus)
     return () => {

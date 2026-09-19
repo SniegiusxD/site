@@ -1,0 +1,29 @@
+name: Checks
+
+# Types, lint and tests on every push and pull request. The audit's point was
+# that nothing enforced these: a broken lint command had gone unnoticed and a
+# TypeScript escape hatch was sitting in the Next config.
+on:
+  push:
+    branches: [main, redesign]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Lint
+        run: pnpm lint
+      - name: Tests
+        run: pnpm test
