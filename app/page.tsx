@@ -1,3 +1,4 @@
+import { EvidenceStrip } from '@/components/landing/evidence-strip'
 import { Faq } from '@/components/landing/faq'
 import { FinalCta } from '@/components/landing/final-cta'
 import { Hero } from '@/components/landing/hero'
@@ -23,6 +24,7 @@ export default async function LandingPage() {
       <SiteHeader />
       <main>
         <Hero stats={stats} />
+        <EvidenceStrip />
         <OddsTicker />
         <LiveStrip stats={stats} />
         <HowItWorks />
