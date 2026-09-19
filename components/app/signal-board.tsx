@@ -419,6 +419,24 @@ export function SignalBoard({
     if (desktop && !selected && visible[0]) setSelected(visible[0])
   }, [desktop, selected, visible])
 
+  // A link straight to one signal: /signalai?signal=<id>&book=<book>. Telegram
+  // alerts and shared links land on the detail rather than on the board, and
+  // the parameters are dropped afterwards so a refresh does not reopen it.
+  const deepLinked = useRef(false)
+  useEffect(() => {
+    if (deepLinked.current) return
+    const params = new URLSearchParams(window.location.search)
+    const id = params.get('signal')
+    if (!id) return
+    deepLinked.current = true
+    const book = params.get('book')
+    const match =
+      [...rows.open, ...rows.closed].find((row) => row.signal.id === id && (!book || row.price.book === book)) ??
+      [...rows.open, ...rows.closed].find((row) => row.signal.id === id)
+    if (match) setSelected(match)
+    router.replace('/signalai', { scroll: false })
+  }, [rows, router])
+
   function toggleBook(book: BookName) {
     const next = prefs.books.includes(book) ? prefs.books.filter((b) => b !== book) : BOOKS.filter((b) => b === book || prefs.books.includes(b))
     if (next.length === 0) return
