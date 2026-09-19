@@ -57,7 +57,9 @@ export async function ensureBetsSchema() {
       ADD COLUMN IF NOT EXISTS "shownOdds" DOUBLE PRECISION,
       ADD COLUMN IF NOT EXISTS "shownStake" DOUBLE PRECISION,
       ADD COLUMN IF NOT EXISTS placement TEXT NOT NULL DEFAULT 'accepted',
-      ADD COLUMN IF NOT EXISTS "delaySeconds" INTEGER;
+      ADD COLUMN IF NOT EXISTS "delaySeconds" INTEGER,
+      -- A member's own note: why they took it, or what the book did.
+      ADD COLUMN IF NOT EXISTS note TEXT;
 
     CREATE INDEX IF NOT EXISTS user_bet_user_idx ON user_bet ("userId", "placedAt" DESC);
     CREATE INDEX IF NOT EXISTS user_bet_pending_idx ON user_bet ("userId", status) WHERE status = 'laukia';

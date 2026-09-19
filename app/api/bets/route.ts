@@ -46,6 +46,7 @@ function rowToActiveBet(row: typeof userBet.$inferSelect): ActiveBet {
     shownStake: row.shownStake ?? null,
     placement: (row.placement as 'accepted' | 'limited' | 'rejected') ?? 'accepted',
     delaySeconds: row.delaySeconds ?? null,
+    note: row.note ?? null,
     canonicalOutcome: isCanonicalOutcome(row.canonicalOutcome) ? row.canonicalOutcome : null,
     homeScore: row.homeScore ?? null,
     awayScore: row.awayScore ?? null,

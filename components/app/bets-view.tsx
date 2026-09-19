@@ -2,7 +2,7 @@
 
 import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, ChevronDown, Download, Loader2, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
+import { AlertTriangle, Check, ChevronDown, Download, Loader2, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
@@ -21,6 +21,8 @@ import {
 } from '@/lib/bet-value'
 import { betsToCsv, csvFileName } from '@/lib/bets-csv'
 import { breakdown, type BreakdownKind } from '@/lib/breakdowns'
+import { workQueues } from '@/lib/work-queues'
+import { EquityChart } from './equity-chart'
 import { executionStats } from '@/lib/execution'
 import { formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
@@ -224,6 +226,8 @@ export function BetsView() {
           <StatGrid stats={stats} bets={scoped} />
           <ValueCard series={series} stats={stats} />
           <ProfitCalendar bets={scoped} />
+          <WorkQueueNotice bets={scoped} />
+          <EquityChart bets={scoped} />
           <Breakdowns bets={scoped} />
           <History pending={pending} settled={settled} tab={tab} onTab={setTab} onChanged={load} />
         </div>
@@ -454,6 +458,41 @@ function ValueCard({ series, stats }: { series: ValuePoint[]; stats: BetStats })
   )
 }
 
+/**
+ * Bets that need attention: no closing price, or still waiting long after the
+ * match. Silence here would let both quietly distort the averages.
+ */
+function WorkQueueNotice({ bets }: { bets: ActiveBet[] }) {
+  const queues = workQueues(bets)
+  const missing = queues.missingClose.length
+  const stale = queues.staleUnsettled.length
+  if (missing === 0 && stale === 0) return null
+
+  return (
+    <section aria-label="Reikia dėmesio" className="mt-6 rounded-2xl bg-[rgb(245_165_36/0.08)] p-5 shadow-[inset_0_0_0_1px_rgb(245_165_36/0.3)]">
+      <p className="flex items-start gap-2.5 font-medium text-warning">
+        <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+        Reikia dėmesio
+      </p>
+      <ul className="mt-2.5 grid gap-1.5 text-[0.9rem] text-haze">
+        {missing > 0 && (
+          <li>
+            <span className="font-semibold text-chalk tnum">{missing}</span>{' '}
+            {ltPlural(missing, 'užbaigtas statymas', 'užbaigti statymai', 'užbaigtų statymų')} be uždarymo kainos — jie neįskaičiuoti į CLV.
+          </li>
+        )}
+        {stale > 0 && (
+          <li>
+            <span className="font-semibold text-chalk tnum">{stale}</span>{' '}
+            {ltPlural(stale, 'statymas laukia', 'statymai laukia', 'statymų laukia')} nors rungtynės jau turėjo baigtis. Jei rezultatas
+            žinomas, o mes jo nepagavom, pažymėk ranka arba ištrink.
+          </li>
+        )}
+      </ul>
+    </section>
+  )
+}
+
 /** Where the results came from: by bookmaker, sport or market family. */
 function Breakdowns({ bets }: { bets: ActiveBet[] }) {
   const [kind, setKind] = useState<BreakdownKind>('book')
@@ -582,6 +621,7 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
   const [editing, setEditing] = useState(false)
   const [odds, setOdds] = useState(() => formatOdds(bet.odds))
   const [stake, setStake] = useState(() => String(bet.stake))
+  const [note, setNote] = useState(() => bet.note ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -594,7 +634,11 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
         headers: method === 'PATCH' ? { 'Content-Type': 'application/json' } : undefined,
         body:
           method === 'PATCH'
-            ? JSON.stringify({ odds: Number(odds.replace(',', '.')), stake: Number(stake.replace(',', '.')) })
+            ? JSON.stringify(
+                bet.status === 'laukia'
+                  ? { odds: Number(odds.replace(',', '.')), stake: Number(stake.replace(',', '.')), note }
+                  : { note },
+              )
             : undefined,
       })
       const body = await response.json().catch(() => null)
@@ -619,6 +663,7 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
           {ltSelection(bet.betDescription)}
           {bet.startsAt ? `, ${kickoffLabel(bet.startsAt)}` : ''}
         </p>
+        {bet.note && <p className="mt-1 truncate text-[0.85rem] text-haze-dim italic">„{bet.note}"</p>}
         <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.85rem]">
           <span className="text-haze-dim">
             {formatEuro(bet.stake)} už {formatOdds(bet.odds)}, {bet.bookmaker}
@@ -636,13 +681,13 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
         <span className={`inline-block rounded-full px-2.5 py-1 text-[0.8rem] font-medium ${status.tone}`}>
           {bet.canonicalOutcome ? OUTCOME_LABEL[bet.canonicalOutcome] : status.label}
         </span>
-        {bet.status === 'laukia' && !editing && (
+        {!editing && (
           <button
             type="button"
             onClick={() => setEditing(true)}
             className="mt-1 block w-full text-right text-[0.8rem] text-haze underline decoration-rail-strong underline-offset-4 hover:text-chalk"
           >
-            Taisyti
+            {bet.status === 'laukia' ? 'Taisyti' : 'Užrašas'}
           </button>
         )}
         {bet.profit !== null && (
@@ -659,6 +704,7 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
       {editing && (
         <div className="col-span-3 mt-3 rounded-xl bg-night/60 p-3">
           <div className="flex flex-wrap items-end gap-3">
+            {bet.status === 'laukia' && (
             <label className="text-[0.8rem] text-haze">
               Koeficientas
               <input
@@ -669,6 +715,8 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
                 className="mt-1 block h-10 w-24 rounded-lg bg-stand px-2.5 text-[0.95rem] text-chalk tnum hairline"
               />
             </label>
+            )}
+            {bet.status === 'laukia' && (
             <label className="text-[0.8rem] text-haze">
               Suma, €
               <input
@@ -677,6 +725,18 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
                 value={stake}
                 onChange={(event) => setStake(event.target.value)}
                 className="mt-1 block h-10 w-24 rounded-lg bg-stand px-2.5 text-[0.95rem] text-chalk tnum hairline"
+              />
+            </label>
+            )}
+            <label className="min-w-[12rem] flex-1 text-[0.8rem] text-haze">
+              Užrašas
+              <input
+                type="text"
+                value={note}
+                maxLength={500}
+                placeholder="Kodėl paėmei, ką kontora padarė…"
+                onChange={(event) => setNote(event.target.value)}
+                className="mt-1 block h-10 w-full rounded-lg bg-stand px-2.5 text-[0.95rem] text-chalk hairline placeholder:text-haze-dim"
               />
             </label>
             <button
@@ -697,17 +757,19 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
             >
               Atšaukti
             </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                // A mistaken record should be removable, but not by accident.
-                if (window.confirm('Ištrinti šį statymą? Grąža ir CLV perskaičiuojami be jo.')) send('DELETE')
-              }}
-              className="ml-auto h-10 rounded-lg px-3 font-medium text-brick hover:bg-brick-soft disabled:opacity-60"
-            >
-              Ištrinti
-            </button>
+            {bet.status === 'laukia' && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  // A mistaken record should be removable, but not by accident.
+                  if (window.confirm('Ištrinti šį statymą? Grąža ir CLV perskaičiuojami be jo.')) send('DELETE')
+                }}
+                className="ml-auto h-10 rounded-lg px-3 font-medium text-brick hover:bg-brick-soft disabled:opacity-60"
+              >
+                Ištrinti
+              </button>
+            )}
           </div>
           {error && <p className="mt-2 text-[0.85rem] text-brick">{error}</p>}
         </div>

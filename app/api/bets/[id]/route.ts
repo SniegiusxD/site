@@ -26,6 +26,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const body = await request.json().catch(() => ({}))
   const odds = body.odds === undefined ? undefined : Number(body.odds)
   const stake = body.stake === undefined ? undefined : Number(body.stake)
+  // A note is the member's own text: trimmed, bounded, and clearable.
+  const note =
+    body.note === undefined ? undefined : typeof body.note === 'string' ? body.note.trim().slice(0, 500) || null : null
 
   if (odds !== undefined && (!Number.isFinite(odds) || odds <= 1 || odds > 1000)) {
     return NextResponse.json({ error: 'Koeficientas turi būti nuo 1,01 iki 1000.' }, { status: 400 })
@@ -33,7 +36,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (stake !== undefined && (!Number.isFinite(stake) || stake <= 0 || stake > 100_000)) {
     return NextResponse.json({ error: 'Suma turi būti nuo 0,01 € iki 100 000 €.' }, { status: 400 })
   }
-  if (odds === undefined && stake === undefined) {
+  if (odds === undefined && stake === undefined && note === undefined) {
     return NextResponse.json({ error: 'Nėra ką keisti.' }, { status: 400 })
   }
 
@@ -43,13 +46,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!row) return NextResponse.json({ error: 'Statymas nerastas.' }, { status: 404 })
     // A settled bet's profit was computed from these numbers; changing them
     // would quietly rewrite history.
-    if (row.status !== 'laukia') {
-      return NextResponse.json({ error: 'Užbaigto statymo keisti nebegalima.' }, { status: 409 })
+    if (row.status !== 'laukia' && (odds !== undefined || stake !== undefined)) {
+      return NextResponse.json({ error: 'Užbaigto statymo sumos ir koeficiento keisti nebegalima.' }, { status: 409 })
     }
 
     await db
       .update(userBet)
-      .set({ ...(odds === undefined ? {} : { odds }), ...(stake === undefined ? {} : { stake }) })
+      .set({
+        ...(odds === undefined ? {} : { odds }),
+        ...(stake === undefined ? {} : { stake }),
+        ...(note === undefined ? {} : { note }),
+      })
       .where(and(eq(userBet.id, id), eq(userBet.userId, user.id)))
     return NextResponse.json({ ok: true })
   } catch (error) {

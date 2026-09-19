@@ -106,6 +106,8 @@ export interface ActiveBet {
   shownStake?: number | null
   placement?: 'accepted' | 'limited' | 'rejected'
   delaySeconds?: number | null
+  /** The member's own note. */
+  note?: string | null
   canonicalOutcome?: 'won' | 'half_won' | 'push' | 'void' | 'half_lost' | 'lost' | null
   /** The period score that grade used. */
   homeScore?: number | null

@@ -99,6 +99,8 @@ export const userBet = pgTable('user_bet', {
   placement: text('placement').notNull().default('accepted'),
   /** Seconds between the price capture we showed and the bet being recorded. */
   delaySeconds: integer('delaySeconds'),
+  /** The member's own note about this bet. */
+  note: text('note'),
   canonicalOutcome: text('canonicalOutcome'),
   resultSource: text('resultSource'),
   homeScore: integer('homeScore'),
