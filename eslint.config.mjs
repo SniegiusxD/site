@@ -7,16 +7,15 @@ export default [
   ...typescript,
   { ignores: ['.next/**', 'node_modules/**', 'public/**', 'drizzle/**', 'next-env.d.ts'] },
   {
-    // The React Compiler rules landed on an app that was written before them
-    // and currently report 20 places, all in components that work. They stay
-    // on as warnings so new code is still told about them, and CI can gate on
-    // everything else instead of staying permanently red. Clearing them is
-    // tracked in planning/SITE_COMPETITIVE_UX_ARCHITECTURE_AUDIT_2026-09-18.md.
+    // The structural React Compiler complaints (refs written during render,
+    // dependency lists built with JSON.stringify, a variable reassigned after
+    // render) are fixed. What is left is 15 set-state-in-effect warnings, every
+    // one of them the same shape: read localStorage on mount, because reading
+    // it during render would not match what the server rendered. Rewriting
+    // those with useSyncExternalStore is a separate, testable change; until
+    // then the rule warns rather than holding CI red.
     rules: {
       'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/refs': 'warn',
-      'react-hooks/use-memo': 'warn',
-      'react-hooks/immutability': 'warn',
     },
   },
 ]

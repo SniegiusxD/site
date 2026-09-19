@@ -323,18 +323,34 @@ export function SignalBoard({
   // On the free board every signal is below the member's usual value floor, so
   // their own filter would empty the page. The free ceilings replace it.
   const freeTier = board.tier === 'free'
-  const filters: BoardFilters = {
-    books: prefs.books,
-    minEdge: freeTier ? 0 : prefs.minEdge,
-    minOdds: prefs.minOdds,
-    maxOdds: freeTier ? Math.min(prefs.maxOdds, FREE_MAX_ODDS) : prefs.maxOdds,
-    maxHoursToStart: prefs.maxHoursToStart,
-    sport,
-    sports: sportsPicked,
-    markets,
-    periods,
-  }
-  const rows = useMemo(() => boardRows(board.signals, filters, now), [board.signals, JSON.stringify(filters), now]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Memoised as one object so everything below can depend on it directly,
+  // rather than on a JSON.stringify of it.
+  const filters: BoardFilters = useMemo(
+    () => ({
+      books: prefs.books,
+      minEdge: freeTier ? 0 : prefs.minEdge,
+      minOdds: prefs.minOdds,
+      maxOdds: freeTier ? Math.min(prefs.maxOdds, FREE_MAX_ODDS) : prefs.maxOdds,
+      maxHoursToStart: prefs.maxHoursToStart,
+      sport,
+      sports: sportsPicked,
+      markets,
+      periods,
+    }),
+    [
+      prefs.books,
+      prefs.minEdge,
+      prefs.minOdds,
+      prefs.maxOdds,
+      prefs.maxHoursToStart,
+      freeTier,
+      sport,
+      sportsPicked,
+      markets,
+      periods,
+    ],
+  )
+  const rows = useMemo(() => boardRows(board.signals, filters, now), [board.signals, filters, now])
   const visible = useMemo(() => {
     let kept = rows.open.filter((row) => !hidden.has(row.signal.id))
 
@@ -411,7 +427,9 @@ export function SignalBoard({
 
   // The undo button in a toast runs later; it must see signals hidden since.
   const hiddenRef = useRef(hidden)
-  hiddenRef.current = hidden
+  useEffect(() => {
+    hiddenRef.current = hidden
+  }, [hidden])
 
   function unhideId(id: string) {
     const next = new Set(hiddenRef.current)
@@ -454,7 +472,7 @@ export function SignalBoard({
       periods: Object.fromEntries(PERIODS.map((period) => [period.key, countWith({ periods: [period.key] })])),
       books: Object.fromEntries(BOOKS.map((book) => [book, countWith({ books: [book] })])),
     }
-  }, [board.signals, JSON.stringify(filters), now, onBoard]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [board.signals, filters, now, onBoard])
 
   const band = bandFor(prefs.minOdds, prefs.maxOdds) ?? bandFor(prefs.minOdds, 100)
   const listLabel = (keys: string[], label: (key: string) => string, all: string) =>

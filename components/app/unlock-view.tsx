@@ -9,6 +9,36 @@ import { formatEdge, formatOdds } from '@/lib/format-lt'
 import type { Access } from '@/lib/subscription'
 import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
 
+/**
+ * The money conversation is where this belongs, not only in the footer. Nothing
+ * here is a growth message: a member deciding to pay should read the limits of
+ * what they are buying at the moment they decide.
+ */
+function ResponsibleUse() {
+  return (
+    <section aria-label="Atsakingas lošimas" className="mt-10 rounded-2xl bg-night-deep/60 p-5 text-[0.9rem] leading-normal text-haze">
+      <p className="font-medium text-chalk">Prieš mokant, verta žinoti</p>
+      <ul className="mt-2.5 grid gap-1.5">
+        <li>Prenumerata perka kainų informaciją, o ne pelną. Vertė atsiperka per šimtus statymų ir gali neatsipirkti.</li>
+        <li>Statyk tik tiek, kiek gali prarasti. Siūloma suma skaičiuojama nuo tavo banko ir niekada neviršija tavo kontoros limito.</li>
+        <li>Lietuvos kontoros karpo laiminčias paskyras: gali gauti mažesnį limitą arba prastesnį koeficientą.</li>
+        <li>Tik nuo 18 metų. Lošimas gali sukelti priklausomybę.</li>
+      </ul>
+      <p className="mt-3">
+        Apriboti sau galimybę lošti gali per{' '}
+        <a
+          href="https://lpt.lrv.lt"
+          rel="noopener"
+          className="text-chalk underline decoration-rail-strong underline-offset-4 hover:decoration-chalk"
+        >
+          Lošimų priežiūros tarnybą
+        </a>
+        . Prenumeratą gali nutraukti bet kada — prieiga lieka iki apmokėto laikotarpio pabaigos.
+      </p>
+    </section>
+  )
+}
+
 const FULL = [
   'Visi signalai, be vertės ir koeficiento ribų',
   'Visų kontorų kainos ir tikroji kaina prie kiekvieno',
@@ -96,6 +126,8 @@ export function UnlockView({ access }: { access: Access }) {
           <p className="mt-2.5 text-center text-[0.9rem] text-haze">Kol kas gali naudotis nemokama paskyra.</p>
         </>
       )}
+
+      <ResponsibleUse />
     </main>
   )
 }

@@ -56,12 +56,13 @@ export function ProfitCalendar({ bets }: { bets: ActiveBet[] }) {
 
   // Cumulative profit through the month, day by day.
   const curve = useMemo(() => {
-    let running = 0
     const byDate = new Map(monthDays.map((day) => [day.date, day.profit]))
-    return weeks.flat().filter((date): date is string => Boolean(date)).map((date) => {
-      running += byDate.get(date) ?? 0
+    const dates = weeks.flat().filter((date): date is string => Boolean(date))
+    return dates.reduce<number[]>((running, date) => {
+      const previous = running.length > 0 ? running[running.length - 1] : 0
+      running.push(previous + (byDate.get(date) ?? 0))
       return running
-    })
+    }, [])
   }, [weeks, monthDays])
 
   const shift = (delta: number) => {

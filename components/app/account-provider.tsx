@@ -33,8 +33,13 @@ export function AccountProvider({
   const [account, setAccount] = useState(initial)
   const [saveError, setSaveError] = useState<string | null>(null)
   const timer = useRef<number | null>(null)
+  // The debounced save sends the newest settings, not the ones that were on
+  // screen when the timer was scheduled. The mirror is updated after render,
+  // which is long before the timer fires.
   const latest = useRef(account)
-  latest.current = account
+  useEffect(() => {
+    latest.current = account
+  }, [account])
 
   const updateSettings = useCallback((patch: Partial<Settings>) => {
     setAccount((current) => ({ ...current, preferences: { ...current.preferences, ...patch } }))
