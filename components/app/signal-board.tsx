@@ -3,7 +3,7 @@
 import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion, useDragControls } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
-import { AlertTriangle, ArrowDown, ArrowUp, Bell, Check, ChevronDown, Eye, Lock, RefreshCw, Search, Sparkles, X } from 'lucide-react'
+import { AlertTriangle, ArrowDown, ArrowUp, Bell, Check, ChevronDown, Eye, Lock, RefreshCw, Plus, Search, Sparkles, Star, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -55,6 +55,23 @@ const HOUR_CHOICES = [
 const HIDDEN_KEY = 'hidden-signals'
 const VIEW_KEY = 'board-view'
 const SEEN_KEY = 'board-last-visit'
+const PINNED_KEY = 'pinned-events'
+const SAVED_KEY = 'board-saved-views'
+
+/** One fixture, however many lines of it are published. */
+const pinKeyOf = (signal: LiveSignal) => signal.eventKey ?? `${signal.home ?? ''}|${signal.away ?? ''}`
+
+/** A board the member named, so a routine does not have to be rebuilt each time. */
+type SavedView = {
+  name: string
+  sort: SortKey
+  drift: 'all' | 'down' | 'up'
+  sports: string[]
+  markets: string[]
+  periods: string[]
+  minEdge: number
+  books: BookName[]
+}
 
 type SortKey = 'value' | 'new' | 'soon' | 'moving'
 const SORTS: Array<{ key: SortKey; label: string }> = [
@@ -76,6 +93,36 @@ function useIsDesktop() {
     return () => query.removeEventListener('change', update)
   }, [])
   return desktop
+}
+
+/** Fixtures the member is watching. Keyed by event, so every line of the same match pins together. */
+function usePinned() {
+  const [pinned, setPinned] = useState<Set<string>>(() => new Set())
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(PINNED_KEY)
+      if (raw) setPinned(new Set(JSON.parse(raw) as string[]))
+    } catch {
+      // Without storage, pinning simply lasts for this visit.
+    }
+  }, [])
+
+  const toggle = useCallback((key: string) => {
+    setPinned((current) => {
+      const next = new Set(current)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      try {
+        window.localStorage.setItem(PINNED_KEY, JSON.stringify([...next]))
+      } catch {
+        // See above.
+      }
+      return next
+    })
+  }, [])
+
+  return [pinned, toggle] as const
 }
 
 /** Signals the member hid on this device. A convenience only, so browser storage is fine. */
@@ -181,6 +228,27 @@ export function SignalBoard({
   const [showHidden, setShowHidden] = useState(false)
   const [selected, setSelected] = useState<BoardRow | null>(null)
   const [hidden, setHidden] = useHiddenSignals(board.signals)
+  const [pinned, togglePinned] = usePinned()
+  const [onlyPinned, setOnlyPinned] = useState(false)
+  const [savedViews, setSavedViews] = useState<SavedView[]>([])
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(SAVED_KEY)
+      if (raw) setSavedViews(JSON.parse(raw) as SavedView[])
+    } catch {
+      // Without storage there are simply no saved views.
+    }
+  }, [])
+
+  const writeViews = useCallback((views: SavedView[]) => {
+    setSavedViews(views)
+    try {
+      window.localStorage.setItem(SAVED_KEY, JSON.stringify(views))
+    } catch {
+      // See above.
+    }
+  }, [])
   const sheetDrag = useDragControls()
 
   // What changed since the previous poll: new signals glow once, moved prices flash up or down.
@@ -289,13 +357,17 @@ export function SignalBoard({
       const movement = board.movement?.[row.signal.id]?.[row.price.book]
       return movement ? Math.abs(driftOf(movement)) : -1
     }
+    if (onlyPinned) kept = kept.filter((row) => pinned.has(pinKeyOf(row.signal)))
+
     const sorted = [...kept]
     if (sort === 'value') sorted.sort((a, b) => b.price.edge - a.price.edge)
     if (sort === 'new') sorted.sort((a, b) => new Date(b.signal.firstSeenAt).getTime() - new Date(a.signal.firstSeenAt).getTime())
     if (sort === 'soon') sorted.sort((a, b) => new Date(a.signal.startsAt).getTime() - new Date(b.signal.startsAt).getTime())
     if (sort === 'moving') sorted.sort((a, b) => movementOf(b) - movementOf(a))
+    // Whatever the sort, a watched fixture is what the member came back for.
+    sorted.sort((a, b) => Number(pinned.has(pinKeyOf(b.signal))) - Number(pinned.has(pinKeyOf(a.signal))))
     return sorted
-  }, [rows.open, hidden, drift, board.movement, search, sort, onlyNew, lastVisit])
+  }, [rows.open, hidden, drift, board.movement, search, sort, onlyNew, lastVisit, pinned, onlyPinned])
 
   // How many the member has not seen yet, whether or not the filter is on.
   const newCount = useMemo(
@@ -411,6 +483,8 @@ export function SignalBoard({
         isHidden={options.isHidden}
         pulse={pulses.get(row.signal.id) ?? pulses.get(`${row.signal.id}:${row.price.book}`)}
         movement={movementFor(row)}
+        pinned={pinned.has(pinKeyOf(row.signal))}
+        onTogglePinned={() => togglePinned(pinKeyOf(row.signal))}
         onSelect={() => setSelected(row)}
         onToggleHidden={row.signal.status === 'open' ? () => (options.isHidden ? unhide(row) : hide(row)) : undefined}
       />
@@ -476,6 +550,19 @@ export function SignalBoard({
                   className="h-11 w-full rounded-full bg-stand pr-3 pl-9 text-[0.95rem] text-chalk hairline placeholder:text-haze-dim"
                 />
               </label>
+              {pinned.size > 0 && (
+                <button
+                  type="button"
+                  aria-pressed={onlyPinned}
+                  onClick={() => setOnlyPinned((value) => !value)}
+                  className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[0.9rem] font-medium transition-colors ${
+                    onlyPinned ? 'bg-chalk text-night' : 'bg-stand text-chalk hairline hover:bg-stand-hover'
+                  }`}
+                >
+                  <Star className="size-4" aria-hidden />
+                  Sekami {pinned.size}
+                </button>
+              )}
               {newCount > 0 && (
                 <button
                   type="button"
@@ -489,6 +576,63 @@ export function SignalBoard({
                   Nauji {newCount}
                 </button>
               )}
+              <FilterChip label="Išsaugoti vaizdai" value={savedViews.length ? `Vaizdai ${savedViews.length}` : 'Vaizdai'} active={false}>
+                {savedViews.length === 0 && (
+                  <p className="px-2.5 pb-2 text-[0.85rem] text-haze">
+                    Susidėliok filtrus ir išsaugok — grįžęs rasi tokį patį sąrašą.
+                  </p>
+                )}
+                {savedViews.map((view) => (
+                  <div key={view.name} className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSort(view.sort)
+                        setDrift(view.drift)
+                        setSportsPicked(view.sports)
+                        setMarkets(view.markets)
+                        setPeriods(view.periods)
+                        setSport(null)
+                        updateSettings({ minEdge: view.minEdge, books: view.books })
+                      }}
+                      className="min-h-11 flex-1 truncate rounded-xl px-2.5 text-left text-[0.9rem] text-chalk hover:bg-stand-hover"
+                    >
+                      {view.name}
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Pašalinti vaizdą ${view.name}`}
+                      onClick={() => writeViews(savedViews.filter((saved) => saved.name !== view.name))}
+                      className="grid size-9 shrink-0 place-items-center rounded-lg text-haze-dim hover:bg-rail hover:text-chalk"
+                    >
+                      <X className="size-4" aria-hidden />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const name = window.prompt('Vaizdo pavadinimas', 'Krepšinis 3 %+')?.trim()
+                    if (!name) return
+                    const view: SavedView = {
+                      name: name.slice(0, 40),
+                      sort,
+                      drift,
+                      sports: sportsPicked,
+                      markets,
+                      periods,
+                      minEdge: prefs.minEdge,
+                      books: prefs.books,
+                    }
+                    writeViews([...savedViews.filter((saved) => saved.name !== view.name), view].slice(-8))
+                  }}
+                  className="mt-1 flex min-h-11 w-full items-center gap-2 rounded-xl bg-stand-hover px-2.5 text-[0.9rem] font-medium text-chalk"
+                >
+                  <Plus className="size-4" aria-hidden />
+                  Išsaugoti dabartinį
+                </button>
+              </FilterChip>
+
               <FilterChip label="Rikiuoti" value={SORTS.find((option) => option.key === sort)!.label} active={sort !== 'value'}>
                 {SORTS.map((option) => (
                   <FilterOption
@@ -872,6 +1016,8 @@ function SignalRow({
   isHidden,
   pulse,
   movement,
+  pinned,
+  onTogglePinned,
   onSelect,
   onToggleHidden,
 }: {
@@ -889,6 +1035,8 @@ function SignalRow({
   pulse?: Pulse
   /** Where this book's price started, once we have seen two cycles. */
   movement?: Movement
+  pinned: boolean
+  onTogglePinned: () => void
   onSelect: () => void
   onToggleHidden?: () => void
 }) {
@@ -988,6 +1136,17 @@ function SignalRow({
             style={{ width: `${Math.max(4, Math.min(100, (price.edge / 0.1) * 100))}%` }}
           />
         </span>
+      </button>
+      <button
+        type="button"
+        onClick={onTogglePinned}
+        aria-pressed={pinned}
+        aria-label={pinned ? `Nebesekti: ${price.eventName}` : `Sekti rungtynes: ${price.eventName}`}
+        className={`absolute right-2 bottom-11 grid size-8 place-items-center rounded-lg transition-colors sm:right-4 ${
+          pinned ? 'text-chalk' : 'text-haze-dim hover:bg-rail hover:text-chalk'
+        }`}
+      >
+        <Star className={`size-4 ${pinned ? 'fill-current' : ''}`} aria-hidden />
       </button>
       {onToggleHidden && (
         <button
