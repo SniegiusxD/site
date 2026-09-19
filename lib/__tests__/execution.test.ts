@@ -41,3 +41,20 @@ describe('executionStats', () => {
     expect(stats.medianDelayMinutes).toBe(10)
   })
 })
+
+describe('fixtureCount', () => {
+  it('counts one fixture however many of its lines were bet', async () => {
+    const { fixtureCount } = await import('@/lib/bet-value')
+    const rows = [
+      { ...bet({ profit: 1 }), eventKey: 'pin-1', match: 'A vs B' },
+      { ...bet({ profit: 2 }), eventKey: 'pin-1', match: 'A vs B' },
+      { ...bet({ profit: 3 }), eventKey: 'pin-2', match: 'C vs D' },
+    ] as ActiveBet[]
+    expect(fixtureCount(rows)).toBe(2)
+  })
+
+  it('leaves unsettled bets out of the sample', async () => {
+    const { fixtureCount } = await import('@/lib/bet-value')
+    expect(fixtureCount([{ ...bet({ profit: null }), eventKey: 'pin-9' } as ActiveBet])).toBe(0)
+  })
+})

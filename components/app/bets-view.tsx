@@ -13,6 +13,7 @@ import {
   type ValuePoint,
   betStats,
   betTime,
+  fixtureCount,
   closingValue,
   inPeriod,
   matchesClv,
@@ -222,7 +223,7 @@ export function BetsView() {
           )}
 
           <AnimatePresence>{since && <SinceLastVisit summary={since} onClose={() => setSince(null)} />}</AnimatePresence>
-          <ThreeNumbers stats={stats} />
+          <ThreeNumbers stats={stats} bets={scoped} />
           <StatGrid stats={stats} bets={scoped} />
           <ValueCard series={series} stats={stats} />
           <ProfitCalendar bets={scoped} />
@@ -274,7 +275,9 @@ function SinceLastVisit({ summary, onClose }: { summary: SettledSummary; onClose
   )
 }
 
-function ThreeNumbers({ stats }: { stats: BetStats }) {
+function ThreeNumbers({ stats, bets }: { stats: BetStats; bets: ActiveBet[] }) {
+  // Lines of the same match are one opinion; saying so keeps the sample honest.
+  const fixtures = fixtureCount(bets)
   return (
     <section aria-label="Rezultatas, vertė ir sėkmė" className="mt-4 rounded-2xl bg-stand p-5 hairline sm:p-7">
       <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-end">
@@ -285,6 +288,7 @@ function ThreeNumbers({ stats }: { stats: BetStats }) {
           </p>
           <p className="mt-2 text-[0.85rem] text-haze">
             {stats.settled} {ltPlural(stats.settled, 'užbaigtas statymas', 'užbaigti statymai', 'užbaigtų statymų')}
+            {fixtures > 0 && fixtures < stats.settled && ` iš ${fixtures} ${ltPlural(fixtures, 'rungtynių', 'rungtynių', 'rungtynių')}`}
             {stats.pending > 0 && `, ${stats.pending} laukia`}
           </p>
         </div>

@@ -182,3 +182,17 @@ export function verdict(point: ValuePoint): 'below' | 'normal' | 'above' {
   if (point.result > point.value + point.spread) return 'above'
   return 'normal'
 }
+
+
+/**
+ * How many distinct fixtures the settled bets came from. Several lines of one
+ * match are one opinion, not several, so a bet count overstates the evidence.
+ */
+export function fixtureCount(bets: ActiveBet[]): number {
+  const keys = new Set<string>()
+  for (const bet of bets) {
+    if (bet.profit === null) continue
+    keys.add(bet.eventKey ?? bet.match ?? bet.id)
+  }
+  return keys.size
+}
