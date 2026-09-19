@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ProsePage } from '@/components/landing/prose-page'
 import { brand } from '@/lib/brand'
+import { EVIDENCE, evidencePeriod } from '@/lib/evidence'
 import { formatEdge, formatInteger, formatOdds, formatPercent } from '@/lib/format-lt'
 import { TRACK_RECORD } from '@/lib/pace'
 
@@ -66,20 +67,37 @@ export default function MethodologyPage() {
       </section>
 
       <section>
-        <h2>Ką rodo mūsų pačių rezultatas</h2>
+        <h2>Kodėl skaičiuojam rungtynes, o ne signalus</h2>
         <p>
-          Atskirai skaičiuojam, kas nutiko signalams, kai rungtynės pasibaigė. Paskutinė eksportuota imtis: {formatInteger(record.bets)}{' '}
-          atsiskaitę signalai, {record.firstDate.replaceAll('-', ' ')}–{record.lastDate.replaceAll('-', ' ')}, vienodos sumos.
-          Grąža {formatEdge(record.roi)}, vidutinis koeficientas {formatOdds(record.averageOdds)}. Laimėta {formatInteger(record.won)},
-          pralaimėta {formatInteger(record.lost)}, grąžinta {formatInteger(record.pushed)}.
+          Tose pačiose rungtynėse dažnai randam kelias linijas — handikapą ir suminį, kelias sumos ribas. Tai ta pati nuomonė apie tas
+          pačias rungtynes, todėl skaičiuodami kiekvieną atskirai imtį išpūstume maždaug trigubai. Kiekvienos rungtynės čia skaičiuojamos
+          vieną kartą: jų signalų rezultatai suvidurkinami, o tik tada rungtynės patenka į bendrą skaičių.
         </p>
         <p>
-          Pagal kontoras: 7BET {formatInteger(record.byBook['7BET'] ?? 0)}, TopSport {formatInteger(record.byBook.TopSport ?? 0)},
-          Betsson {formatInteger(record.byBook.Betsson ?? 0)}. Skaičiuojam tik tas kontoras, kurias rodom viduje.
+          Paskutinė eksportuota imtis: <strong>{formatInteger(EVIDENCE.fixtures)}</strong> rungtynės su atsiskaičiusiu signalu,{' '}
+          {evidencePeriod()}, vienodos sumos. Jose įvykdyti {formatInteger(EVIDENCE.signals)} signalai — tai vykdymo apimtis, o ne imties
+          dydis. Vidutinis koeficientas {formatOdds(EVIDENCE.averageOdds)}.
         </p>
         <p>
-          Devynios dienos ir du tūkstančiai statymų yra per maža imtis pelningumui įrodyti. Tiek laiko pakanka pamatyti, ar kainos
-          geresnės už uždarymo — pelnas ateina iš to, o ne atvirkščiai.
+          Grąža: <strong>{formatEdge(EVIDENCE.roi)}</strong>, o 95 % intervalas siekia nuo {formatEdge(EVIDENCE.roiLow)} iki{' '}
+          {formatEdge(EVIDENCE.roiHigh)}. Intervalas kerta nulį, todėl sąžiningas atsakymas yra toks: per šitą laikotarpį grąžos atskirti
+          nuo atsitiktinumo negalima. Uždarymo kainos matas jau kai ką rodo, grąža — dar ne.
+        </p>
+        <p>
+          Iš {formatInteger(EVIDENCE.fixturesWithClosing)} rungtynių su užfiksuota uždarymo kaina{' '}
+          <strong>{formatPercent((EVIDENCE.fixturesBeatingClose / Math.max(1, EVIDENCE.fixturesWithClosing)), 1)}</strong> pagavo geresnę
+          kainą nei uždarymas; vidutinis skirtumas {EVIDENCE.clvMean === null ? '—' : formatEdge(EVIDENCE.clvMean)}, mediana{' '}
+          {EVIDENCE.clvMedian === null ? '—' : formatEdge(EVIDENCE.clvMedian)}.
+        </p>
+        <p>
+          Pagal kontoras (signalai): 7BET {formatInteger(EVIDENCE.byBook['7BET'] ?? 0)}, TopSport{' '}
+          {formatInteger(EVIDENCE.byBook.TopSport ?? 0)}, Betsson {formatInteger(EVIDENCE.byBook.Betsson ?? 0)}. Skaičiuojam tik tas
+          kontoras, kurias rodom viduje.
+        </p>
+        <p>
+          Skaičiuoklė pradiniame puslapyje perleidžia kitą imtį — {formatInteger(record.bets)} atsiskaičiusių signalų (
+          {record.firstDate.replaceAll('-', ' ')}–{record.lastDate.replaceAll('-', ' ')}) — nes ten simuliuojamas žmogaus kelias:
+          statymai dedami po vieną, o ne rungtynėmis. Ta imtis yra vykdymo apimtis, o ne nepriklausomų stebėjimų skaičius.
         </p>
       </section>
 
@@ -107,8 +125,9 @@ export default function MethodologyPage() {
         <h2>Iš kur šitie skaičiai</h2>
         <p>
           Visi skaičiai šiame puslapyje eksportuoti iš tos pačios duomenų bazės, kurią naudoja skeneris: signalų knyga, uždarymo kainų
-          įrašai ir atsiskaitymų knyga. Prie kiekvieno skaičiaus rašom imtį ir laikotarpį, o ne vien procentą. Kai imtis pasipildo,
-          perrašom skaičių, o ne paliekam patogesnį senąjį.
+          įrašai ir atsiskaitymų knyga. Rungtynių lygio skaičius suveda vienas scenarijus (<i>export_site_evidence.py</i>), o ne ranka
+          rinkti skaičiai — todėl juos galima perskaičiuoti ir patikrinti. Prie kiekvieno skaičiaus rašom imtį ir laikotarpį, o ne vien
+          procentą. Kai imtis pasipildo, perrašom skaičių, o ne paliekam patogesnį senąjį.
         </p>
         <p>
           <Link href="/#duomenys" className="text-chalk underline underline-offset-4">

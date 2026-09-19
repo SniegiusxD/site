@@ -1,0 +1,30 @@
+{
+  "averageOdds": 2.0121,
+  "beatsZero": false,
+  "byBook": {
+    "7BET": 1433,
+    "Betsson": 564,
+    "TopSport": 867
+  },
+  "clvMean": 0.01314,
+  "clvMedian": 0.008,
+  "firstDate": "2026-09-09",
+  "fixtures": 957,
+  "fixturesBeatingClose": 515,
+  "fixturesWithClosing": 879,
+  "generatedAt": "2026-09-19",
+  "lastDate": "2026-09-19",
+  "outcomes": {
+    "half_lost": 7,
+    "half_won": 4,
+    "lost": 1342,
+    "push": 71,
+    "won": 1440
+  },
+  "roi": -0.00925,
+  "roiHigh": 0.05075,
+  "roiLow": -0.06925,
+  "signals": 2864,
+  "signalsPerFixture": 2.993,
+  "source": "settlement_output/ledger.json joined to data/clv.db surfaced_bets by signal_id; scope=published; site books only; flat stakes; one fixture counts once"
+}

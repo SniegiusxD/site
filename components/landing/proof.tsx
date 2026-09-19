@@ -1,7 +1,7 @@
 'use client'
 
+import { EVIDENCE, evidencePeriod } from '@/lib/evidence'
 import { formatEdge, formatInteger } from '@/lib/format-lt'
-import { TRACK_RECORD, recordPeriodLabel } from '@/lib/pace'
 import { Reveal, Roll, useInViewOnce } from './motion-primitives'
 
 // Fixture-level mean CLV by entry edge, 3,693 surfaced bets with a captured closing
@@ -82,22 +82,31 @@ export function Proof() {
         <Reveal className="mt-7">
           <div className="grid gap-6 rounded-[20px] bg-stand p-[clamp(20px,2.6vw,28px)] shadow-[inset_0_0_0_1px_var(--rail)] sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.4fr]">
             <div>
-              <Roll value={TRACK_RECORD.bets} className="block font-display text-[2rem] leading-none font-extrabold tracking-[-0.03em]" />
-              <p className="mt-1.5 text-[0.8125rem] text-haze">atsiskaityti signalai, {recordPeriodLabel()}</p>
+              <Roll value={EVIDENCE.fixtures} className="block font-display text-[2rem] leading-none font-extrabold tracking-[-0.03em]" />
+              <p className="mt-1.5 text-[0.8125rem] text-haze">
+                rungtynės su atsiskaičiusiu signalu, {evidencePeriod()}
+              </p>
             </div>
             <div>
+              {/* Not green, and with its interval: at this many fixtures the
+                  return cannot be told apart from zero, and a coloured number
+                  would say otherwise. */}
               <Roll
-                value={TRACK_RECORD.roi * 100}
+                value={EVIDENCE.roi * 100}
                 decimals={2}
                 signed
                 suffix=" %"
-                className="block font-display text-[2rem] leading-none font-extrabold tracking-[-0.03em] text-floodlight"
+                className="block font-display text-[2rem] leading-none font-extrabold tracking-[-0.03em]"
               />
-              <p className="mt-1.5 text-[0.8125rem] text-haze">ROI per tą laikotarpį</p>
+              <p className="mt-1.5 text-[0.8125rem] text-haze">
+                grąža, nuo {formatEdge(EVIDENCE.roiLow)} iki {formatEdge(EVIDENCE.roiHigh)}; skaičiuojam rungtynes, ne signalus
+              </p>
             </div>
             <div>
-              <Roll value={TRACK_RECORD.averageOdds} decimals={2} className="block font-display text-[2rem] leading-none font-extrabold tracking-[-0.03em]" />
-              <p className="mt-1.5 text-[0.8125rem] text-haze">vidutinis koeficientas</p>
+              <Roll value={EVIDENCE.averageOdds} decimals={2} className="block font-display text-[2rem] leading-none font-extrabold tracking-[-0.03em]" />
+              <p className="mt-1.5 text-[0.8125rem] text-haze">
+                vidutinis koeficientas · {formatInteger(EVIDENCE.signals)} signalų (vykdymo apimtis)
+              </p>
             </div>
             <p className="text-[0.875rem] text-haze">
               Kelios dienos nieko neįrodo. Todėl rodom ir CLV: jis matuoja, ar kaina buvo gera, nepriklausomai nuo to, ar statymas laimėjo.

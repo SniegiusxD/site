@@ -1,18 +1,24 @@
 import Link from 'next/link'
-import { formatEdge, formatInteger, formatOdds } from '@/lib/format-lt'
-import { TRACK_RECORD, recordPeriodLabel } from '@/lib/pace'
+import { EVIDENCE, beatShare, evidencePeriod } from '@/lib/evidence'
+import { formatEdge, formatInteger, formatPercent } from '@/lib/format-lt'
 
 /**
- * The evidence, directly under the hero. The audit's point was that a visitor
- * reaches our strongest proof far too late; every figure here carries its own
- * sample and period so it cannot be read as a promise.
+ * The evidence, directly under the hero. Counted by fixture: several lines of
+ * one match are one opinion, and a count of signals would make the sample look
+ * three times larger than it is. Return is shown with its interval rather than
+ * as a headline, because at this many fixtures it cannot yet be told from zero
+ * — the closing-price figure is the one that can.
  */
 export function EvidenceStrip() {
+  const share = beatShare()
   const items = [
-    { value: formatInteger(TRACK_RECORD.bets), label: `atsiskaitę signalai, ${recordPeriodLabel()}` },
-    { value: formatEdge(TRACK_RECORD.roi), label: 'grąža per tą laikotarpį' },
-    { value: formatOdds(TRACK_RECORD.averageOdds), label: 'vidutinis koeficientas' },
-    { value: '3 693', label: 'statymai su užfiksuota uždarymo kaina' },
+    { value: formatInteger(EVIDENCE.fixtures), label: `rungtynės su atsiskaičiusiu signalu, ${evidencePeriod()}` },
+    { value: share === null ? '—' : formatPercent(share, 1), label: `pagavo geresnę kainą nei uždarymas (${formatInteger(EVIDENCE.fixturesWithClosing)} rungtynių)` },
+    { value: EVIDENCE.clvMean === null ? '—' : formatEdge(EVIDENCE.clvMean), label: 'vidutinis skirtumas nuo uždarymo kainos' },
+    {
+      value: formatEdge(EVIDENCE.roi),
+      label: `grąža (nuo ${formatEdge(EVIDENCE.roiLow)} iki ${formatEdge(EVIDENCE.roiHigh)}) — dar per anksti išvadai`,
+    },
   ]
 
   return (
