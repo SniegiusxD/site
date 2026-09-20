@@ -291,10 +291,25 @@ function BankrollStep({ prefs, text, onText }: { prefs: Preferences; text: strin
           </button>
         ))}
       </div>
-      <p className="mt-8 rounded-xl bg-stand p-4 text-haze hairline">
-        Signalui su +3 % verte (koef. {formatOdds(EXAMPLE.odds)}) siūlytume{' '}
-        <span className="font-semibold text-chalk">{stake > 0 ? formatEuro(stake) : 'mažiau nei 1 €'}</span>.
-      </p>
+      <div className="mt-8 rounded-xl bg-stand p-4 text-haze hairline">
+        <p>
+          Signalui su +3 % verte (koef. {formatOdds(EXAMPLE.odds)}) siūlytume{' '}
+          <span className="font-semibold text-chalk">{stake > 0 ? formatEuro(stake) : 'mažiau nei 1 €'}</span>.
+        </p>
+        {/* The second half of the rule: one selection gets one position, so a
+            bet already placed on it comes out of the same amount. */}
+        <p className="mt-2">
+          Jei tą pačią baigtį jau būsi pastatęs{' '}
+          <span className="font-semibold text-chalk">{formatEuro(Math.max(1, Math.floor(stake / 2)))}</span> kitoje kontoroje, tam
+          pačiam signalui liktų{' '}
+          <span className="font-semibold text-chalk">
+            {stake - Math.max(1, Math.floor(stake / 2)) > 0
+              ? formatEuro(stake - Math.max(1, Math.floor(stake / 2)))
+              : 'nieko — riba jau išnaudota'}
+          </span>
+          . Suma skaičiuojama vienai baigčiai, o ne vienam statymui.
+        </p>
+      </div>
     </div>
   )
 }
