@@ -58,6 +58,20 @@ describe('betPayload', () => {
     expect(body.betDescription).toContain('Daugiau')
   })
 
+  it.each([
+    ['team_total', 'home_over', 'Breogan Lugo'],
+    ['corner_team_total', 'away_under', 'Rilski Sportist'],
+  ])('keeps the selected team for expanded %s markets', (market, direction, team) => {
+    const body = betPayload(signal(market, direction, 4.5), price, 5)
+    expect(body.pickName).toBe(team)
+  })
+
+  it('stores a fixture game key instead of the selection id', () => {
+    const body = betPayload(signal('spread', 'home', -16.5), price, 5)
+    expect(body.gameKey).toBe('1636213222')
+    expect(body.gameKey).not.toBe(body.signalId)
+  })
+
   it('falls back to signal names when the event name is not "A – B"', () => {
     const body = betPayload(signal('moneyline', 'away', null), { ...price, eventName: 'Breogan Lugo' }, 5)
     expect(body.pickName).toBe('Rilski Sportist')

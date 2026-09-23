@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
-import { AlertTriangle, ArrowLeft, Check, Clock, Loader2, Minus, Plus } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, Clock, ExternalLink, Loader2, Minus, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useId, useState } from 'react'
 import { toast } from 'sonner'
@@ -18,6 +18,7 @@ import { agoLabel, clockLabel, eventLabel, isInterpolatedLabel, kickoffLabel, lt
 import { sportName } from '@/lib/sports-lt'
 import { trackBet } from '@/lib/track-bet'
 import { useAccount } from './account-provider'
+import { safeBookEventUrl } from '@/lib/book-event-link'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
@@ -88,6 +89,7 @@ export function SignalDetail({
   const high = Math.max(signal.fairOdds, ...prices.map((p) => p.odds)) * 1.02
   const at = (odds: number) => ((odds - low) / (high - low)) * 100
   const fairAt = at(signal.fairOdds)
+  const bookEventUrl = safeBookEventUrl(price.book, price.eventUrl)
 
   async function track(actual?: { odds?: number; stake?: number; placement?: 'accepted' | 'limited' | 'rejected' }) {
     if (stake <= 0) {
@@ -190,6 +192,17 @@ export function SignalDetail({
             <p className="mt-1 font-display text-3xl font-bold text-floodlight tnum">{formatOdds(price.odds)}</p>
           </div>
         </div>
+        {open && bookEventUrl && (
+          <a
+            href={bookEventUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-night/60 font-semibold text-chalk transition-colors hairline hover:bg-rail"
+          >
+            Atidaryti {price.book}
+            <ExternalLink className="size-4" aria-hidden />
+          </a>
+        )}
       </div>
 
       {movement && Math.abs(edgeOf(movement.first, signal.fairOdds) - price.edge) >= 0.005 && (

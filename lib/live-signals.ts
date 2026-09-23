@@ -18,6 +18,10 @@ export type LivePrice = {
   eventName: string
   selectionLabel: string
   capturedAt: string
+  /** Bookmaker-owned event identity published by the scanner. */
+  softEventId?: string | null
+  /** Collector-verified exact event page; null when the adapter cannot prove one. */
+  eventUrl?: string | null
   /** Pinnacle had no price on this exact line; the fair price was interpolated between its neighbours. Null before the VM release. */
   fairPriceInterpolated?: boolean | null
   /** Distance from this line to the nearest real Pinnacle line (0 for exact lines). */
@@ -138,6 +142,8 @@ export async function loadLiveBoard(): Promise<LiveBoard> {
             eventName: String(price.event_name ?? ''),
             selectionLabel: String(price.selection_label ?? ''),
             capturedAt: iso(price.captured_at as string)!,
+            softEventId: price.soft_event_id == null ? null : String(price.soft_event_id),
+            eventUrl: price.event_url == null ? null : String(price.event_url),
             fairPriceInterpolated: typeof price.fair_price_interpolated === 'boolean' ? price.fair_price_interpolated : null,
             fairPriceNearestLineDistance:
               price.fair_price_nearest_line_distance == null ? null : Number(price.fair_price_nearest_line_distance),

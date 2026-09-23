@@ -26,7 +26,7 @@ export function betPayload(
   const home = names?.[0] ?? signal.home ?? ''
   const away = names?.[1] ?? signal.away ?? ''
   const side = signal.direction
-  const pickName = signal.market === 'total' ? null : side === 'home' ? home : side === 'away' ? away : null
+  const pickName = side === 'home' || side?.startsWith('home_') ? home : side === 'away' || side?.startsWith('away_') ? away : null
   return {
     signalId: signal.id,
     sport: signal.sport.toUpperCase(),
@@ -44,7 +44,9 @@ export function betPayload(
     line: signal.line,
     homeName: home,
     awayName: away,
-    gameKey: signal.id,
+    // A game key groups different lines on one fixture. A signal id identifies
+    // one selection, so use Pinnacle's shared event identity when available.
+    gameKey: signal.eventKey ?? signal.id,
     startsAt: signal.startsAt,
     entryFairProb: signal.fairProb,
     // Kept with the bet so the tracker can separate exact lines from
