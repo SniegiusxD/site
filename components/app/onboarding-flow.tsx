@@ -13,13 +13,14 @@ import { BOOKS, type BookName, landingSignals } from '@/lib/landing-signals'
 import { PACE_CHOICES, TRACK_RECORD, daysTo, recordPeriodLabel, simulationStake, timeLabel } from '@/lib/pace'
 import { KELLY_CHOICES, type Preferences, suggestedStake } from '@/lib/preferences'
 import type { SignalCounts } from '@/lib/signal-counts'
+import { DEFAULT_TELEGRAM_SETTINGS } from '@/lib/telegram-settings'
 import { sampleStretches, simulate } from '@/lib/simulate'
 import { HardTimes } from './hard-times'
 import { Outlook } from './outlook'
 import { signedWhole } from './scenario-chart'
 
 const EASE = [0.22, 1, 0.36, 1] as const
-const STEPS = ['Bankrollas', 'Kontoros', 'Signalai', 'Rizika', 'Tempas'] as const
+const STEPS = ['Bankrollas', 'Kontoros', 'Signalai', 'Rizika', 'Tempas', 'Pranešimai'] as const
 
 const BANKROLL_PRESETS = [250, 500, 1000, 2500]
 const EDGE_CHOICES = [0.01, 0.02, 0.03, 0.05]
@@ -54,6 +55,8 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
   const [direction, setDirection] = useState(1)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Asked last, once the member has seen what a signal contains.
+  const [notify, setNotify] = useState<NotifyChoice>({ channel: 'site', minEdge: 0.03, quiet: true })
 
   const update = (patch: Partial<Preferences>) => setPrefs((current) => ({ ...current, ...patch }))
   const last = step === STEPS.length - 1
@@ -95,7 +98,25 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
         setError(body?.error ?? 'Nepavyko išsaugoti. Bandyk dar kartą.')
         return
       }
-      router.push('/signalai')
+      if (notify.channel === 'telegram') {
+        // The rules are saved now and apply the moment a chat is connected. A
+        // failure here must not undo a finished onboarding: the profile shows
+        // the same settings.
+        await fetch('/api/telegram', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...DEFAULT_TELEGRAM_SETTINGS,
+            books: prefs.books,
+            minEdge: notify.minEdge,
+            quietStart: notify.quiet ? 0 : null,
+            quietEnd: notify.quiet ? 8 : null,
+          }),
+        }).catch(() => null)
+        router.push('/profilis#telegram')
+      } else {
+        router.push('/signalai')
+      }
       router.refresh()
     } catch {
       setError('Nepavyko pasiekti serverio. Patikrink ryšį ir bandyk dar kartą.')
@@ -158,6 +179,7 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
                   <SampleSignal prefs={prefs} />
                 </>
               )}
+              {step === 5 && <NotifyStep value={notify} onChange={setNotify} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -184,7 +206,7 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
             className="inline-flex items-center gap-2 rounded-xl bg-floodlight px-7 py-3.5 font-semibold text-night transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-70"
           >
             {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
-            {last ? 'Rodyti signalus' : 'Toliau'}
+            {last ? (notify.channel === 'telegram' ? 'Prijungti Telegram' : 'Rodyti signalus') : 'Toliau'}
           </button>
         </div>
       </form>
@@ -237,6 +259,79 @@ function SampleSignal({ prefs }: { prefs: Preferences }) {
         Tikras signalas iš mūsų skenavimo. Suma suskaičiuota nuo tavo {formatEuro(prefs.bankroll)} banko.
       </p>
     </section>
+  )
+}
+
+type NotifyChoice = { channel: 'site' | 'telegram'; minEdge: number; quiet: boolean }
+
+const ALERT_EDGES = [0.02, 0.03, 0.05] as const
+
+/**
+ * How the member wants to hear about new signals, asked after the sample
+ * signal so they know what an alert would contain. The chat itself is
+ * connected in the profile, which also says it comes with full access.
+ */
+function NotifyStep({ value, onChange }: { value: NotifyChoice; onChange: (next: NotifyChoice) => void }) {
+  const quietId = useId()
+  const choices = [
+    { channel: 'telegram', name: 'Telegram žinute', note: 'Signalas su kaina, verte ir suma, vos jį randam. Įeina į pilną prieigą.' },
+    { channel: 'site', name: 'Pats užsuksiu', note: 'Lenta rodo, kas nauja. Telegram galėsi įjungti vėliau profilyje.' },
+  ] as const
+  return (
+    <div>
+      <StepTitle
+        title="Kaip sužinosi apie naujus signalus?"
+        body="Vertė dažnai trunka valandą ar kelias. Kas nenori jos praleisti, gauna žinutę; kas stato kartą per dieną, užsuka pats."
+      />
+      <div role="radiogroup" aria-label="Pranešimų būdas" className="mt-10 grid gap-3 sm:grid-cols-2">
+        {choices.map((choice) => {
+          const checked = value.channel === choice.channel
+          return (
+            <button
+              key={choice.channel}
+              type="button"
+              role="radio"
+              aria-checked={checked}
+              onClick={() => onChange({ ...value, channel: choice.channel })}
+              className={`rounded-2xl bg-stand p-5 text-left transition-[background-color,box-shadow] duration-200 ${
+                checked ? 'shadow-[inset_0_0_0_1.5px_var(--chalk)]' : 'hairline hover:bg-stand-hover'
+              }`}
+            >
+              <span className="block text-[1.15rem] font-medium">{choice.name}</span>
+              <span className="mt-1 block text-[0.95rem] text-haze">{choice.note}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {value.channel === 'telegram' && (
+        <div className="mt-10 space-y-8">
+          <Segmented
+            label="Siųsti signalus"
+            columns="grid-cols-3"
+            options={ALERT_EDGES.map((edge) => ({ value: edge, label: `nuo ${percent(edge)}` }))}
+            value={value.minEdge}
+            onChange={(minEdge) => onChange({ ...value, minEdge })}
+          />
+          <label htmlFor={quietId} className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl bg-stand p-5 hairline">
+            <span>
+              <span className="block font-medium">Tyla naktį, 00:00–08:00</span>
+              <span className="mt-1 block text-[0.95rem] text-haze">Naktiniai signalai neateina žinute, bet lieka lentoje.</span>
+            </span>
+            <input
+              id={quietId}
+              type="checkbox"
+              checked={value.quiet}
+              onChange={(event) => onChange({ ...value, quiet: event.target.checked })}
+              className="size-5 shrink-0 accent-[var(--chalk)]"
+            />
+          </label>
+          <p className="text-[0.95rem] text-haze">
+            Toliau atsidarys profilis, kur vienu paspaudimu prijungsi Telegram. Taisykles ten pat pakeisi bet kada.
+          </p>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -371,7 +466,9 @@ function Segmented<T extends string | number>({
   options,
   value,
   onChange,
+  columns = 'grid-cols-2 sm:grid-cols-4',
 }: {
+  columns?: string
   label: string
   options: Array<{ value: T; label: string }>
   value: T
@@ -380,7 +477,7 @@ function Segmented<T extends string | number>({
   return (
     <fieldset>
       <legend className="font-medium">{label}</legend>
-      <div role="radiogroup" className="mt-3 grid grid-cols-2 gap-1.5 rounded-xl bg-stand p-1.5 hairline sm:grid-cols-4">
+      <div role="radiogroup" className={`mt-3 grid gap-1.5 rounded-xl bg-stand p-1.5 hairline ${columns}`}>
         {options.map((option) => {
           const checked = option.value === value
           return (
