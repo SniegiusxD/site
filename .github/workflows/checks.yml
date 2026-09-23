@@ -13,6 +13,7 @@ on:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -35,6 +36,9 @@ jobs:
     # build with no database reachable, keep one h1, never scroll sideways, and
     # pass axe at 1440 px and on a phone.
     runs-on: ubuntu-latest
+    # The suite takes about a minute. On 09-23 a runner hung for 40+ minutes on
+    # a commit that passes locally in 43 s; a hung job should fail fast instead.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
