@@ -16,7 +16,9 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 2 : undefined,
-  reporter: process.env.CI ? 'github' : 'list',
+  // In CI the list reporter prints each test as it runs; the github reporter
+  // alone stays silent until the end, which made a stalled run unreadable.
+  reporter: process.env.CI ? [['list'], ['github']] : 'list',
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
     trace: 'on-first-retry',
