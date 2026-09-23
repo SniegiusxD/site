@@ -4,10 +4,11 @@
  * ice_hockey 62, handball 34, esports 16, american_football 9, volleyball 1,
  * snooker 1; markets spread, total, team_total, moneyline, moneyline_3way,
  * moneyline_reg, spread_1h, total_1h, spreads_sets, team_totals_1h,
- * corner_total, handicap_3way).
+ * corner_total, corner_totals_1h, corner_team_total,
+ * corner_team_totals_1h, handicap_3way).
  *
- * The bot mirrors these groupings in scripts/telegram_bot_service.py; change
- * both together.
+ * The bot mirrors these groupings in aggregator/src/telegram_notify.py;
+ * change both together.
  */
 
 export const SPORTS = [
@@ -33,7 +34,11 @@ export const MARKET_FAMILIES = [
   { key: 'team_total', label: 'Komandos suminis', markets: ['team_total', 'team_totals_1h'] },
   // Round 20 on the VM added per-team corner totals; asking for "Kampiniai"
   // means both the match total and the team ladders.
-  { key: 'corners', label: 'Kampiniai', markets: ['corner_total', 'corner_team_total'] },
+  {
+    key: 'corners',
+    label: 'Kampiniai',
+    markets: ['corner_total', 'corner_totals_1h', 'corner_team_total', 'corner_team_totals_1h'],
+  },
 ] as const
 
 export type MarketFamilyKey = (typeof MARKET_FAMILIES)[number]['key']
@@ -46,7 +51,14 @@ export const PERIODS = [
 
 export type PeriodKey = (typeof PERIODS)[number]['key']
 
-export const PART_MARKETS = ['spread_1h', 'total_1h', 'team_totals_1h', 'spreads_sets'] as const
+export const PART_MARKETS = [
+  'spread_1h',
+  'total_1h',
+  'team_totals_1h',
+  'corner_totals_1h',
+  'corner_team_totals_1h',
+  'spreads_sets',
+] as const
 
 /** Odds bands, as ranges rather than labels only, so the filter stays honest. */
 export const ODDS_BANDS = [

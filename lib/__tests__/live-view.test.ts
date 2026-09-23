@@ -78,6 +78,29 @@ describe('boardRows', () => {
   it('filters by sport', () => {
     expect(boardRows([signal()], { ...filters, books: [...filters.books], sport: 'tennis' }, NOW).open).toHaveLength(0)
   })
+
+  it('keeps first-half corner markets in the corners and part filters', () => {
+    const rows = boardRows(
+      [
+        signal({ id: 'match-corners', market: 'corner_total' }),
+        signal({ id: 'half-corners', market: 'corner_totals_1h' }),
+        signal({ id: 'team-corners', market: 'corner_team_total' }),
+        signal({ id: 'half-team-corners', market: 'corner_team_totals_1h' }),
+      ],
+      {
+        ...filters,
+        books: [...filters.books],
+        markets: ['corners'],
+        periods: ['part'],
+      },
+      NOW,
+    )
+
+    expect(rows.open.map((row) => row.signal.id)).toEqual([
+      'half-corners',
+      'half-team-corners',
+    ])
+  })
 })
 
 describe('labels', () => {
