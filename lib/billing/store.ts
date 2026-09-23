@@ -37,6 +37,11 @@ export async function saveCustomerId(userId: string, customerId: string): Promis
   )
 }
 
+export async function userExists(userId: string): Promise<boolean> {
+  const { rowCount } = await pool.query(`SELECT 1 FROM "user" WHERE id = $1`, [userId])
+  return rowCount === 1
+}
+
 export async function userIdForCustomer(customerId: string): Promise<string | null> {
   const { rows } = await pool.query<{ userId: string }>(
     `SELECT "userId" FROM subscription WHERE "providerCustomerId" = $1`,

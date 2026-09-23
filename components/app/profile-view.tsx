@@ -16,6 +16,7 @@ import { DAILY_BET_CHOICES, KELLY_CHOICES } from '@/lib/preferences'
 import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
 import { useAccount } from './account-provider'
 import { BankrollDialog } from './bankroll-dialog'
+import { AccountDataControls } from './account-data-controls'
 import { BillingCard } from './billing-card'
 import { ChipGroup } from './chip-group'
 import { LimitHistory } from './limit-history'
@@ -205,6 +206,7 @@ export function ProfileView() {
           <LogOut className="size-4" aria-hidden />
           Atsijungti
         </button>
+        <AccountDataControls email={email} />
       </Section>
 
       <BankrollDialog open={bankrollOpen} onClose={closeBankroll} />
