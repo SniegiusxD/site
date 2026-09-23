@@ -24,7 +24,7 @@ export function LiveStrip({ stats }: { stats: PublicStats | null }) {
               stats.perBook[book] === undefined ? null : (
                 <span key={book} className="font-display text-[clamp(1.5rem,2.4vw,2rem)] leading-none font-extrabold tracking-[-0.03em]">
                   <Roll value={stats.perBook[book]!} />
-                  <span className="block font-sans text-[0.8125rem] font-medium tracking-normal text-haze">{book}</span>
+                  <span className="mt-1 block font-sans text-[0.8125rem] font-medium tracking-normal text-haze">{book}</span>
                 </span>
               ),
             )}
@@ -45,7 +45,8 @@ export function LiveStrip({ stats }: { stats: PublicStats | null }) {
         )}
         {stats.lastScanAt && (
           <Reveal variant="scale" delay={180} className={CARD}>
-            <p className="font-display text-[clamp(2rem,3.4vw,2.75rem)] leading-none font-extrabold tracking-[-0.03em]">{clockLabel(stats.lastScanAt)}</p>
+            {/* Same line box as the rolling numbers beside it, so the four figures share a baseline. */}
+            <p className="font-display text-[clamp(2rem,3.4vw,2.75rem)] leading-[1.35] font-extrabold tracking-[-0.03em]">{clockLabel(stats.lastScanAt)}</p>
             <p className="mt-2 text-[0.9375rem] text-haze">Paskutinis skenavimas</p>
           </Reveal>
         )}

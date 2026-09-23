@@ -2,9 +2,9 @@
 
 import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, Clock, Copy, Minus, Plus } from 'lucide-react'
+import { Check, Clock, Copy } from 'lucide-react'
 import { useState } from 'react'
-import { edgeOf, formatEdge, formatOdds, kellyFraction, ltPlural } from '@/lib/format-lt'
+import { edgeOf, formatEdge, formatOdds, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName, landingSignals } from '@/lib/landing-signals'
 import type { PublicStats } from '@/lib/public-stats'
 import { BookMark } from './book-mark'
@@ -30,6 +30,9 @@ export function ProductTiles({ stats }: { stats: PublicStats | null }) {
         <Reveal delay={80}>
           <p className="mt-5 max-w-[60ch] text-[clamp(1.05rem,1.4vw,1.25rem)] text-haze">Visa tai veikia ir čia. Spaudinėk.</p>
         </Reveal>
+        {/* Six tiles, one wide per row on desktop, alternating sides: 2+1, 1+2,
+            2+1. On tablets the two wide ones take a row each and the rest pair up,
+            so no row ends with a gap. */}
         <div className="mt-[clamp(40px,5vw,72px)] grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Reveal variant="scale" className="md:col-span-2">
             <PricesTile />
@@ -41,16 +44,13 @@ export function ProductTiles({ stats }: { stats: PublicStats | null }) {
             <CopyTile />
           </Reveal>
           <Reveal variant="scale" delay={180} className="md:col-span-2">
-            <LimitTile />
-          </Reveal>
-          <Reveal variant="scale" delay={60}>
-            <BankrollTile />
-          </Reveal>
-          <Reveal variant="scale" delay={120}>
             <TelegramTile />
           </Reveal>
-          <Reveal variant="scale" delay={180} className="md:col-span-2 lg:col-span-1">
+          <Reveal variant="scale" delay={60} className="lg:col-span-2">
             <ClosedTile />
+          </Reveal>
+          <Reveal variant="scale" delay={120}>
+            <BankrollTile />
           </Reveal>
         </div>
       </div>
@@ -59,8 +59,11 @@ export function ProductTiles({ stats }: { stats: PublicStats | null }) {
 }
 
 /**
- * One selection, every book's price on one axis, with the true price marked.
- * A bar past the mark is value: that reading needs no toggle and no legend.
+ * One selection, every book's price read against the true price. The true price
+ * is the zero line in the middle: a bar to the right means the book pays more
+ * than the bet is worth, to the left less. Bar lengths are the percentage
+ * difference itself, so no arbitrary axis minimum can make a small gap look
+ * large, and every row also says its odds and difference in words.
  */
 function PricesTile() {
   const [ref, seen] = useInViewOnce<HTMLDivElement>()
@@ -68,12 +71,10 @@ function PricesTile() {
   const sorted = [...prices].sort((a, b) => b.odds - a.odds)
   const event = threeBook.prices.find((price) => price.book === threeBook.valueBook)!
   const fair = threeBook.fairOdds
-
-  // The axis starts below the cheapest price and ends above the dearest, so the
-  // true price always sits inside the frame with room on both sides.
-  const low = Math.min(fair, ...prices.map((price) => price.odds)) * 0.94
-  const high = Math.max(fair, ...prices.map((price) => price.odds)) * 1.03
-  const at = (odds: number) => ((odds - low) / (high - low)) * 100
+  const deltas = sorted.map((price) => price.odds / fair - 1)
+  // The widest difference reaches most of a half-track, never the edge.
+  const span = Math.max(0.03, ...deltas.map(Math.abs)) * 1.15
+  const best = sorted[0]
 
   return (
     <article className={CARD}>
@@ -83,58 +84,54 @@ function PricesTile() {
         {event.event} <span className="text-haze">· {threeBook.market}: {event.selection}</span>
       </p>
 
-      <div className="mt-5 flex justify-between gap-3 text-[0.75rem] tracking-[0.06em] text-haze-dim uppercase">
-        <span>Kontora ir koeficientas</span>
-        <span>Skirtumas nuo tikrosios</span>
-      </div>
-      <div ref={ref} className="relative mt-2.5 grid flex-1 content-start gap-2.5">
-        {/* The true price: everything in this card is read against this line. */}
-        <div className="pointer-events-none absolute inset-y-0 z-10" style={{ left: `${at(fair)}%` }} aria-hidden>
-          <div className="h-full w-px border-l border-dashed border-chalk/70" />
+      <div ref={ref} className="mt-5 grid gap-2.5">
+        <div className="grid grid-cols-[5.25rem_minmax(0,1fr)_6.25rem] items-end gap-3 text-[0.8125rem] text-haze-dim">
+          <span>Kontora</span>
+          {/* On a phone the track is too narrow for three labels; the true
+              price, which the whole reading hangs on, is the one that stays. */}
+          <span className="flex justify-center sm:justify-between">
+            <span className="hidden sm:inline">moka mažiau</span>
+            <span className="whitespace-nowrap text-chalk">tikroji {formatOdds(fair)}</span>
+            <span className="hidden sm:inline">moka daugiau</span>
+          </span>
+          <span className="hidden text-right whitespace-nowrap sm:inline">Koef., skirtumas</span>
         </div>
 
         {sorted.map((price, index) => {
-          const delta = price.odds / fair - 1
+          const delta = deltas[index]
           const value = delta > 0
+          const reach = `${Math.min(Math.abs(delta) / span, 1) * 50}%`
           return (
-            <div key={price.book} className="grid grid-cols-[4.5rem_1fr] items-center gap-3">
-              <span className="truncate text-[0.875rem] text-haze">{price.book}</span>
-              <div className="relative h-11 rounded-[10px] bg-night-deep">
-                <div
-                  className={`absolute inset-y-0 left-0 rounded-[10px] ${value ? 'bg-floodlight/25 shadow-[inset_0_0_0_1.5px_var(--floodlight)]' : 'bg-steel/45'}`}
+            <div key={price.book} className="grid grid-cols-[5.25rem_minmax(0,1fr)_6.25rem] items-center gap-3">
+              <span className="min-w-0">
+                <span className="block truncate text-[0.875rem]">{price.book}</span>
+                {price === best && value && <span className="block text-[0.75rem] text-floodlight">geriausia kaina</span>}
+              </span>
+              <div className="relative h-9 rounded-[10px] bg-night-deep" aria-hidden>
+                <span className="absolute inset-y-1 left-1/2 w-px -translate-x-1/2 border-l border-dashed border-chalk/70" />
+                <span
+                  className={`absolute inset-y-2 ${value ? 'left-1/2 rounded-r-md bg-floodlight' : 'right-1/2 rounded-l-md bg-steel'}`}
                   style={{
-                    width: seen ? `${at(price.odds)}%` : '0%',
-                    transition: `width 900ms cubic-bezier(0.22,1,0.36,1) ${index * 90}ms`,
+                    width: seen ? reach : '0%',
+                    transition: `width 800ms cubic-bezier(0.22,1,0.36,1) ${index * 90}ms`,
                   }}
                 />
-                <div className="relative flex h-full items-center justify-between gap-2 px-3">
-                  <span className={`font-display text-[1.05rem] font-bold tnum ${value ? 'text-floodlight' : 'text-chalk'}`}>
-                    {formatOdds(price.odds)}
-                  </span>
-                  <span className={`text-[0.8125rem] font-semibold tnum ${value ? 'text-floodlight' : 'text-haze'}`}>
-                    <NumberFlow
-                      value={seen ? delta : 0}
-                      locales="lt-LT"
-                      format={{ style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' }}
-                    />
-                  </span>
-                </div>
               </div>
+              <span className="text-right tnum">
+                <span className={`font-display text-[1.05rem] font-bold ${value ? 'text-floodlight' : 'text-chalk'}`}>
+                  {formatOdds(price.odds)}
+                </span>{' '}
+                <span className={`text-[0.8125rem] font-semibold ${value ? 'text-floodlight' : 'text-haze'}`}>
+                  <NumberFlow
+                    value={seen ? delta : 0}
+                    locales="lt-LT"
+                    format={{ style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' }}
+                  />
+                </span>
+              </span>
             </div>
           )
         })}
-
-        <div className="grid grid-cols-[4.5rem_1fr] items-center gap-3">
-          <span className="text-[0.875rem] text-haze">Tikroji</span>
-          <div className="relative h-5">
-            <span
-              className="absolute top-0 -translate-x-1/2 text-[0.8125rem] whitespace-nowrap text-chalk tnum"
-              style={{ left: `${at(fair)}%` }}
-            >
-              {formatOdds(fair)}
-            </span>
-          </div>
-        </div>
       </div>
 
       <p className="mt-4 text-[0.875rem] text-haze">
@@ -238,93 +235,6 @@ function CopyTile() {
       <p aria-live="polite" className="mt-auto min-h-5 pt-3 text-[0.8125rem] text-floodlight">
         {copied ? `Nukopijuota ${copied} rašyba` : ''}
       </p>
-    </article>
-  )
-}
-
-function Stepper({ label, value, onDown, onUp }: { label: string; value: string; onDown: () => void; onUp: () => void }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-[0.875rem] text-haze">{label}</span>
-      <span className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onDown}
-          aria-label={`Mažinti: ${label.toLowerCase()}`}
-          className="grid size-11 place-items-center rounded-[14px] shadow-[inset_0_0_0_1px_var(--rail)] transition-transform hover:bg-stand-hover active:scale-95"
-        >
-          <Minus className="size-4" aria-hidden />
-        </button>
-        <span className="min-w-[88px] text-right font-display text-[1.125rem] font-bold tnum">{value}</span>
-        <button
-          type="button"
-          onClick={onUp}
-          aria-label={`Didinti: ${label.toLowerCase()}`}
-          className="grid size-11 place-items-center rounded-[14px] shadow-[inset_0_0_0_1px_var(--rail)] transition-transform hover:bg-stand-hover active:scale-95"
-        >
-          <Plus className="size-4" aria-hidden />
-        </button>
-      </span>
-    </div>
-  )
-}
-
-function LimitTile() {
-  const [bankroll, setBankroll] = useState(500)
-  const [limit, setLimit] = useState(40)
-  const price = betsson.prices.find((item) => item.book === betsson.valueBook)!
-  const kelly = bankroll * Math.min(0.05, kellyFraction(price.odds, 1 / betsson.fairOdds) * 0.25)
-  const stake = Math.min(kelly, limit)
-  const capped = stake < kelly - 0.005
-  const scale = Math.max(kelly, limit) * 1.15
-
-  return (
-    <article className={CARD}>
-      <h3 className={H3}>Limitas mažesnis už Kelly?</h3>
-      <p className={BODY}>
-        Siūlom ketvirtį Kelly, ne daugiau 5 % bankrollo ir ne daugiau tavo limito. Pavyzdys: {price.book} {formatOdds(price.odds)}, vertė{' '}
-        {formatEdge(edgeOf(price.odds, betsson.fairOdds))}.
-      </p>
-      <div className="mt-5 grid gap-3">
-        <Stepper
-          label="Bankrollas"
-          value={`${bankroll.toLocaleString('lt-LT')} €`}
-          onDown={() => setBankroll((value) => Math.max(100, value - 100))}
-          onUp={() => setBankroll((value) => Math.min(20000, value + 100))}
-        />
-        <Stepper
-          label="Kontoros limitas"
-          value={`${limit} €`}
-          onDown={() => setLimit((value) => Math.max(10, value - 10))}
-          onUp={() => setLimit((value) => Math.min(1000, value + 10))}
-        />
-      </div>
-      <div aria-hidden className="mt-5">
-        <div className="relative h-3 rounded-full bg-night-deep">
-          <span
-            className="absolute inset-y-0 left-0 rounded-full bg-rail-strong transition-[width] duration-500"
-            style={{ width: `${Math.min(100, (kelly / scale) * 100)}%` }}
-          />
-          <span
-            className="absolute inset-y-0 left-0 rounded-full bg-floodlight transition-[width] duration-500"
-            style={{ width: `${Math.min(100, (stake / scale) * 100)}%` }}
-          />
-          <span className="absolute -inset-y-1 w-0.5 bg-chalk transition-[left] duration-500" style={{ left: `${Math.min(100, (limit / scale) * 100)}%` }} />
-        </div>
-        <div className="mt-2 flex flex-wrap justify-between gap-2 text-[0.8125rem] text-haze">
-          <span>Siūloma suma</span>
-          <span>Pilnas ketvirtis Kelly {kelly.toFixed(2).replace('.', ',')} €</span>
-          <span>Limitas {limit} €</span>
-        </div>
-      </div>
-      <div className="mt-auto flex flex-wrap items-baseline justify-between gap-2.5 border-t border-rail pt-3.5">
-        <span className={`text-[0.875rem] ${capped ? 'text-floodlight' : 'text-haze'}`}>
-          {capped ? 'Apkirpta pagal kontoros limitą' : `Ketvirtis Kelly, ${((stake / bankroll) * 100).toFixed(2).replace('.', ',')} % bankrollo`}
-        </span>
-        <span className="font-display text-[1.75rem] font-extrabold tracking-[-0.03em]">
-          <NumberFlow value={stake} locales="lt-LT" format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} suffix=" €" />
-        </span>
-      </div>
     </article>
   )
 }

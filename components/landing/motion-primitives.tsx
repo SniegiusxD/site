@@ -89,7 +89,14 @@ export function Roll({
   const [ref, seen] = useInViewOnce<HTMLSpanElement>()
   return (
     <span ref={ref} className={className}>
+      {/* NumberFlow rolls its digits through a soft fade zone above and below
+          the number. With the callers' leading-none that zone lay over the
+          label underneath, so neighbouring digits showed through mid-roll. A
+          line box tall enough to hold the zone keeps the fade inside the
+          number's own space; the clip is a backstop at its edges. */}
+      <span className="inline-block overflow-hidden align-bottom leading-[1.35]">
       <NumberFlow
+        style={{ '--number-flow-mask-height': '0.15em' } as React.CSSProperties}
         value={seen ? value : 0}
         locales="lt-LT"
         prefix={prefix}
@@ -100,6 +107,7 @@ export function Roll({
           signDisplay: signed ? 'exceptZero' : 'auto',
         }}
       />
+      </span>
     </span>
   )
 }

@@ -45,6 +45,10 @@ const BOOKS: Array<{ book: string; note: string; cells: Array<{ clv: number; sur
   },
 ]
 
+/** A band whose interval still crosses zero: hatched and grey, never green. */
+const UNSURE_FILL =
+  'bg-[repeating-linear-gradient(135deg,var(--steel)_0_4px,transparent_4px_8px)] shadow-[inset_0_0_0_1px_var(--steel)]'
+
 const clvLabel = (value: number) => (Math.abs(value) < 0.0005 ? '0,0 %' : formatEdge(value))
 
 export function Proof() {
@@ -65,10 +69,20 @@ export function Proof() {
             1–13 d.
           </p>
         </Reveal>
+        {/* The two states differ in shape as well as colour: a solid bar is a
+            measured difference, a hatched one is not yet told apart from chance.
+            A green outline used to mark the second, and read as a selection. */}
         <Reveal delay={140}>
-          <p className="mt-3.5 max-w-[64ch] text-haze">
-            Užpildyti stulpeliai yra tie, kurių 95 % intervalas nekerta nulio. Nubrėžti tik kontūru dar gali būti atsitiktiniai.
-          </p>
+          <ul className="mt-4 flex flex-wrap gap-x-7 gap-y-2 text-[0.9375rem] text-haze" aria-label="Kaip skaityti stulpelius">
+            <li className="flex items-center gap-2.5">
+              <span aria-hidden className="h-3.5 w-9 rounded-full bg-floodlight" />
+              Patikima: 95 % intervalas nekerta nulio
+            </li>
+            <li className="flex items-center gap-2.5">
+              <span aria-hidden className={`h-3.5 w-9 rounded-full ${UNSURE_FILL}`} />
+              Dar nepakanka duomenų: gali būti atsitiktinumas
+            </li>
+          </ul>
         </Reveal>
 
         <div className="mt-[clamp(40px,5vw,72px)] grid gap-5 lg:grid-cols-3">
@@ -163,7 +177,7 @@ function BookCard({ book, note, cells }: { book: string; note: string; cells: Ar
             <span className="relative h-3.5 rounded-full bg-night">
               <span
                 className={`absolute inset-y-0 left-0 overflow-hidden rounded-full transition-[width] duration-[800ms] ease-[cubic-bezier(.22,1,.36,1)] ${
-                  cell.sure ? 'bg-floodlight' : 'shadow-[inset_0_0_0_1px_var(--floodlight)]'
+                  cell.sure ? 'bg-floodlight' : UNSURE_FILL
                 }`}
                 style={{ width: seen ? `${Math.max(2, (Math.abs(cell.clv) / MAX_CLV) * 100).toFixed(1)}%` : '0%', transitionDelay: `${index * 80}ms` }}
               >
@@ -175,7 +189,9 @@ function BookCard({ book, note, cells }: { book: string; note: string; cells: Ar
                 )}
               </span>
             </span>
-            <span className={`text-right text-[0.875rem] font-semibold tnum ${cell.clv > 0.0005 ? 'text-floodlight' : 'text-haze'}`}>{clvLabel(cell.clv)}</span>
+            <span className={`text-right text-[0.875rem] font-semibold tnum ${cell.sure && cell.clv > 0.0005 ? 'text-floodlight' : 'text-haze'}`}>
+              {clvLabel(cell.clv)}
+            </span>
           </div>
         ))}
       </div>
