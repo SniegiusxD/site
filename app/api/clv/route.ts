@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { rateLimitResponse } from "@/lib/rate-limit"
 
 export const dynamic = "force-dynamic"
 
@@ -13,7 +14,9 @@ const EMPTY = {
   recent_closed: [],
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const limited = await rateLimitResponse(request, 'expensive-read')
+  if (limited) return limited
   const base = process.env.API_URL ?? "http://localhost:5001"
 
   try {

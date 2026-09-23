@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rate-limit'
 
 const MAX_REPORT_BYTES = 16_384
 
@@ -13,6 +14,8 @@ function safeLocation(value: unknown) {
 }
 
 export async function POST(request: Request) {
+  const limited = await rateLimitResponse(request, 'csp-report')
+  if (limited) return limited
   const announced = Number(request.headers.get('content-length') ?? 0)
   if (announced > MAX_REPORT_BYTES) {
     return NextResponse.json({ error: 'Ataskaita per didelė.' }, { status: 413 })

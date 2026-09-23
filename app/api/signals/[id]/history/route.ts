@@ -2,11 +2,14 @@ import { NextResponse } from 'next/server'
 import { loadSeries } from '@/lib/price-history'
 import { getSessionUser } from '@/lib/session'
 import { getAccess } from '@/lib/subscription-store'
+import { rateLimitResponse } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
 /** Everything we have recorded for one signal's prices, oldest first. */
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const limited = await rateLimitResponse(request, 'expensive-read')
+  if (limited) return limited
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Prisijunk iš naujo.' }, { status: 401 })
 

@@ -3,10 +3,13 @@ import { freeBoard } from '@/lib/free-tier'
 import { loadLiveBoard } from '@/lib/live-signals'
 import { getSessionUser } from '@/lib/session'
 import { getAccess } from '@/lib/subscription-store'
+import { rateLimitResponse } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: Request) {
+  const limited = await rateLimitResponse(request, 'expensive-read')
+  if (limited) return limited
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Prisijunk iš naujo.' }, { status: 401 })
 
