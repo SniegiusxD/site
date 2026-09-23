@@ -28,7 +28,13 @@ export default defineConfig({
     { name: 'phone', use: { ...devices['Pixel 7'] } },
   ],
   webServer: {
-    command: `pnpm build && pnpm start --port ${PORT}`,
+    // In CI the build is its own workflow step and the server runs as one
+    // process: `pnpm build && pnpm start` left next-server alive after the
+    // tests, so every run passed in 90 s and then hung until the job timeout.
+    command: process.env.CI
+      ? `node node_modules/next/dist/bin/next start --port ${PORT}`
+      : `pnpm build && pnpm start --port ${PORT}`,
+    gracefulShutdown: { signal: 'SIGTERM', timeout: 5_000 },
     url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
