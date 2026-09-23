@@ -46,9 +46,23 @@ const FULL = [
   'Statymų sekimas, rezultatai ir CLV',
 ]
 
-export function UnlockView({ access }: { access: Access }) {
+export function UnlockView({ access, billing }: { access: Access; billing: boolean }) {
   const router = useRouter()
   const [starting, setStarting] = useState(false)
+  const [paying, setPaying] = useState(false)
+
+  async function subscribe() {
+    setPaying(true)
+    try {
+      const response = await fetch('/api/billing/checkout', { method: 'POST' })
+      const body = await response.json().catch(() => null)
+      if (!response.ok || !body?.url) throw new Error(body?.error ?? 'Nepavyko atidaryti apmokėjimo.')
+      window.location.assign(body.url)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Nepavyko atidaryti apmokėjimo.')
+      setPaying(false)
+    }
+  }
 
   async function start() {
     setStarting(true)
@@ -118,6 +132,20 @@ export function UnlockView({ access }: { access: Access }) {
           </button>
           <p className="mt-2.5 text-center text-[0.9rem] text-haze">Kortelės nereikia. Pasibaigus lieki nemokamoje paskyroje.</p>
         </>
+      ) : billing ? (
+        <>
+          <button
+            type="button"
+            onClick={subscribe}
+            disabled={paying}
+            className="mt-8 h-12 w-full rounded-xl bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
+          >
+            {paying ? 'Atidarom apmokėjimą…' : `Prenumeruoti už ${PRICE_EUR_PER_MONTH} € per mėnesį`}
+          </button>
+          <p className="mt-2.5 text-center text-[0.9rem] text-haze">
+            Apmokėjimas per Stripe. Atšaukti gali bet kada — prieiga lieka iki apmokėto laikotarpio pabaigos.
+          </p>
+        </>
       ) : (
         <>
           <button type="button" disabled className="mt-8 h-12 w-full cursor-not-allowed rounded-xl bg-floodlight/60 font-semibold text-night">
@@ -125,6 +153,19 @@ export function UnlockView({ access }: { access: Access }) {
           </button>
           <p className="mt-2.5 text-center text-[0.9rem] text-haze">Kol kas gali naudotis nemokama paskyra.</p>
         </>
+      )}
+
+      {/* Someone still in their free days can pay now and keep them: the
+          subscription starts when the trial would have ended. */}
+      {billing && access.state === 'trial' && (
+        <button
+          type="button"
+          onClick={subscribe}
+          disabled={paying}
+          className="mt-3 h-11 w-full rounded-xl font-medium text-chalk hairline transition-colors hover:bg-stand disabled:opacity-70"
+        >
+          Prenumeruoti dabar — likusios nemokamos dienos išlieka
+        </button>
       )}
 
       <ResponsibleUse />

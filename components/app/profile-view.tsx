@@ -16,6 +16,7 @@ import { DAILY_BET_CHOICES, KELLY_CHOICES } from '@/lib/preferences'
 import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
 import { useAccount } from './account-provider'
 import { BankrollDialog } from './bankroll-dialog'
+import { BillingCard } from './billing-card'
 import { ChipGroup } from './chip-group'
 import { LimitHistory } from './limit-history'
 import { TelegramCard } from './telegram-card'
@@ -184,6 +185,10 @@ export function ProfileView() {
         <LimitHistory />
       </Section>
 
+
+      <Section title="Prenumerata" id="prenumerata">
+        <BillingCard />
+      </Section>
 
       <Section title="Telegram pranešimai" id="telegram">
         <TelegramCard />

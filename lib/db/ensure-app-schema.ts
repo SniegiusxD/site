@@ -62,6 +62,25 @@ export function ensureAppSchema(): Promise<void> {
       -- empty and "trialStartedAt" records the one time they are used.
       ALTER TABLE subscription
         ADD COLUMN IF NOT EXISTS "trialStartedAt" TIMESTAMPTZ;
+
+      -- Stripe billing. The period end already lives in "currentPeriodEnd";
+      -- these say whether it is ending by the member's choice and whether a
+      -- renewal is currently failing, which the profile has to show.
+      ALTER TABLE subscription
+        ADD COLUMN IF NOT EXISTS "cancelAtPeriodEnd" BOOLEAN NOT NULL DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS "paymentFailedAt" TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS "priceId" TEXT;
+      CREATE UNIQUE INDEX IF NOT EXISTS subscription_provider_customer_idx
+        ON subscription ("providerCustomerId") WHERE "providerCustomerId" IS NOT NULL;
+
+      -- Every Stripe event handled, by its id. Stripe delivers at least once, so
+      -- a retried event must find itself here and do nothing the second time.
+      CREATE TABLE IF NOT EXISTS billing_event (
+        id TEXT PRIMARY KEY,
+        type TEXT NOT NULL,
+        "userId" TEXT,
+        "receivedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
       ALTER TABLE subscription
         ALTER COLUMN "trialEndsAt" DROP NOT NULL,
         ALTER COLUMN status SET DEFAULT 'free';
