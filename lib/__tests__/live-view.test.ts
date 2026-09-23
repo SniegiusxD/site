@@ -101,6 +101,40 @@ describe('boardRows', () => {
       'half-team-corners',
     ])
   })
+
+  it.each([
+    ['moneyline_1h', 'moneyline', 'part'],
+    ['sets_total', 'total', 'part'],
+    ['btts', 'btts', 'full'],
+    ['btts_1h', 'btts', 'part'],
+    ['booking_total', 'bookings', 'full'],
+    ['booking_total_1h', 'bookings', 'part'],
+  ])('keeps expanded %s signals in the %s/%s filters', (market, family, period) => {
+    const visible = boardRows(
+      [signal({ id: market, market })],
+      {
+        ...filters,
+        books: [...filters.books],
+        markets: [family],
+        periods: [period],
+      },
+      NOW,
+    )
+    expect(visible.open.map((row) => row.signal.id)).toEqual([market])
+
+    const otherPeriod = period === 'part' ? 'full' : 'part'
+    const hidden = boardRows(
+      [signal({ id: market, market })],
+      {
+        ...filters,
+        books: [...filters.books],
+        markets: [family],
+        periods: [otherPeriod],
+      },
+      NOW,
+    )
+    expect(hidden.open).toHaveLength(0)
+  })
 })
 
 describe('labels', () => {

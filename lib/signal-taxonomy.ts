@@ -3,7 +3,9 @@
  * 2026-09-18 (7 days: basketball 548, football 319, tennis 268, baseball 101,
  * ice_hockey 62, handball 34, esports 16, american_football 9, volleyball 1,
  * snooker 1; markets spread, total, team_total, moneyline, moneyline_3way,
- * moneyline_reg, spread_1h, total_1h, spreads_sets, team_totals_1h,
+ * moneyline_reg, moneyline_1h, spread_1h, total_1h, sets_total,
+ * spreads_sets, team_totals_1h, btts, btts_1h, booking_total,
+ * booking_total_1h,
  * corner_total, corner_totals_1h, corner_team_total,
  * corner_team_totals_1h, handicap_3way).
  *
@@ -28,9 +30,9 @@ export type SportKey = (typeof SPORTS)[number]['key']
 
 /** Market families, each covering the raw market names the publisher writes. */
 export const MARKET_FAMILIES = [
-  { key: 'moneyline', label: 'Nugalėtojas', markets: ['moneyline', 'moneyline_3way', 'moneyline_reg'] },
+  { key: 'moneyline', label: 'Nugalėtojas', markets: ['moneyline', 'moneyline_1h', 'moneyline_3way', 'moneyline_reg'] },
   { key: 'spread', label: 'Pranašumas', markets: ['spread', 'spread_1h', 'spreads_sets', 'handicap_3way'] },
-  { key: 'total', label: 'Suminis', markets: ['total', 'total_1h'] },
+  { key: 'total', label: 'Suminis', markets: ['total', 'total_1h', 'sets_total'] },
   { key: 'team_total', label: 'Komandos suminis', markets: ['team_total', 'team_totals_1h'] },
   // Round 20 on the VM added per-team corner totals; asking for "Kampiniai"
   // means both the match total and the team ladders.
@@ -39,6 +41,8 @@ export const MARKET_FAMILIES = [
     label: 'Kampiniai',
     markets: ['corner_total', 'corner_totals_1h', 'corner_team_total', 'corner_team_totals_1h'],
   },
+  { key: 'btts', label: 'Abi komandos įmuš', markets: ['btts', 'btts_1h'] },
+  { key: 'bookings', label: 'Kortelės', markets: ['booking_total', 'booking_total_1h'] },
 ] as const
 
 export type MarketFamilyKey = (typeof MARKET_FAMILIES)[number]['key']
@@ -52,11 +56,15 @@ export const PERIODS = [
 export type PeriodKey = (typeof PERIODS)[number]['key']
 
 export const PART_MARKETS = [
+  'moneyline_1h',
   'spread_1h',
   'total_1h',
+  'sets_total',
   'team_totals_1h',
   'corner_totals_1h',
   'corner_team_totals_1h',
+  'btts_1h',
+  'booking_total_1h',
   'spreads_sets',
 ] as const
 
