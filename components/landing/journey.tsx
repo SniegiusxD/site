@@ -103,7 +103,7 @@ export function Journey() {
                 {scanning && (
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute inset-x-0 z-10 h-12 animate-[kr-scan_1.4s_cubic-bezier(.45,0,.55,1)_infinite] bg-[linear-gradient(180deg,transparent,rgb(91_229_132/0.22),transparent)]"
+                    className="pointer-events-none absolute inset-0 z-10 animate-[kr-scan_1.4s_cubic-bezier(.45,0,.55,1)_infinite] bg-[linear-gradient(180deg,transparent_calc(50%-24px),rgb(91_229_132/0.22)_50%,transparent_calc(50%+24px))]"
                   />
                 )}
                 {rows.map((price) => {

@@ -29,8 +29,10 @@ export function Hero({ stats }: { stats: PublicStats | null }) {
     >
       <div
         aria-hidden
-        className="kr-stripes pointer-events-none absolute inset-[-10%_-20%] [mask-image:radial-gradient(90%_70%_at_88%_6%,#000,transparent_62%)]"
-      />
+        className="pointer-events-none absolute inset-x-[-20%] top-[-80px] h-[1040px] [mask-image:radial-gradient(90%_70%_at_88%_6%,#000,transparent_62%)]"
+      >
+        <div className="kr-stripes absolute inset-y-0 -left-[272px] right-0" />
+      </div>
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute inset-[-20%_-40%] animate-[kr-sweep_16s_cubic-bezier(.55,0,.45,1)_infinite_alternate] bg-[linear-gradient(112deg,transparent_42%,rgb(234_246_238/0.05)_50%,transparent_58%)]" />
         <div
@@ -43,22 +45,19 @@ export function Hero({ stats }: { stats: PublicStats | null }) {
         className="kr-breathe pointer-events-none absolute -top-[220px] -right-[120px] h-[620px] w-[760px] bg-[radial-gradient(closest-side,rgb(91_229_132/0.16),transparent_70%)]"
       />
 
-      <div className="relative mx-auto grid max-w-[80rem] items-center gap-12 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,38rem)] lg:gap-14">
+      <div className="relative mx-auto grid max-w-[80rem] items-center gap-12 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(0,38rem)] xl:gap-14">
         <div className="min-w-0">
           <h1 className="text-[clamp(2.75rem,7vw,6rem)] leading-[0.95]">
             <span className="block overflow-hidden pb-[0.14em]">
+              {/* The rotating word ends its own line: its width changes only the
+                  empty space after it, so no line ever re-wraps (layout shift). */}
               <span className="kr-line block" style={{ animationDelay: '80ms' }}>
-                Kai <BookRotator /> suklysta,
+                Kai <BookRotator />
               </span>
             </span>
             <span className="block overflow-hidden pb-[0.04em]">
               <span className="kr-line block" style={{ animationDelay: '140ms' }}>
-                tu tai matai
-              </span>
-            </span>
-            <span className="block overflow-hidden pb-[0.04em]">
-              <span className="kr-line block" style={{ animationDelay: '200ms' }}>
-                pirmas
+                suklysta, tu tai matai pirmas
               </span>
             </span>
           </h1>

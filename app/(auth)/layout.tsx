@@ -24,8 +24,10 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       <aside className="relative hidden overflow-hidden border-l border-rail bg-night-deep lg:flex lg:items-center lg:justify-center lg:p-12">
         <div
           aria-hidden
-          className="kr-stripes pointer-events-none absolute inset-0 [mask-image:radial-gradient(70%_60%_at_50%_0%,#000,transparent_70%)]"
-        />
+          className="pointer-events-none absolute inset-0 overflow-hidden [mask-image:radial-gradient(70%_60%_at_50%_0%,#000,transparent_70%)]"
+        >
+        <div className="kr-stripes absolute inset-y-0 -left-[272px] right-0" />
+      </div>
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_50%_0%,rgb(91_229_132/0.10),transparent_70%)]"

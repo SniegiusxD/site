@@ -10,6 +10,7 @@ import { BookMark } from './book-mark'
 
 const DEMO_BANKROLL = 500
 const CYCLE_MS = 5200
+const MAX_BOOKS = 3
 
 const valuePrice = (signal: LandingSignal) => signal.prices.find((price) => price.book === signal.valueBook) ?? signal.prices[0]
 const edgeFor = (signal: LandingSignal) => edgeOf(valuePrice(signal).odds, signal.fairOdds)
@@ -131,6 +132,16 @@ export function HeroBoard({ stats }: { stats: PublicStats | null }) {
                         </div>
                       )
                     })}
+                    {/* Every open row is as tall as one with all three books, so the
+                        hero does not grow and shrink (a layout shift) on each cycle. */}
+                    {Array.from({ length: Math.max(0, MAX_BOOKS - signal.prices.length) }, (_, pad) => (
+                      <div key={`pad-${pad}`} aria-hidden className="invisible flex min-w-0 items-center gap-3">
+                        <BookMark book={signal.prices[0].book} size="sm" />
+                        <span className="w-[4.5rem] shrink-0 text-[0.8125rem]">&nbsp;</span>
+                        <span className="h-2.5 flex-1" />
+                        <span className="w-[3rem] shrink-0 text-[0.875rem] font-semibold">&nbsp;</span>
+                      </div>
+                    ))}
                     <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-rail pt-3 text-[0.8125rem] text-haze">
                       <span>
                         Tikroji kaina <span className="font-semibold text-chalk tnum">{formatOdds(signal.fairOdds)}</span> · Pinnacle su marža{' '}

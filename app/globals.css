@@ -330,9 +330,12 @@
 
 /* ---- Landing motion (2026-09-17). Transform and opacity only; the reduced-motion
    rule above collapses every one of these to its end state. ---- */
+/* The headline rises from a faint, low start rather than from fully hidden:
+   something is painted in the first frame, so the headline is the page's
+   Largest Contentful Paint instead of whatever finishes animating last. */
 @keyframes kr-line {
-  from { transform: translateY(108%); }
-  to { transform: none; }
+  from { transform: translateY(28%); opacity: 0.15; }
+  to { transform: none; opacity: 1; }
 }
 @keyframes kr-fade-up {
   from { opacity: 0; transform: translateY(12px); }
@@ -358,9 +361,13 @@
   from { opacity: 0; transform: translateY(-16px); }
   to { opacity: 1; transform: none; }
 }
+/* The stripes move by transform, so the GPU slides a finished layer instead of
+   the browser repainting a viewport-sized gradient every frame. 271.8px is two
+   stripe periods along x for a 118deg, 120px pattern (120 / sin 118deg = 135.9),
+   so the loop has no visible jump. */
 @keyframes kr-drift {
-  from { background-position: 0 0; }
-  to { background-position: 240px 0; }
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(271.8px, 0, 0); }
 }
 @keyframes kr-sweep {
   from { transform: translate3d(-60%, 0, 0); }
@@ -370,15 +377,18 @@
   0%, 100% { opacity: 0.55; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.07); }
 }
+/* The glow's shadow is fixed on ::after; only its opacity breathes (composited). */
 @keyframes kr-cta-glow {
-  0%, 100% { box-shadow: 0 10px 34px -14px rgb(91 229 132 / 0.25); }
-  50% { box-shadow: 0 14px 44px -12px rgb(91 229 132 / 0.6); }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
+/* A full-height layer with the band at its middle: -50% to 50% carries the
+   band from the top edge to the bottom edge without animating top. */
 @keyframes kr-scan {
-  0% { top: 0; opacity: 0; }
+  0% { transform: translate3d(0, -50%, 0); opacity: 0; }
   12% { opacity: 1; }
   88% { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
+  100% { transform: translate3d(0, 50%, 0); opacity: 0; }
 }
 @keyframes kr-shimmer {
   0% { transform: translateX(-140%); }
@@ -388,9 +398,11 @@
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.3; transform: scale(0.7); }
 }
+/* The "live" dot's ping. It animated stroke-dashoffset, which does nothing on a
+   plain span, so the dots never pulsed. */
 @keyframes kr-ring {
-  from { stroke-dashoffset: 82; }
-  to { stroke-dashoffset: 0; }
+  from { transform: scale(1); opacity: 0.7; }
+  to { transform: scale(2.6); opacity: 0; }
 }
 @keyframes kr-toast {
   0% { opacity: 0; transform: translateY(18px); }
@@ -453,13 +465,24 @@
   .kr-row-in { animation: kr-row-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both; }
   .kr-row-drop { animation: kr-row-drop 540ms cubic-bezier(0.22, 1, 0.36, 1) both; }
   .kr-expand { animation: kr-expand 400ms cubic-bezier(0.22, 1, 0.36, 1) both; }
-  .kr-cta-glow { animation: kr-cta-glow 4.5s ease-in-out infinite; }
+  .kr-cta-glow { position: relative; box-shadow: 0 10px 34px -14px rgb(91 229 132 / 0.25); }
+  .kr-cta-glow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 14px 44px -12px rgb(91 229 132 / 0.6);
+    opacity: 0;
+    pointer-events: none;
+    animation: kr-cta-glow 4.5s ease-in-out infinite;
+  }
   .kr-breathe { animation: kr-breathe 12s ease-in-out infinite; }
   .kr-float { animation: kr-float 4.2s ease-in-out infinite; }
   /* Mown-stripe texture of the pitch, drifting slowly. */
   .kr-stripes {
     background-image: repeating-linear-gradient(118deg, rgb(234 246 238 / 0.028) 0 44px, transparent 44px 120px);
     animation: kr-drift 44s linear infinite;
+    will-change: transform;
   }
   .kr-marquee { animation: ticker 50s linear infinite; }
   .kr-marquee-slow { animation: ticker 68s linear infinite reverse; }

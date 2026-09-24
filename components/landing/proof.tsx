@@ -56,8 +56,10 @@ export function Proof() {
     <section id="duomenys" className="relative scroll-mt-16 overflow-hidden bg-night-alt px-5 py-[clamp(80px,10vw,160px)] sm:px-8">
       <div
         aria-hidden
-        className="kr-stripes pointer-events-none absolute inset-[-10%_-20%] [animation-direction:reverse] [mask-image:radial-gradient(80%_60%_at_14%_8%,#000,transparent_60%)]"
-      />
+        className="pointer-events-none absolute inset-x-[-20%] top-[-80px] h-[1040px] [mask-image:radial-gradient(80%_60%_at_14%_8%,#000,transparent_60%)]"
+      >
+        <div className="kr-stripes absolute inset-y-0 -left-[272px] right-0 [animation-direction:reverse]" />
+      </div>
       <div className="relative mx-auto max-w-[80rem]">
         <Reveal>
           <h2 className="text-[clamp(2.25rem,4.5vw,4rem)] leading-[0.95]">Ką rodo mūsų pačių duomenys</h2>
