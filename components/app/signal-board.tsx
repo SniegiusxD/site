@@ -323,6 +323,10 @@ export function SignalBoard({
   // On the free board every signal is below the member's usual value floor, so
   // their own filter would empty the page. The free ceilings replace it.
   const freeTier = board.tier === 'free'
+  // Price movement is part of the full board; the free board never receives it.
+  // A filter or sort remembered from a trial would only empty the list.
+  const activeDrift = freeTier ? 'all' : drift
+  const activeSort: SortKey = freeTier && sort === 'moving' ? 'value' : sort
   // Memoised as one object so everything below can depend on it directly,
   // rather than on a JSON.stringify of it.
   const filters: BoardFilters = useMemo(
@@ -354,12 +358,12 @@ export function SignalBoard({
   const visible = useMemo(() => {
     let kept = rows.open.filter((row) => !hidden.has(row.signal.id))
 
-    if (drift !== 'all') {
+    if (activeDrift !== 'all') {
       kept = kept.filter((row) => {
         const movement = board.movement?.[row.signal.id]?.[row.price.book]
         if (!movement) return false
         const change = driftOf(movement)
-        return drift === 'down' ? change <= -DRIFT_FLOOR : change >= DRIFT_FLOOR
+        return activeDrift === 'down' ? change <= -DRIFT_FLOOR : change >= DRIFT_FLOOR
       })
     }
 
@@ -379,14 +383,14 @@ export function SignalBoard({
     if (onlyPinned) kept = kept.filter((row) => pinned.has(pinKeyOf(row.signal)))
 
     const sorted = [...kept]
-    if (sort === 'value') sorted.sort((a, b) => b.price.edge - a.price.edge)
-    if (sort === 'new') sorted.sort((a, b) => new Date(b.signal.firstSeenAt).getTime() - new Date(a.signal.firstSeenAt).getTime())
-    if (sort === 'soon') sorted.sort((a, b) => new Date(a.signal.startsAt).getTime() - new Date(b.signal.startsAt).getTime())
-    if (sort === 'moving') sorted.sort((a, b) => movementOf(b) - movementOf(a))
+    if (activeSort === 'value') sorted.sort((a, b) => b.price.edge - a.price.edge)
+    if (activeSort === 'new') sorted.sort((a, b) => new Date(b.signal.firstSeenAt).getTime() - new Date(a.signal.firstSeenAt).getTime())
+    if (activeSort === 'soon') sorted.sort((a, b) => new Date(a.signal.startsAt).getTime() - new Date(b.signal.startsAt).getTime())
+    if (activeSort === 'moving') sorted.sort((a, b) => movementOf(b) - movementOf(a))
     // Whatever the sort, a watched fixture is what the member came back for.
     sorted.sort((a, b) => Number(pinned.has(pinKeyOf(b.signal))) - Number(pinned.has(pinKeyOf(a.signal))))
     return sorted
-  }, [rows.open, hidden, drift, board.movement, search, sort, onlyNew, lastVisit, pinned, onlyPinned])
+  }, [rows.open, hidden, activeDrift, board.movement, search, activeSort, onlyNew, lastVisit, pinned, onlyPinned])
 
   // How many the member has not seen yet, whether or not the filter is on.
   const newCount = useMemo(
@@ -681,12 +685,12 @@ export function SignalBoard({
                 </button>
               </FilterChip>
 
-              <FilterChip label="Rikiuoti" value={SORTS.find((option) => option.key === sort)!.label} active={sort !== 'value'}>
-                {SORTS.map((option) => (
+              <FilterChip label="Rikiuoti" value={SORTS.find((option) => option.key === activeSort)!.label} active={activeSort !== 'value'}>
+                {SORTS.filter((option) => !(freeTier && option.key === 'moving')).map((option) => (
                   <FilterOption
                     key={option.key}
                     label={option.label}
-                    checked={sort === option.key}
+                    checked={activeSort === option.key}
                     onChange={() => setSort(option.key)}
                   />
                 ))}
@@ -789,12 +793,30 @@ export function SignalBoard({
 
               <FilterChip
                 label="Kainos judėjimas"
-                value={drift === 'all' ? 'Judėjimas' : drift === 'down' ? 'Krenta' : 'Kyla'}
-                active={drift !== 'all'}
+                value={activeDrift === 'all' ? 'Judėjimas' : activeDrift === 'down' ? 'Krenta' : 'Kyla'}
+                active={activeDrift !== 'all'}
               >
-                <FilterOption label="Visos" checked={drift === 'all'} onChange={() => setDrift('all')} />
-                <FilterOption label="Kaina krenta" checked={drift === 'down'} onChange={() => setDrift('down')} />
-                <FilterOption label="Kaina kyla" checked={drift === 'up'} onChange={() => setDrift('up')} />
+                {freeTier ? (
+                  // What the tool does, without a single real event, book or price.
+                  <div className="max-w-[18rem] p-2">
+                    <p className="flex items-center gap-2 font-medium">
+                      <Lock className="size-4 text-haze" aria-hidden />
+                      Pilnos prieigos įrankis
+                    </p>
+                    <p className="mt-1.5 text-[0.9rem] text-haze">
+                      Rodo, kurių signalų kaina krenta ar kyla tarp skenavimų: krentanti kaina dažnai reiškia, kad vertė netrukus užsidarys.
+                    </p>
+                    <Link href="/atrakinti" className="mt-3 inline-flex min-h-10 items-center rounded-lg bg-floodlight px-3 text-[0.9rem] font-semibold text-night">
+                      Atrakinti
+                    </Link>
+                  </div>
+                ) : (
+                  <>
+                    <FilterOption label="Visos" checked={drift === 'all'} onChange={() => setDrift('all')} />
+                    <FilterOption label="Kaina krenta" checked={drift === 'down'} onChange={() => setDrift('down')} />
+                    <FilterOption label="Kaina kyla" checked={drift === 'up'} onChange={() => setDrift('up')} />
+                  </>
+                )}
               </FilterChip>
 
               <FilterChip label="Periodas" value={periods.length ? periodsValue : 'Periodas'} active={periods.length > 0}>
@@ -852,7 +874,7 @@ export function SignalBoard({
                   ? 'Nuo paskutinio apsilankymo naujų signalų nėra. Išjunk „Nauji“, kad matytum visus.'
                   : search.trim()
                   ? `Pagal „${search.trim()}“ nieko neradom. Pabandyk kitą komandos pavadinimą.`
-                  : drift !== 'all'
+                  : activeDrift !== 'all'
                   ? 'Kainų judėjimą matom tik tuose signaluose, kuriuos matėm bent dviejuose skenavimuose. Palauk kito skenavimo arba grąžink filtrą į „Visos“.'
                   : !status
                   ? 'Kai tik ateis pirmas skenavimas, signalai atsiras čia patys.'
