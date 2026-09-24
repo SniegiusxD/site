@@ -1,9 +1,13 @@
 'use client'
 
+import { motion } from 'framer-motion'
 import { Loader2, Plus } from 'lucide-react'
 import { useId, useState } from 'react'
 import { toast } from 'sonner'
 import { SPORTS } from '@/lib/signal-taxonomy'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
+
+const EASE = [0.22, 1, 0.36, 1] as const
 
 const COUNTRIES = [
   { value: 'LT', label: 'Lietuva' },
@@ -26,6 +30,7 @@ export function SuggestBook() {
   const [busy, setBusy] = useState(false)
   const [sent, setSent] = useState<string | null>(null)
   const nameId = useId()
+  const reduced = useReducedMotion()
   const commentId = useId()
 
   async function send() {
@@ -58,9 +63,15 @@ export function SuggestBook() {
     return (
       <div className="mt-3">
         {sent && (
-          <p role="status" className="mb-2 text-[0.9rem] text-haze">
+          <motion.p
+            role="status"
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: EASE }}
+            className="mb-2 text-[0.9rem] text-haze"
+          >
             Užrašėm: {sent}. Kontoras jungiam pagal tai, kiek žmonių jų prašo ir ar jų kainas galim patikimai palyginti.
-          </p>
+          </motion.p>
         )}
         <button
           type="button"
@@ -78,7 +89,12 @@ export function SuggestBook() {
     `min-h-10 rounded-full px-3.5 text-[0.9rem] font-medium transition-colors ${active ? 'bg-chalk text-night' : 'bg-rail text-haze hover:text-chalk'}`
 
   return (
-    <div className="mt-3 rounded-2xl bg-stand p-5 hairline">
+    <motion.div
+      initial={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: EASE }}
+      className="mt-3 rounded-2xl bg-stand p-5 hairline"
+    >
       <p className="font-medium">Pasiūlyk kontorą</p>
       <p className="mt-1 text-[0.9rem] text-haze">
         Kol kas lyginam 7BET, TopSport ir Betsson. Prašymas nieko neįjungia, bet parodo, kurią kontorą jungti toliau.
@@ -161,6 +177,6 @@ export function SuggestBook() {
           Atšaukti
         </button>
       </div>
-    </div>
+    </motion.div>
   )
 }

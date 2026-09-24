@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
-import { AlertTriangle, ArrowLeft, Check, Clock, ExternalLink, Loader2, Minus, Plus } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Clock, ExternalLink, Loader2, Minus, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useId, useState } from 'react'
 import { toast } from 'sonner'
@@ -408,13 +408,26 @@ export function SignalDetail({
 
       <div className="fixed inset-x-0 bottom-0 z-10 border-t border-rail bg-night/90 p-4 backdrop-blur-xl lg:static lg:mt-6 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
         {tracking === 'done' ? (
-          <p className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-pitch-soft font-semibold text-pitch">
-            <Check className="size-5" aria-hidden />
+          <motion.p
+            initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.22, ease: EASE }}
+            className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-pitch-soft font-semibold text-pitch"
+          >
+            {/* Lucide's check, drawn in so the confirmation reads as done, not swapped. */}
+            <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <motion.path
+                d="M20 6 9 17l-5-5"
+                initial={{ pathLength: reduced ? 1 : 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.26, ease: EASE, delay: reduced ? 0 : 0.08 }}
+              />
+            </svg>
             Pažymėta.{' '}
             <Link href="/statymai" className="underline underline-offset-4">
               Žiūrėti statymus
             </Link>
-          </p>
+          </motion.p>
         ) : (
           <>
             <button

@@ -1,5 +1,6 @@
 'use client'
 
+import { AnimatePresence, motion } from 'framer-motion'
 import { AlertTriangle, CreditCard, Loader2, RotateCcw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -8,6 +9,9 @@ import { CANCEL_REASONS } from '@/lib/billing/cancel-reasons'
 import type { BillingState } from '@/lib/billing/store'
 import { kickoffLabel } from '@/lib/live-view'
 import { PRICE_EUR_PER_MONTH } from '@/lib/subscription'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
+
+const EASE = [0.22, 1, 0.36, 1] as const
 
 type Status = { enabled: boolean; testMode: boolean; billing: BillingState }
 
@@ -26,6 +30,7 @@ export function BillingCard() {
   const [leaving, setLeaving] = useState(false)
   const [reason, setReason] = useState<string | null>(null)
   const returned = useRef(false)
+  const reduced = useReducedMotion()
 
   const load = useCallback(async () => {
     const response = await fetch('/api/billing/status', { cache: 'no-store' })
@@ -179,8 +184,16 @@ export function BillingCard() {
         )}
       </div>
 
+      <AnimatePresence initial={false}>
       {paying && leaving && (
-        <div className="rounded-2xl bg-night/60 p-5 hairline">
+        <motion.div
+          key="leave"
+          initial={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
+          transition={{ duration: 0.2, ease: EASE }}
+          className="rounded-2xl bg-night/60 p-5 hairline"
+        >
           <p className="font-medium">Atšaukti prenumeratą?</p>
           <ul className="mt-2 grid gap-1 text-[0.95rem] text-haze">
             <li>Daugiau mokėjimų nebus. Visi signalai veiks iki {dateOf(billing.currentPeriodEnd)}, nes už šį laiką jau sumokėta.</li>
@@ -222,8 +235,9 @@ export function BillingCard() {
               Palikti kaip yra
             </button>
           </div>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   )
 }
