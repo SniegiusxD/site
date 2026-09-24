@@ -42,6 +42,7 @@ import { useAccount } from './account-provider'
 import { ChipGroup } from './chip-group'
 import { FilterChip, FilterOption } from './filter-chip'
 import { FirstSteps } from './first-steps'
+import { MonthDialog } from './month-dialog'
 import { SignalDetail } from './signal-detail'
 import { TrialRecap } from './trial-recap'
 
@@ -1103,6 +1104,8 @@ function DailyTarget({
     animateCard(card.current, { scale: [1, 1.035, 1] }, { duration: 0.42, ease: EASE })
   }, [bump, reduced, animateCard, card])
   const [editing, setEditing] = useState(false)
+  const [monthOpen, setMonthOpen] = useState(false)
+  const closeMonth = useCallback(() => setMonthOpen(false), [])
   const progress = useMemo(() => dailyProgress(bets, now), [bets, now])
   const reached = progress.count >= target
   const left = Math.max(0, target - progress.count)
@@ -1163,6 +1166,13 @@ function DailyTarget({
         >
           Keisti tikslą
         </button>
+        <button
+          type="button"
+          onClick={() => setMonthOpen(true)}
+          className="font-medium text-chalk underline decoration-rail-strong underline-offset-4 hover:decoration-chalk"
+        >
+          Mėnuo
+        </button>
       </div>
       {editing && (
         <div className="mt-3 border-t border-rail pt-3">
@@ -1177,6 +1187,7 @@ function DailyTarget({
           />
         </div>
       )}
+      <MonthDialog open={monthOpen} onClose={closeMonth} dailyTarget={target} now={now} />
     </div>
   )
 }
