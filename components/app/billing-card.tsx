@@ -3,12 +3,13 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { AlertTriangle, CreditCard, Loader2, RotateCcw } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { CANCEL_REASONS } from '@/lib/billing/cancel-reasons'
 import type { BillingState } from '@/lib/billing/store'
 import { kickoffLabel } from '@/lib/live-view'
 import { PRICE_EUR_PER_MONTH } from '@/lib/subscription'
+import { useApi } from '@/lib/use-api'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -25,7 +26,10 @@ const dateOf = (iso: string | null) => (iso ? kickoffLabel(iso).replace(/\s\d{2}
  */
 export function BillingCard() {
   const router = useRouter()
-  const [status, setStatus] = useState<Status | null>(null)
+  // The status as the server has it, until a cancel or resume here returns the new billing.
+  const { data: loaded, reload: load } = useApi<Status>('/api/billing/status')
+  const [changed, setStatus] = useState<Status | null>(null)
+  const status = changed ?? loaded
   // Back from Checkout or the portal: the card says it is confirming from the first frame.
   const params = useSearchParams()
   const from = params.get('billing')
@@ -35,18 +39,6 @@ export function BillingCard() {
   const [reason, setReason] = useState<string | null>(null)
   const returned = useRef(false)
   const reduced = useReducedMotion()
-
-  const load = useCallback(
-    () =>
-      fetch('/api/billing/status', { cache: 'no-store' }).then(async (response) => {
-        if (response.ok) setStatus(await response.json())
-      }),
-    [],
-  )
-
-  useEffect(() => {
-    load()
-  }, [load])
 
   // Back from Checkout or the portal: confirm once, then drop the parameters.
   useEffect(() => {
@@ -69,7 +61,8 @@ export function BillingCard() {
         else toast.success('Prenumerata aktyvi. Visi signalai atrakinti.')
         router.replace('/profilis#prenumerata', { scroll: false })
         router.refresh()
-        return load()
+        setStatus(null)
+        load()
       })
       .catch((error) => toast.error(error?.message || 'Nepavyko patikrinti apmokėjimo.'))
       .finally(() => setBusy(null))
@@ -98,7 +91,10 @@ export function BillingCard() {
       })
       const body = await response.json().catch(() => null)
       if (!response.ok) throw new Error(body?.error ?? 'Nepavyko.')
-      setStatus((current) => (current ? { ...current, billing: body.billing } : current))
+      setStatus((current) => {
+        const base = current ?? loaded
+        return base ? { ...base, billing: body.billing } : base
+      })
       setLeaving(false)
       setReason(null)
       toast.success(action === 'cancel' ? 'Prenumerata atšaukta. Daugiau mokėjimų nebus.' : 'Prenumerata vėl aktyvi.')
