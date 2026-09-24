@@ -1,11 +1,11 @@
 'use client'
 
-import { AnimatePresence, motion, useDragControls } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
-import { Bell, Check, RefreshCw, Search, Sparkles, Star } from 'lucide-react'
+import { Bell, RefreshCw, Search, Sparkles, Star } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { type BoardBet, boardStake, exposureFor } from '@/lib/exposure'
 import { formatEdge, ltPlural } from '@/lib/format-lt'
@@ -39,7 +39,9 @@ import { TrialRecap } from './trial-recap'
 import { DailyTarget } from './board/daily-target'
 import { Collapsible, Notice } from './board/list-parts'
 import { FilterChips, SavedViewsChip, SortChip } from './board/filters'
+import { BetFlight, useBetFlight } from './board/bet-flight'
 import { LockedStrip } from './board/locked-strip'
+import { PhoneSheet } from './board/phone-sheet'
 import { useLiveBoard } from './board/use-live-board'
 import { pinKeyOf, SEEN_KEY, type SortKey, useBoardView, useDensity, useHiddenSignals, usePinned } from './board/use-board-preferences'
 
@@ -108,7 +110,6 @@ export function SignalBoard({
   const [hidden, setHidden] = useHiddenSignals(board.signals)
   const [pinned, togglePinned] = usePinned()
   const [onlyPinned, setOnlyPinned] = useState(false)
-  const sheetDrag = useDragControls()
 
   // On the free board every signal is below the member's usual value floor, so
   // their own filter would empty the page. The free ceilings replace it.
@@ -252,37 +253,7 @@ export function SignalBoard({
     unhideId(row.signal.id)
   }
 
-  // "+1 statymas": a pill flies from where the bet was recorded into the daily
-  // target, which bumps as it lands. Only when both ends are on screen (the
-  // phone sheet covers the target) and never in calm mode.
-  const targetRef = useRef<HTMLDivElement>(null)
-  const [flight, setFlight] = useState<{ bet: BoardBet; from: { x: number; y: number }; to: { x: number; y: number } } | null>(null)
-  const [bump, setBump] = useState(0)
-  const onTracked = useCallback(
-    (bet: BoardBet, from?: DOMRect) => {
-      const to = targetRef.current?.getBoundingClientRect()
-      const onScreen = (rect?: DOMRect): rect is DOMRect => Boolean(rect && rect.width > 0 && rect.bottom > 0 && rect.top < window.innerHeight)
-      if (!reduced && from && from.width > 0 && onScreen(to)) {
-        // Kept inside the screen: the detail can scroll between click and save.
-        const fromY = Math.min(window.innerHeight - 40, Math.max(40, from.top + from.height / 2))
-        setFlight({ bet, from: { x: from.left + from.width / 2, y: fromY }, to: { x: to.left + to.width / 2, y: to.top + to.height / 2 } })
-        // The server copy arrives after the landing, so the count moves once.
-        window.setTimeout(refreshBets, 1000)
-      } else {
-        addBet(bet)
-        refreshBets()
-      }
-    },
-    [addBet, refreshBets, reduced],
-  )
-  // The count changes when the pill lands, not when it leaves.
-  const land = useCallback(() => {
-    setFlight((current) => {
-      if (current) addBet(current.bet)
-      return null
-    })
-    setBump((value) => value + 1)
-  }, [addBet])
+  const { targetRef, bump, flight, onTracked, land } = useBetFlight(addBet, refreshBets)
 
   const onBoard = sportsIn(board.signals)
 
@@ -590,73 +561,24 @@ export function SignalBoard({
       </section>
 
       {/* "+1 statymas": from the recorded bet to the daily target, in a low arc. */}
-      <AnimatePresence>
-        {flight && (
-          <motion.div
-            key={flight.bet.id}
-            aria-hidden
-            className="pointer-events-none fixed top-0 left-0 z-[60] -translate-x-1/2 -translate-y-1/2"
-            initial={{ x: flight.from.x, y: flight.from.y, scale: 0.85, opacity: 0 }}
-            animate={{
-              x: [flight.from.x, (flight.from.x + flight.to.x) / 2, flight.to.x],
-              y: [flight.from.y, Math.min(flight.from.y, flight.to.y) - 70, flight.to.y],
-              scale: [0.85, 1.05, 0.55],
-              opacity: [0, 1, 0.15],
-            }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.75, ease: [0.45, 0, 0.2, 1], times: [0, 0.45, 1] }}
-            onAnimationComplete={land}
-          >
-            <span className="flex items-center gap-1.5 rounded-full bg-floodlight px-3.5 py-2 text-[0.95rem] font-semibold whitespace-nowrap text-night shadow-[0_12px_30px_-10px_rgb(91_229_132/0.7)]">
-              <Check className="size-4" strokeWidth={3} aria-hidden />
-              +1 statymas
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <BetFlight flight={flight} onLanded={land} />
 
       {/* Phone detail sheet */}
-      <AnimatePresence>
-        {!desktop && selectedRow && (
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Signalo informacija"
-            initial={reduced ? { opacity: 0 } : { y: '100%' }}
-            animate={reduced ? { opacity: 1 } : { y: 0 }}
-            exit={reduced ? { opacity: 0 } : { y: '100%' }}
-            transition={{ duration: 0.4, ease: EASE }}
-            // Pull the handle down to close; only the handle starts a drag, so the content still scrolls.
-            drag={reduced ? false : 'y'}
-            dragControls={sheetDrag}
-            dragListener={false}
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.7 }}
-            onDragEnd={(_, info) => {
-              if (info.offset.y > 120 || info.velocity.y > 700) setSelected(null)
-            }}
-            className="fixed inset-0 z-50 overflow-y-auto bg-night"
-          >
-            <div
-              onPointerDown={(event) => sheetDrag.start(event)}
-              className="sticky top-0 z-20 flex h-7 touch-none items-center justify-center bg-night"
-            >
-              <span aria-hidden className="h-1 w-10 rounded-full bg-rail-strong" />
-            </div>
-            <SignalDetail
-              key={`${selectedRow.signal.id}-${selectedRow.price.book}`}
-              signal={selectedRow.signal}
-              price={selectedRow.price}
-              now={now}
-              bets={bets}
-              signalsById={signalsById}
-              movement={movementFor(selectedRow)}
-              onTracked={onTracked}
-              onClose={() => setSelected(null)}
-            />
-          </motion.div>
+      <PhoneSheet open={!desktop && selectedRow !== null} onClose={() => setSelected(null)}>
+        {selectedRow && (
+          <SignalDetail
+            key={`${selectedRow.signal.id}-${selectedRow.price.book}`}
+            signal={selectedRow.signal}
+            price={selectedRow.price}
+            now={now}
+            bets={bets}
+            signalsById={signalsById}
+            movement={movementFor(selectedRow)}
+            onTracked={onTracked}
+            onClose={() => setSelected(null)}
+          />
         )}
-      </AnimatePresence>
+      </PhoneSheet>
     </main>
   )
 }
