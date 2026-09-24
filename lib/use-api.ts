@@ -15,12 +15,15 @@ export class ApiError extends Error {
   readonly status: number
   /** Seconds the server asked us to wait (Retry-After), when it said. */
   readonly retryAfter: number | null
+  /** The body's own `error` text, when the server sent one; screens show it over their default. */
+  readonly serverMessage: string | null
 
-  constructor(message: string, status: number, retryAfter: number | null = null) {
+  constructor(message: string, status: number, retryAfter: number | null = null, serverMessage: string | null = null) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.retryAfter = retryAfter
+    this.serverMessage = serverMessage
   }
 }
 
@@ -52,7 +55,8 @@ export async function fetchJson<T>(url: string, signal?: AbortSignal): Promise<T
   }
   const body = await response.json().catch(() => null)
   if (!response.ok) {
-    throw new ApiError(errorFromBody(body) ?? `HTTP ${response.status}`, response.status, parseRetryAfter(response.headers.get('Retry-After')))
+    const serverMessage = errorFromBody(body)
+    throw new ApiError(serverMessage ?? `HTTP ${response.status}`, response.status, parseRetryAfter(response.headers.get('Retry-After')), serverMessage)
   }
   return body as T
 }

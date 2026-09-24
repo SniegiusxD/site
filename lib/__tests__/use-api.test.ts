@@ -49,12 +49,17 @@ describe('fetchJson', () => {
 
   it("throws the server's message with the status", async () => {
     respond(403, { error: 'Reikia prenumeratos.' })
-    await expect(fetchJson('/api/x')).rejects.toMatchObject({ name: 'ApiError', message: 'Reikia prenumeratos.', status: 403 })
+    await expect(fetchJson('/api/x')).rejects.toMatchObject({
+      name: 'ApiError',
+      message: 'Reikia prenumeratos.',
+      serverMessage: 'Reikia prenumeratos.',
+      status: 403,
+    })
   })
 
   it('falls back to the status when the body is not JSON', async () => {
     respond(500, undefined)
-    await expect(fetchJson('/api/x')).rejects.toMatchObject({ message: 'HTTP 500', status: 500 })
+    await expect(fetchJson('/api/x')).rejects.toMatchObject({ message: 'HTTP 500', serverMessage: null, status: 500 })
   })
 
   it('carries Retry-After on a 429', async () => {
