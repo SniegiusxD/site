@@ -14,7 +14,7 @@ import { formatEdge, formatEuro, formatOdds, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { FREE_MAX_EDGE, FREE_MAX_ODDS } from '@/lib/free-tier'
 import type { LiveBoard, LiveSignal, LockedSignal } from '@/lib/live-signals'
-import { driftOf, DRIFT_FLOOR, type Movement } from '@/lib/price-movement'
+import { driftOf, DRIFT_FLOOR, type Movement, pollPulses, type Pulse } from '@/lib/price-movement'
 import {
   agoLabel,
   type BoardFilters,
@@ -126,8 +126,6 @@ function parseView(value: unknown): StoredView | undefined {
     periods: strings(view.periods),
   }
 }
-
-type Pulse = 'new' | 'up' | 'down'
 
 function useIsDesktop() {
   const [desktop, setDesktop] = useState(false)
@@ -244,29 +242,18 @@ export function SignalBoard({
 
   // What changed since the previous poll: new signals glow once, moved prices flash up or down.
   const [pulses, setPulses] = useState<Map<string, Pulse>>(() => new Map())
-  const previousBoard = useRef<LiveBoard | null>(null)
-  useEffect(() => {
-    const before = previousBoard.current
-    previousBoard.current = board
-    if (!before || before === board) return
-    const oldOdds = new Map(before.signals.flatMap((signal) => signal.prices.map((price) => [`${signal.id}:${price.book}`, price.odds] as const)))
-    const oldIds = new Set(before.signals.map((signal) => signal.id))
-    const next = new Map<string, Pulse>()
-    for (const signal of board.signals) {
-      if (!oldIds.has(signal.id)) {
-        next.set(signal.id, 'new')
-        continue
-      }
-      for (const price of signal.prices) {
-        const old = oldOdds.get(`${signal.id}:${price.book}`)
-        if (old !== undefined && Math.abs(old - price.odds) >= 0.005) next.set(`${signal.id}:${price.book}`, price.odds > old ? 'up' : 'down')
-      }
-    }
-    if (next.size === 0) return
-    setPulses(next)
-    const timer = window.setTimeout(() => setPulses(new Map()), 4000)
-    return () => window.clearTimeout(timer)
-  }, [board])
+  const shownBoard = useRef(initial)
+  const pulseTimer = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(pulseTimer.current), [])
+  const showBoard = useCallback((next: LiveBoard) => {
+    const changed = pollPulses(shownBoard.current.signals, next.signals)
+    shownBoard.current = next
+    setBoard(next)
+    if (changed.size === 0) return
+    setPulses(changed)
+    window.clearTimeout(pulseTimer.current)
+    pulseTimer.current = window.setTimeout(() => setPulses(new Map()), 4000)
+  }, [])
 
   const refreshBets = useCallback(async () => {
     try {
@@ -286,7 +273,7 @@ export function SignalBoard({
         return
       }
       if (!response.ok) throw new Error()
-      setBoard(await response.json())
+      showBoard(await response.json())
       setLoadError(null)
     } catch {
       setLoadError('Nepavyko atnaujinti signalų. Bandysim dar kartą po minutės.')
@@ -294,7 +281,7 @@ export function SignalBoard({
       setRefreshing(false)
       setNow(new Date())
     }
-  }, [router, refreshBets])
+  }, [router, refreshBets, showBoard])
 
   useEffect(() => {
     // A background tab does not need fresh odds: it polls again the moment it

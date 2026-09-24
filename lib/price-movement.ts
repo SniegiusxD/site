@@ -25,3 +25,29 @@ export function driftOf(movement: Movement): number {
 
 /** Below this, a move is noise rather than a market signal. */
 export const DRIFT_FLOOR = 0.005
+
+/** What changed between two polls: a signal that is new, or one book's price that moved. */
+export type Pulse = 'new' | 'up' | 'down'
+
+type PolledSignal = { id: string; prices: ReadonlyArray<{ book: string; odds: number }> }
+
+/**
+ * Keyed by signal id for a new signal, and by `id:book` for a moved price. A
+ * change under half a cent is rounding between scans, not a move.
+ */
+export function pollPulses(before: ReadonlyArray<PolledSignal>, after: ReadonlyArray<PolledSignal>): Map<string, Pulse> {
+  const oldOdds = new Map(before.flatMap((signal) => signal.prices.map((price) => [`${signal.id}:${price.book}`, price.odds] as const)))
+  const oldIds = new Set(before.map((signal) => signal.id))
+  const pulses = new Map<string, Pulse>()
+  for (const signal of after) {
+    if (!oldIds.has(signal.id)) {
+      pulses.set(signal.id, 'new')
+      continue
+    }
+    for (const price of signal.prices) {
+      const old = oldOdds.get(`${signal.id}:${price.book}`)
+      if (old !== undefined && Math.abs(old - price.odds) >= 0.005) pulses.set(`${signal.id}:${price.book}`, price.odds > old ? 'up' : 'down')
+    }
+  }
+  return pulses
+}
