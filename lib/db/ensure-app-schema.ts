@@ -167,6 +167,26 @@ export function ensureAppSchema(): Promise<void> {
         "sentAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         PRIMARY KEY ("userId", "signalId")
       );
+
+      -- What a member did with a signal before betting: opened the bookmaker's
+      -- event page or copied the event name to search for it. With user_bet
+      -- (which keeps signalId and createdAt) this measures how long it takes
+      -- from our first sight of a price to a placed bet, and at what price.
+      CREATE TABLE IF NOT EXISTS execution_event (
+        id TEXT PRIMARY KEY,
+        "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+        "signalId" TEXT NOT NULL,
+        book TEXT NOT NULL,
+        kind TEXT NOT NULL CHECK (kind IN ('open_book', 'copy_event')),
+        "shownOdds" DOUBLE PRECISION,
+        "shownEdge" DOUBLE PRECISION,
+        "firstSeenAt" TIMESTAMPTZ,
+        "at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS execution_event_signal_idx
+        ON execution_event ("signalId", "at");
+      CREATE INDEX IF NOT EXISTS execution_event_user_idx
+        ON execution_event ("userId", "at" DESC);
     `)
   })().catch((error) => {
     // Let the next request retry instead of caching a failed migration.

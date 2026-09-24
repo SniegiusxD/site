@@ -8,6 +8,7 @@ export function CopyButton({
   label,
   className = '',
   icon,
+  onCopied,
 }: {
   text: string
   /** What is being copied, for screen readers: "Kopijuoti: {label}". */
@@ -15,6 +16,8 @@ export function CopyButton({
   className?: string
   /** 'full' copies the whole bet and shows no word, to sit beside the plain one. */
   icon?: 'full'
+  /** Called once the text is on the clipboard. */
+  onCopied?: () => void
 }) {
   const [copied, setCopied] = useState(false)
 
@@ -28,6 +31,7 @@ export function CopyButton({
     try {
       await navigator.clipboard.writeText(text)
       setCopied(true)
+      onCopied?.()
     } catch {
       // Clipboard can be blocked (insecure context, permissions). Selecting
       // the text is the fallback the user can still act on.

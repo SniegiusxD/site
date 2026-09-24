@@ -19,6 +19,7 @@ import { sportName } from '@/lib/sports-lt'
 import { trackBet } from '@/lib/track-bet'
 import { useAccount } from './account-provider'
 import { safeBookEventUrl } from '@/lib/book-event-link'
+import { reportExecution } from '@/lib/report-execution'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
@@ -134,7 +135,11 @@ export function SignalDetail({
       <div className="mt-5 flex items-start justify-between gap-3">
         <h2 className="text-[2.1rem] sm:text-[2.6rem]">{eventLabel(price.eventName)}</h2>
         <span className="mt-1 flex shrink-0 items-center gap-1">
-          <CopyButton text={price.eventName} label={`${price.book}: ${price.eventName}`} />
+          <CopyButton
+            text={price.eventName}
+            label={`${price.book}: ${price.eventName}`}
+            onCopied={() => reportExecution('copy_event', signal, price)}
+          />
           {/* The event name alone is what a bookmaker's search wants; a note
               wants the market and the price as well. */}
           <CopyButton
@@ -197,6 +202,7 @@ export function SignalDetail({
             href={bookEventUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => reportExecution('open_book', signal, price)}
             className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-night/60 font-semibold text-chalk transition-colors hairline hover:bg-rail"
           >
             Atidaryti {price.book}

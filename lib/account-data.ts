@@ -24,6 +24,7 @@ export const MEMBER_TABLES = [
   'telegram_sent',
   'telegram_link_token',
   'billing_event',
+  'execution_event',
 ] as const
 
 /** Columns that are the site's own machinery, not the member's data. */

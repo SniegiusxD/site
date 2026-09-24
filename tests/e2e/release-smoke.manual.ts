@@ -168,7 +168,7 @@ async function main() {
     // Belt and braces: whatever a failed step left behind goes too.
     const { rows } = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [email])
     for (const { id } of rows) {
-      for (const table of ['bet_edit', 'billing_event', 'book_limit_event', 'bankroll_entry', 'subscription', 'telegram_sent', 'telegram_preset', 'telegram_link_token', 'telegram_account', 'user_settings', 'user_bet', 'session', 'account']) {
+      for (const table of ['bet_edit', 'billing_event', 'execution_event', 'book_limit_event', 'bankroll_entry', 'subscription', 'telegram_sent', 'telegram_preset', 'telegram_link_token', 'telegram_account', 'user_settings', 'user_bet', 'session', 'account']) {
         await pool.query(`DELETE FROM "${table}" WHERE "userId" = $1`, [id]).catch(() => {})
       }
       await pool.query(`DELETE FROM "user" WHERE id = $1`, [id])
