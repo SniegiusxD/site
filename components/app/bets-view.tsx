@@ -104,6 +104,9 @@ const splitTags = (text: string) =>
     .filter(Boolean)
 
 const tone = (value: number) => (value > 0.004 ? 'text-pitch' : value < -0.004 ? 'text-brick' : 'text-chalk')
+/** One correction the member made to a bet, from its history. */
+type Edit = { field: string; from: string | null; to: string | null; at: string }
+
 const timeOf = (bet: ActiveBet) => new Date(betTime(bet) ?? 0).getTime()
 
 /** closeTrust: the scanner's verdict on closing prices, read by the server page. */
@@ -676,18 +679,10 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
   const started = bet.status !== 'laukia' || (bet.startsAt ? new Date(bet.startsAt) < new Date() : false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [edits, setEdits] = useState<Array<{ field: string; from: string | null; to: string | null; at: string }>>([])
-
-  // The corrections, loaded only when the editor is opened.
-  useEffect(() => {
-    if (!editing) return
-    fetch(`/api/bets/${bet.id}`, { cache: 'no-store' })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body) => setEdits(body?.edits ?? []))
-      .catch(() => {
-        // The editor still works without the history.
-      })
-  }, [editing, bet.id])
+  // The corrections, loaded only when the editor is opened. The editor still
+  // works without the history, so a failure shows none.
+  const corrections = useApi<{ edits?: Edit[] }>(editing ? `/api/bets/${bet.id}` : null)
+  const edits = corrections.data?.edits ?? []
 
   async function send(method: 'PATCH' | 'DELETE', status?: BetStatus) {
     setBusy(true)
