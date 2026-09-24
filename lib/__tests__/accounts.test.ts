@@ -113,14 +113,16 @@ describe('parsePreferences', () => {
 
 describe('parseSettings', () => {
   it('validates settings without a bankroll', () => {
-    const { bankroll: _bankroll, ...settings } = DEFAULT_PREFERENCES
+    const settings = Object.fromEntries(Object.entries(DEFAULT_PREFERENCES).filter(([key]) => key !== 'bankroll'))
     const result = parseSettings(settings)
     expect(result.ok).toBe(true)
     expect(result.ok && 'bankroll' in result.value).toBe(false)
   })
 
   it('defaults a missing daily target and rejects silly ones', () => {
-    const { bankroll: _bankroll, dailyBets: _dailyBets, ...older } = DEFAULT_PREFERENCES
+    const older = Object.fromEntries(
+      Object.entries(DEFAULT_PREFERENCES).filter(([key]) => key !== 'bankroll' && key !== 'dailyBets'),
+    )
     const result = parseSettings(older)
     expect(result.ok && result.value.dailyBets).toBe(10)
     expect(parseSettings({ ...older, dailyBets: 20 })).toMatchObject({ ok: true, value: { dailyBets: 20 } })

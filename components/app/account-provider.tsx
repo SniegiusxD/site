@@ -45,7 +45,9 @@ export function AccountProvider({
     setAccount((current) => ({ ...current, preferences: { ...current.preferences, ...patch } }))
     if (timer.current) window.clearTimeout(timer.current)
     timer.current = window.setTimeout(async () => {
-      const { bankroll: _bankroll, ...settings } = latest.current.preferences
+      const settings = Object.fromEntries(
+        Object.entries(latest.current.preferences).filter(([key]) => key !== 'bankroll'),
+      )
       try {
         const response = await fetch('/api/preferences', {
           method: 'PUT',

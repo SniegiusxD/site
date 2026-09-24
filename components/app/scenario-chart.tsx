@@ -46,8 +46,8 @@ function useRun(key: string | number, calm: boolean) {
   const [progress, setProgress] = useState(1)
   useEffect(() => {
     if (calm) {
-      setProgress(1)
-      return
+      const frame = requestAnimationFrame(() => setProgress(1))
+      return () => cancelAnimationFrame(frame)
     }
     let frame = 0
     const start = performance.now()
@@ -57,8 +57,10 @@ function useRun(key: string | number, calm: boolean) {
       setProgress(1 - (1 - t) ** 3)
       if (t < 1) frame = requestAnimationFrame(step)
     }
-    setProgress(0)
-    frame = requestAnimationFrame(step)
+    frame = requestAnimationFrame((now) => {
+      setProgress(0)
+      step(now)
+    })
     return () => cancelAnimationFrame(frame)
   }, [key, calm])
   return progress
