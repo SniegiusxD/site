@@ -7,8 +7,8 @@ import { type Access, accessFrom, PRICE_EUR_PER_MONTH, type SubscriptionRow } fr
 /**
  * The owner's view of the business. Who counts as owner comes from the
  * OWNER_EMAILS environment variable (comma separated) and nothing else: no
- * request can make an account an owner. Test accounts made by the e2e scripts
- * (e2e-check-…) are left out of every figure.
+ * request can make an account an owner. Test accounts are left out of every
+ * figure (see REAL_USER).
  */
 
 export function ownerEmails(env: string | undefined = process.env.OWNER_EMAILS): string[] {
@@ -22,7 +22,9 @@ export function isOwner(email: string | null | undefined, env: string | undefine
   return Boolean(email) && ownerEmails(env).includes(email!.trim().toLowerCase())
 }
 
-const REAL_USER = `u.email NOT LIKE 'e2e-check-%'`
+// Test accounts: the e2e scripts (e2e-check-…), the June seed accounts
+// (@signalai.local) and manual checks on @example.com.
+const REAL_USER = `u.email NOT LIKE 'e2e-check-%' AND u.email NOT LIKE '%@signalai.local' AND u.email NOT LIKE '%@example.com'`
 
 export type AccessCounts = Record<Access['state'], number>
 
