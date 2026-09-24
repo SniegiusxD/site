@@ -13,7 +13,7 @@ import type { ActiveBet } from '@/lib/types'
 import { signedEuro } from './value-chart'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { SuggestBook } from './suggest-book'
-import { DAILY_BET_CHOICES, KELLY_CHOICES } from '@/lib/preferences'
+import { DAILY_BET_CHOICES, KELLY_CHOICES, type Preferences } from '@/lib/preferences'
 import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
 import { useAccount } from './account-provider'
 import { BankrollDialog } from './bankroll-dialog'
@@ -23,7 +23,7 @@ import { ChipGroup } from './chip-group'
 import { LimitHistory } from './limit-history'
 import { TelegramCard } from './telegram-card'
 
-const KELLY_LABEL: Record<(typeof KELLY_CHOICES)[number], string> = { 0.125: '⅛ Kelly', 0.25: '¼ Kelly', 0.5: '½ Kelly' }
+const KELLY_LABEL: Record<(typeof KELLY_CHOICES)[number], string> = { 0.125: 'Atsargiai (⅛)', 0.25: 'Subalansuotai (¼)', 0.5: 'Drąsiai (½)' }
 
 const dateFormat = new Intl.DateTimeFormat('lt-LT', { timeZone: 'Europe/Vilnius', month: 'long', day: 'numeric' })
 const sinceFormat = new Intl.DateTimeFormat('lt-LT', { timeZone: 'Europe/Vilnius', year: 'numeric', month: 'long', day: 'numeric' })
@@ -163,11 +163,12 @@ export function ProfileView() {
         <div className="mt-6" />
         <ChipGroup
           size="md"
-          label="Kelly dalis"
+          label="Rizika: kokią Kelly dalį naudoti"
           options={KELLY_CHOICES.map((value) => ({ value, label: KELLY_LABEL[value] }))}
           value={prefs.kellyFraction as (typeof KELLY_CHOICES)[number]}
           onChange={(kellyFraction) => updateSettings({ kellyFraction })}
         />
+        <StakePreview prefs={prefs} />
         <p className="mt-6 font-medium">Kontorų limitai</p>
         <p className="mt-1 text-[0.95rem] text-haze">Siūloma suma niekada neviršys čia įrašyto limito. Tuščia: be limito.</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -287,6 +288,53 @@ function SummaryStat({ label, className = '', children }: { label: string; class
           </>
         )}
       </dd>
+    </div>
+  )
+}
+
+// One example signal for the preview: 2,06 against a fair 2,00 (+3 %), as in onboarding.
+const EXAMPLE = { odds: 2.06, fair: 2 }
+const STAKE_CAP = 0.05
+
+/**
+ * What the chosen Kelly share means in euros, worked through on one example,
+ * and what cut it: the 5 % ceiling or a bookmaker's limit. Mirrors
+ * suggestedStake in lib/preferences.ts.
+ */
+function StakePreview({ prefs }: { prefs: Preferences }) {
+  const p = 1 / EXAMPLE.fair
+  const b = EXAMPLE.odds - 1
+  const fullKelly = Math.max(0, (b * p - (1 - p)) / b)
+  const share = fullKelly * prefs.kellyFraction
+  const capped = share > STAKE_CAP
+  const raw = prefs.bankroll * Math.min(STAKE_CAP, share)
+  const rows = BOOKS.filter((book) => prefs.books.includes(book)).map((book) => {
+    const limit = prefs.bookLimits[book]
+    const stake = Math.floor(limit !== undefined ? Math.min(raw, limit) : raw)
+    return { book, stake, limited: limit !== undefined && limit < raw }
+  })
+  const percent = (value: number) => `${(value * 100).toLocaleString('lt-LT', { maximumFractionDigits: 1 })} %`
+  return (
+    <div className="mt-4 rounded-xl bg-night/60 p-4 text-[0.95rem]">
+      <p className="text-haze">
+        Pavyzdys: signalas +3 % vertės, koef. 2,06. Pilnas Kelly — {percent(fullKelly)} bankrollo, tavo dalis —{' '}
+        <span className="font-semibold text-chalk">{percent(Math.min(STAKE_CAP, share))}</span>
+        {capped ? ', apkirpta iki 5 % viršutinės ribos' : ''}, tai yra{' '}
+        <span className="font-semibold text-chalk">{formatEuro(Math.floor(raw))}</span> iš {formatEuro(prefs.bankroll)}.
+      </p>
+      {rows.some((row) => row.limited) && (
+        <ul className="mt-2 grid gap-1">
+          {rows.map((row) => (
+            <li key={row.book} className="flex justify-between gap-4">
+              <span className="text-haze">{row.book}</span>
+              <span className={row.limited ? 'text-warning' : ''}>
+                {formatEuro(row.stake)}
+                {row.limited ? ' — apribota tavo limito' : ''}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }
