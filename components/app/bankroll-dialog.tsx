@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import type { BankrollEntry } from '@/lib/account-store'
 import { formatEuro } from '@/lib/format-lt'
 import { useAccount } from './account-provider'
+import { LoadError } from './load-error'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 type Mode = 'deposit' | 'withdrawal' | 'set'
@@ -46,10 +47,9 @@ function OpenBankrollDialog({ onClose }: { onClose: () => void }) {
   const [kind, setKind] = useState<Mode>('deposit')
   const [amountText, setAmountText] = useState('')
   // The history as the server has it, until a change here returns a newer one.
-  // A failed request shows the empty history rather than a spinner forever.
   const history = useApi<{ entries: BankrollEntry[] }>('/api/bankroll')
   const [posted, setPosted] = useState<BankrollEntry[] | null>(null)
-  const entries = posted ?? history.data?.entries ?? (history.error ? [] : null)
+  const entries = posted ?? history.data?.entries ?? null
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const amountId = useId()
@@ -217,8 +217,13 @@ function OpenBankrollDialog({ onClose }: { onClose: () => void }) {
 
             <div className="mt-8">
               <p className="text-[0.9rem] text-haze">Paskutiniai įrašai</p>
-              {entries === null ? (
-                <p className="mt-3 text-[0.95rem] text-haze-dim">Įkeliama…</p>
+              {entries === null && history.error && !history.loading ? (
+                // A failure is not an empty history: say so, and let the member ask again.
+                <LoadError error={history.error} what="bankrollo istorijos" onRetry={history.reload} className="mt-3" />
+              ) : entries === null ? (
+                <p role="status" className="mt-3 text-[0.95rem] text-haze-dim">
+                  Įkeliama…
+                </p>
               ) : entries.length === 0 ? (
                 <p className="mt-3 text-[0.95rem] text-haze-dim">Įrašų dar nėra.</p>
               ) : (
