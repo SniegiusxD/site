@@ -1,0 +1,15 @@
+{
+  "id": 1,
+  "generated_at": "2026-10-10T06:00:00.000Z",
+  "close_coverage": 0.87,
+  "close_trust": {
+    "trusted": true,
+    "reasons": [],
+    "fresh_captures": 870,
+    "fresh_capture_rate": 0.93,
+    "largest_book_share": 0.44,
+    "thresholds": { "min_unique_selections": 100, "min_coverage_rate": 0.6, "min_fresh_capture_rate": 0.8, "max_prestart_minutes": 120, "max_book_share": 0.7 }
+  },
+  "close_by_book_sport_market": [],
+  "close_coverage_detail": {}
+}

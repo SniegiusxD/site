@@ -1,0 +1,17 @@
+{
+  "id": 1,
+  "generated_at": "2026-09-24T18:40:00.000Z",
+  "close_coverage": 0.41,
+  "close_trust": {
+    "trusted": false,
+    "reasons": ["sample_too_small", "coverage_below_threshold"],
+    "fresh_captures": 41,
+    "fresh_capture_rate": 0.82,
+    "largest_book_share": 0.61,
+    "thresholds": { "min_unique_selections": 100, "min_coverage_rate": 0.6, "min_fresh_capture_rate": 0.8, "max_prestart_minutes": 120, "max_book_share": 0.7 }
+  },
+  "close_by_book_sport_market": [
+    { "book": "TopSport", "sport": "basketball", "market": "spread", "published_rows": 60, "exact_close_within_window": 25, "close_coverage": 0.4167 }
+  ],
+  "close_coverage_detail": { "unique_selections": 100, "exact_fresh_closes": 41 }
+}
