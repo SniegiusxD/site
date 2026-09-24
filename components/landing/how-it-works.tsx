@@ -305,10 +305,18 @@ function ThousandChapter() {
             }}
           />
         </div>
-        <p className="mt-[18px] text-[0.9375rem] text-moss" aria-live="polite">
-          {summary
-            ? `Simuliacija, ne pažadas. Su ${value} % verte maždaug ${inTen} iš 10 tokių kelių baigiasi minuse.`
-            : 'Simuliacija, ne pažadas.'}
+        {/* Both sentences share one grid cell, so the longer one's height is
+            there from the start: the summary arriving used to push the chart
+            down on phones (layout shift). */}
+        <p className="mt-[18px] grid text-[0.9375rem] text-moss">
+          <span aria-hidden className="invisible [grid-area:1/1]">
+            Simuliacija, ne pažadas. Su {value} % verte maždaug {inTen} iš 10 tokių kelių baigiasi minuse.
+          </span>
+          <span aria-live="polite" className="[grid-area:1/1]">
+            {summary
+              ? `Simuliacija, ne pažadas. Su ${value} % verte maždaug ${inTen} iš 10 tokių kelių baigiasi minuse.`
+              : 'Simuliacija, ne pažadas.'}
+          </span>
         </p>
       </div>
       <div className="min-w-0 lg:sticky lg:top-24">
