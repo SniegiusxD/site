@@ -1,9 +1,10 @@
 'use client'
 
-import { AlertTriangle, CreditCard, Loader2 } from 'lucide-react'
+import { AlertTriangle, CreditCard, Loader2, RotateCcw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { CANCEL_REASONS } from '@/lib/billing/cancel-reasons'
 import type { BillingState } from '@/lib/billing/store'
 import { kickoffLabel } from '@/lib/live-view'
 import { PRICE_EUR_PER_MONTH } from '@/lib/subscription'
@@ -21,7 +22,9 @@ const dateOf = (iso: string | null) => (iso ? kickoffLabel(iso).replace(/\s\d{2}
 export function BillingCard() {
   const router = useRouter()
   const [status, setStatus] = useState<Status | null>(null)
-  const [busy, setBusy] = useState<'checkout' | 'portal' | 'sync' | null>(null)
+  const [busy, setBusy] = useState<'checkout' | 'portal' | 'sync' | 'cancel' | 'resume' | null>(null)
+  const [leaving, setLeaving] = useState(false)
+  const [reason, setReason] = useState<string | null>(null)
   const returned = useRef(false)
 
   const load = useCallback(async () => {
@@ -74,6 +77,28 @@ export function BillingCard() {
     }
   }
 
+  async function change(action: 'cancel' | 'resume') {
+    setBusy(action)
+    try {
+      const response = await fetch('/api/billing/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, reason }),
+      })
+      const body = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(body?.error ?? 'Nepavyko.')
+      setStatus((current) => (current ? { ...current, billing: body.billing } : current))
+      setLeaving(false)
+      setReason(null)
+      toast.success(action === 'cancel' ? 'Prenumerata atšaukta. Daugiau mokėjimų nebus.' : 'Prenumerata vėl aktyvi.')
+      router.refresh()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Nepavyko.')
+    } finally {
+      setBusy(null)
+    }
+  }
+
   if (!status) return <p className="text-haze">Įkeliama…</p>
   if (!status.enabled) return <p className="text-haze">Mokėjimai įjungiami netrukus. Kol kas gali naudotis nemokama paskyra.</p>
 
@@ -94,7 +119,7 @@ export function BillingCard() {
       {billing.paymentFailedAt && (
         <p role="alert" className="flex gap-2.5 rounded-xl bg-brick-soft px-3.5 py-3 text-brick">
           <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden />
-          Nepavyko nuskaityti mokėjimo nuo {dateOf(billing.paymentFailedAt)}. Prieiga kol kas veikia — atnaujink kortelę, kad
+          Nepavyko nuskaityti mokėjimo nuo {dateOf(billing.paymentFailedAt)} Prieiga kol kas veikia — atnaujink kortelę, kad
           nenutrūktų.
         </p>
       )}
@@ -103,13 +128,24 @@ export function BillingCard() {
         {busy === 'sync'
           ? 'Tvirtinam apmokėjimą…'
           : paying
-            ? `Prenumerata aktyvi, ${PRICE_EUR_PER_MONTH} € per mėnesį. Kitas mokėjimas ${dateOf(billing.currentPeriodEnd)}.`
+            ? `Prenumerata aktyvi, ${PRICE_EUR_PER_MONTH} € per mėnesį. Kitas mokėjimas ${dateOf(billing.currentPeriodEnd)}`
             : ending
               ? `Prenumerata atšaukta. Viskas veikia iki ${dateOf(billing.currentPeriodEnd)}, paskui lieki nemokamoje paskyroje.`
               : `Nemokamas planas. Visi signalai — ${PRICE_EUR_PER_MONTH} € per mėnesį, atšaukti gali bet kada.`}
       </p>
 
       <div className="flex flex-wrap gap-2.5">
+        {ending && (
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={() => change('resume')}
+            className={`${button} bg-floodlight text-night hover:bg-pitch`}
+          >
+            {busy === 'resume' ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <RotateCcw className="size-4" aria-hidden />}
+            Tęsti prenumeratą
+          </button>
+        )}
         {paying || ending ? (
           <button
             type="button"
@@ -118,7 +154,7 @@ export function BillingCard() {
             className={`${button} bg-rail text-chalk hover:bg-rail-strong`}
           >
             {busy === 'portal' ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <CreditCard className="size-4" aria-hidden />}
-            {billing.paymentFailedAt ? 'Atnaujinti kortelę' : ending ? 'Atnaujinti prenumeratą' : 'Tvarkyti prenumeratą ir sąskaitas'}
+            {billing.paymentFailedAt ? 'Atnaujinti kortelę' : 'Kortelė ir sąskaitos'}
           </button>
         ) : (
           <button
@@ -131,7 +167,63 @@ export function BillingCard() {
             Prenumeruoti
           </button>
         )}
+        {paying && !leaving && (
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={() => setLeaving(true)}
+            className={`${button} font-medium text-haze hover:bg-stand hover:text-chalk`}
+          >
+            Atšaukti prenumeratą
+          </button>
+        )}
       </div>
+
+      {paying && leaving && (
+        <div className="rounded-2xl bg-night/60 p-5 hairline">
+          <p className="font-medium">Atšaukti prenumeratą?</p>
+          <ul className="mt-2 grid gap-1 text-[0.95rem] text-haze">
+            <li>Daugiau mokėjimų nebus. Visi signalai veiks iki {dateOf(billing.currentPeriodEnd)}, nes už šį laiką jau sumokėta.</li>
+            <li>Paskui lieki nemokamoje paskyroje: statymų istorija, bankrollas ir nustatymai niekur nedings.</li>
+            <li>Iki {dateOf(billing.currentPeriodEnd)} persigalvoti gali vienu paspaudimu.</li>
+          </ul>
+          <fieldset className="mt-4">
+            <legend className="text-[0.9rem] text-haze">Kodėl išeini? Nebūtina, bet padeda.</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {CANCEL_REASONS.map((entry) => (
+                <button
+                  key={entry.key}
+                  type="button"
+                  aria-pressed={reason === entry.key}
+                  onClick={() => setReason(reason === entry.key ? null : entry.key)}
+                  className={`min-h-10 rounded-full px-3.5 text-[0.9rem] font-medium transition-colors ${
+                    reason === entry.key ? 'bg-chalk text-night' : 'bg-rail text-haze hover:text-chalk'
+                  }`}
+                >
+                  {entry.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            <button type="button" disabled={busy !== null} onClick={() => change('cancel')} className={`${button} bg-brick text-night`}>
+              {busy === 'cancel' && <Loader2 className="size-4 animate-spin" aria-hidden />}
+              Atšaukti prenumeratą
+            </button>
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() => {
+                setLeaving(false)
+                setReason(null)
+              }}
+              className={`${button} font-medium text-haze hover:text-chalk`}
+            >
+              Palikti kaip yra
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
