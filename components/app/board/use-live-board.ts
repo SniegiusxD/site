@@ -4,7 +4,9 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { BoardBet } from '@/lib/exposure'
 import type { LiveBoard } from '@/lib/live-signals'
+import { pollErrorMessage } from '@/lib/api-error'
 import { pollPulses, type Pulse } from '@/lib/price-movement'
+import { ApiError, fetchJson } from '@/lib/use-api'
 
 const POLL_MS = 60_000
 
@@ -39,8 +41,7 @@ export function useLiveBoard(initial: LiveBoard, initialBets: BoardBet[]) {
 
   const refreshBets = useCallback(async () => {
     try {
-      const response = await fetch('/api/bets/recent', { cache: 'no-store' })
-      if (response.ok) setBets((await response.json()).bets)
+      setBets((await fetchJson<{ bets: BoardBet[] }>('/api/bets/recent')).bets)
     } catch {
       // The board still works; the target and warnings catch up on the next poll.
     }
@@ -49,16 +50,17 @@ export function useLiveBoard(initial: LiveBoard, initialBets: BoardBet[]) {
   const refresh = useCallback(async () => {
     setRefreshing(true)
     try {
-      const [response] = await Promise.all([fetch('/api/live', { cache: 'no-store' }), refreshBets()])
-      if (response.status === 402 || response.status === 401) {
+      const [board] = await Promise.all([fetchJson<LiveBoard>('/api/live'), refreshBets()])
+      showBoard(board)
+      setLoadError(null)
+    } catch (caught) {
+      const error = caught instanceof ApiError ? caught : null
+      // Signed out or access changed elsewhere: the server page decides what to show.
+      if (error?.status === 401 || error?.status === 402) {
         router.refresh()
         return
       }
-      if (!response.ok) throw new Error()
-      showBoard(await response.json())
-      setLoadError(null)
-    } catch {
-      setLoadError('Nepavyko atnaujinti signalų. Bandysim dar kartą po minutės.')
+      setLoadError(pollErrorMessage(error))
     } finally {
       setRefreshing(false)
       setNow(new Date())

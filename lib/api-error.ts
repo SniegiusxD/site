@@ -38,3 +38,12 @@ export function errorAdvice(error: Pick<ApiError, 'status' | 'retryAfter' | 'ser
   }
   return { message: error.serverMessage ?? `Nepavyko įkelti ${what}.`, signIn: false, retry: error.status !== 403 && error.status !== 402 }
 }
+
+/** The board keeps polling on its own, so each message says when it tries again. */
+export function pollErrorMessage(error: Pick<ApiError, 'status' | 'retryAfter'> | null): string {
+  if (error?.status === 0) return 'Nėra ryšio su serveriu. Kainos gali būti pasenusios; bandysim dar kartą po minutės.'
+  if (error?.status === 429) {
+    return `Per daug užklausų per trumpą laiką. Signalus atnaujinsim po ${waitLabel(Math.max(60, error.retryAfter ?? 60))}.`
+  }
+  return 'Nepavyko atnaujinti signalų. Bandysim dar kartą po minutės.'
+}
