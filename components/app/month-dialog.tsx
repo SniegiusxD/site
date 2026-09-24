@@ -8,6 +8,7 @@ import { monthProgress } from '@/lib/month-progress'
 import { useApi } from '@/lib/use-api'
 import { useFocusTrap } from '@/lib/use-focus-trap'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { LoadError } from './load-error'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
@@ -18,16 +19,12 @@ const EASE = [0.22, 1, 0.36, 1] as const
 export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean; onClose: () => void; dailyTarget: number; now: Date }) {
   const reduced = useReducedMotion()
   const titleId = useId()
-  // Asked each time the dialog opens; a failed request counts as no bets yet.
-  const { data, error } = useApi<{ bets: Array<{ placedAtIso?: string }> }>(open ? '/api/bets' : null)
+  // Asked each time the dialog opens. A failure says so rather than drawing
+  // an empty month, which would read as "no bets".
+  const { data, error, loading, reload } = useApi<{ bets: Array<{ placedAtIso?: string }> }>(open ? '/api/bets' : null)
   const placed = useMemo(
-    () =>
-      data
-        ? data.bets.map((bet) => ({ placedAt: bet.placedAtIso ?? '' })).filter((bet) => bet.placedAt)
-        : error
-          ? []
-          : null,
-    [data, error],
+    () => (data ? data.bets.map((bet) => ({ placedAt: bet.placedAtIso ?? '' })).filter((bet) => bet.placedAt) : null),
+    [data],
   )
 
   // Focus moves in, stays in, and returns to the "Mėnuo" button; Escape closes.
@@ -70,8 +67,12 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
               </button>
             </div>
 
-            {!m ? (
-              <p className="py-16 text-center text-haze">Skaičiuojam…</p>
+            {!m && error && !loading ? (
+              <LoadError error={error} what="mėnesio statymų" onRetry={reload} className="my-10" />
+            ) : !m ? (
+              <p role="status" className="py-16 text-center text-haze">
+                Skaičiuojam…
+              </p>
             ) : (
               <div className="mt-4 grid gap-8 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
                 <div>
