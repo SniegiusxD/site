@@ -163,6 +163,53 @@ hook in `lib/use-api.ts` (no new dependency): GET with `cache: 'no-store'`,
 taken from the body's `error` field when present. Move the components onto it
 one per commit, keeping each screen's current loading and error wording.
 
+## Task 5 — lock the performance wins into CI
+
+On 2026-09-24 the landing went from CLS 0.451 to 0.001 and LCP 3.6 s to 0.4 s,
+and the board from CLS 0.064 to 0 (see `planning/PERFORMANCE_AND_RELIABILITY_2026-09-24.md`,
+section "How to measure again"). Nothing stops that from regressing. Add
+Playwright tests (in the existing public spec and, for the board, in
+`member-flow.spec.ts`) that, at 412×823 and 1440×900:
+
+- scroll the page 300 px every 150 ms to the bottom and assert the summed
+  `layout-shift` value (without recent input) stays under 0.05;
+- assert the Largest Contentful Paint element on `/` is the hero headline;
+- assert no element on `/` animates a non-composited property for longer
+  than 2 s (read computed `animation-name` and compare with an allow-list, or
+  simply assert the known keyframes use only transform/opacity by parsing
+  `app/globals.css` in a unit test).
+
+Keep them fast (under 20 s together) and not flaky: retry-free, generous
+thresholds, no timing-sensitive sleeps shorter than the animations.
+
+## Task 6 — accessibility of the member pages
+
+The public pages already pass axe. Add axe checks (`@axe-core/playwright`,
+already a dependency) to `member-flow.spec.ts` for `/signalai`, a signal's
+detail, `/statymai`, `/profilis`, `/pagalba` and `/atrakinti`, at phone and
+desktop width. Fix every violation you find (labels, contrast, focus order,
+names of icon-only buttons, dialogs trapping focus and closing on Escape).
+One commit per kind of fix.
+
+## Task 7 — unit tests where `lib/` has none
+
+List every module in `lib/` without a test in `lib/__tests__/`. For the pure
+ones (formatting, Kelly/stake sizing, exposure, free-tier rules, access
+state, live-view labels, month progress, simulations), add focused tests of
+the rules that matter to money and to what a member sees: boundaries,
+rounding, Lithuanian plurals, time zones (Europe/Vilnius around midnight and
+DST changes). If a test exposes a real bug, fix it in its own commit with the
+test first and explain the bug in the message.
+
+## Task 8 — every screen says what went wrong and how to retry
+
+Walk every client fetch in `components/app/*` (after Task 4 they all use
+`useApi`). For each: what the member sees while loading, on a network error,
+on 401 (signed out elsewhere), on 429 (rate limit — the server sends
+`Retry-After`), and on an empty result. Make each state explicit, short,
+Lithuanian, with a retry where it makes sense, and never a blank area or an
+endless spinner. Add a unit test for the shared error-message helper.
+
 ## If you finish early
 
 - Task 3: `components/landing/book-mark.tsx` uses `<img>`; move to
