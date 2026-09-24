@@ -100,8 +100,10 @@ export function ClosingLine() {
         <div>
           {/* Every bar hangs off one line: the closing price. */}
           <div className="relative">
-            <p className="mb-3 text-center text-[0.8rem] tracking-[0.04em] text-haze-dim">uždarymo kaina</p>
-            <span aria-hidden className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-rail-strong" />
+            <p className="text-center text-[0.8rem] tracking-[0.04em] text-haze-dim">uždarymo kaina</p>
+            {/* The line is drawn only where the bars are, so it never runs
+                through a match name or the caption under a bar. */}
+            <span aria-hidden className="mx-auto mb-3 block h-3 w-px bg-rail-strong" />
             <ul ref={ref} className="grid gap-6">
             {RUNS.map((run, index) => {
               const reach = Math.min(Math.abs(run.clv) / SPAN, 1) * 50
@@ -119,6 +121,7 @@ export function ClosingLine() {
                     </p>
                   </div>
                   <div className="relative mt-2 h-8">
+                    <span aria-hidden className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-rail-strong" />
                     <motion.span
                       aria-hidden
                       initial={reduced ? false : { width: 0 }}

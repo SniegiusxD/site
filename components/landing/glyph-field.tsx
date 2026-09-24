@@ -95,10 +95,10 @@ export function GlyphField() {
       ratio = Math.min(2, window.devicePixelRatio || 1)
       // Bigger cells than a plain noise field: the digits have to be readable first.
       // Phones get smaller cells: the number has to fit across a narrow field.
-      cell = width < 640 ? 8 : 11
+      cell = width < 640 ? 6 : 11
       cols = Math.floor(width / cell)
       rows = Math.floor(height / cell)
-      const cap = width < 640 ? 3200 : 11000
+      const cap = width < 640 ? 4200 : 11000
       while (cols * rows > cap) {
         cell += 1
         cols = Math.floor(width / cell)
@@ -138,14 +138,21 @@ export function GlyphField() {
       maskContext.fillStyle = '#fff'
       maskContext.textAlign = 'center'
       maskContext.textBaseline = 'middle'
-      let size = rows * 0.8
+      // A phone-wide field is too few cells for eight characters in a row: the
+      // digits dissolve into noise. There the currency sign takes a line of its own.
+      const lines = cols < 90 && text.endsWith(' €') ? [text.slice(0, -2), '€'] : [text]
+      let size = (rows * 0.8) / lines.length
       maskContext.font = `800 ${size}px ${displayFace}`
-      const measured = maskContext.measureText(text).width || 1
+      const measured = Math.max(...lines.map((line) => maskContext.measureText(line).width)) || 1
       if (measured > cols * 0.92) {
         size *= (cols * 0.92) / measured
         maskContext.font = `800 ${size}px ${displayFace}`
       }
-      maskContext.fillText(text, cols / 2, rows / 2 + size * 0.04)
+      const lineHeight = size * 0.95
+      lines.forEach((line, index) => {
+        const offset = (index - (lines.length - 1) / 2) * lineHeight
+        maskContext.fillText(line, cols / 2, rows / 2 + offset + size * 0.04)
+      })
       const pixels = maskContext.getImageData(0, 0, cols, rows).data
       for (const item of cells) {
         // Hard edges: a soft gradient over one cell reads as noise, not as a digit.
@@ -277,7 +284,7 @@ export function GlyphField() {
 
   return (
     <>
-      <canvas ref={canvasRef} aria-hidden className="block h-[clamp(200px,28vw,380px)] w-full" />
+      <canvas ref={canvasRef} aria-hidden className="block h-[clamp(280px,28vw,380px)] w-full" />
       <p ref={readout} className="sr-only" />
     </>
   )
