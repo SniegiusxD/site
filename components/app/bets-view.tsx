@@ -4,7 +4,7 @@ import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { AlertTriangle, Check, ChevronDown, Download, Loader2, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
 import {
   type BetStats,
@@ -33,6 +33,8 @@ import { OUTCOME_LABEL } from '@/lib/member-outcomes'
 import { ClvTrust } from '@/components/landing/clv-trust'
 import type { TrustLabel } from '@/lib/close-evidence'
 import { type SettledSummary, latestSettlement, settledSince } from '@/lib/since-last-visit'
+import { useApi } from '@/lib/use-api'
+import { useStoredOnce, writeStored } from '@/lib/use-stored-state'
 import { sportName } from '@/lib/sports-lt'
 import type { ActiveBet, BetStatus } from '@/lib/types'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
@@ -106,9 +108,9 @@ const timeOf = (bet: ActiveBet) => new Date(betTime(bet) ?? 0).getTime()
 
 /** closeTrust: the scanner's verdict on closing prices, read by the server page. */
 export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
-  const [bets, setBets] = useState<ActiveBet[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data, error: loadError, loading, reload: load, settledAt } = useApi<{ bets: ActiveBet[] }>('/api/bets')
+  const bets = data?.bets ?? null
+  const error = loadError ? 'Nepavyko įkelti statymų. Bandyk dar kartą.' : null
   const [period, setPeriod] = useState<Period>('month')
   const [book, setBook] = useState('')
   const [sport, setSport] = useState('')
@@ -116,58 +118,22 @@ export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
   const [tag, setTag] = useState('')
   const [tab, setTab] = useState<StatusTab>('all')
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [now, setNow] = useState(() => new Date())
+  // "Now" for the period filters is when the list arrived, as before.
+  const [openedAt] = useState(() => Date.now())
+  const now = useMemo(() => new Date(settledAt ?? openedAt), [settledAt, openedAt])
   const { email } = useAccount()
-  const [since, setSince] = useState<SettledSummary | null>(null)
-  const sinceChecked = useRef(false)
 
-  // Once per visit: what settled since the last one, then remember the newest result as seen.
-  const noteSince = useCallback(
-    (list: ActiveBet[]) => {
-      if (sinceChecked.current) return
-      sinceChecked.current = true
-      const key = `${SEEN_KEY}${email}`
-      try {
-        const marker = window.localStorage.getItem(key)
-        setSince(settledSince(list, marker))
-        const latest = latestSettlement(list)
-        window.localStorage.setItem(key, marker && marker > latest ? marker : latest)
-      } catch {
-        // Storage refused (private window): no summary this visit.
-      }
-    },
-    [email],
-  )
-
-  const fetchBets = useCallback(
-    () =>
-      fetch('/api/bets', { cache: 'no-store' })
-        .then((response) => {
-          if (!response.ok) throw new Error()
-          return response.json()
-        })
-        .then((body) => {
-          setBets(body.bets)
-          setError(null)
-          noteSince(body.bets)
-        })
-        .catch(() => setError('Nepavyko įkelti statymų. Bandyk dar kartą.'))
-        .finally(() => {
-          setLoading(false)
-          setNow(new Date())
-        }),
-    [noteSince],
-  )
-
-  const load = useCallback(() => {
-    setLoading(true)
-    return fetchBets()
-  }, [fetchBets])
-
-  // The first load: the list starts in its loading state, so nothing is set here.
+  // What settled since the last visit: the marker is read once for this view,
+  // and the newest result is remembered as seen once the list is here.
+  const seenKey = `${SEEN_KEY}${email}`
+  const marker = useStoredOnce(seenKey)
+  const [sinceClosed, setSinceClosed] = useState(false)
+  const since = useMemo(() => (bets && !sinceClosed ? settledSince(bets, marker) : null), [bets, marker, sinceClosed])
   useEffect(() => {
-    fetchBets()
-  }, [fetchBets])
+    if (!bets) return
+    const latest = latestSettlement(bets)
+    writeStored(seenKey, marker && marker > latest ? marker : latest)
+  }, [bets, marker, seenKey])
 
   // Results are graded after the list is sent. If a bet's match should be over
   // but it still waits, look once more half a minute later.
@@ -297,7 +263,7 @@ export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
             </div>
           )}
 
-          <AnimatePresence>{since && <SinceLastVisit summary={since} onClose={() => setSince(null)} />}</AnimatePresence>
+          <AnimatePresence>{since && <SinceLastVisit summary={since} onClose={() => setSinceClosed(true)} />}</AnimatePresence>
           <ThreeNumbers stats={stats} bets={scoped} />
           <Glossary />
           <StatGrid stats={stats} bets={scoped} closeTrust={closeTrust} />
