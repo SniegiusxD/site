@@ -14,7 +14,6 @@ import { MonthDialog } from '../month-dialog'
 const EASE = [0.22, 1, 0.36, 1] as const
 
 /** Today's recorded bets against the member's daily target, and the way into the month view. */
-
 export function DailyTarget({
   ref,
   bump = 0,

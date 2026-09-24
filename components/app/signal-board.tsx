@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useDragControls } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
-import { AlertTriangle, Bell, Check, ChevronDown, Lock, RefreshCw, Plus, Search, Sparkles, Star, X } from 'lucide-react'
+import { Bell, Check, Lock, RefreshCw, Plus, Search, Sparkles, Star, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -46,6 +46,7 @@ import { CompactHeader, CompactSignalRow, SignalRow } from './signal-row'
 import { Segmented } from './segmented'
 import { TrialRecap } from './trial-recap'
 import { DailyTarget } from './board/daily-target'
+import { Collapsible, Notice } from './board/list-parts'
 import { LockedStrip } from './board/locked-strip'
 
 const POLL_MS = 60_000
@@ -1082,32 +1083,6 @@ export function SignalBoard({
         )}
       </AnimatePresence>
     </main>
-  )
-}
-
-function Collapsible({ label, open, onToggle, children }: { label: string; open: boolean; onToggle: () => void; children: React.ReactNode }) {
-  return (
-    <div className="border-t border-rail">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={onToggle}
-        className="flex w-full items-center justify-between px-4 py-3.5 text-[0.95rem] text-haze hover:text-chalk sm:px-6"
-      >
-        {label}
-        <ChevronDown className={`size-4 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
-      </button>
-      {open && children}
-    </div>
-  )
-}
-
-function Notice({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="flex gap-3 border-b border-rail bg-[rgb(245_165_36/0.1)] px-4 py-3 text-[0.9rem] text-warning sm:px-6">
-      <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-      <span>{children}</span>
-    </p>
   )
 }
 
