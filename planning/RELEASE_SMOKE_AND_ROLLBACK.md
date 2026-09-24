@@ -18,8 +18,23 @@ green, but nothing deploys — and nothing says so. Check after every release:
 npx vercel ls predictions-dashboard      # the newest Production row must be minutes old
 ```
 
-If it is not, the fix is Vercel → project → Settings → Git → reconnect the
-GitHub repository. Until then, a manual deploy has to come from a **clean
+If it is not, first ask GitHub what Vercel said about the commit — a failed
+build that never becomes a deployment does not show in `vercel ls` at all:
+
+```bash
+gh api repos/SniegiusxD/site/commits/<sha>/statuses --jq '.[] | .context + " " + .state + " " + .target_url'
+```
+
+**2026-09-24: this was the real cause of the "dropped integration".** Every
+push since 09-19 got `Vercel failure` linking to the cron pricing page: the
+project is on the Hobby plan, which allows a cron at most once a day, and
+`vercel.json` had `/api/cron/settle` every 15 minutes. Vercel refused every
+build. The Vercel cron is now daily (04:00 UTC) as a fallback; the 15-minute
+schedule belongs on the VM (a timer calling the endpoint with `CRON_SECRET`).
+Never put a sub-daily schedule in `vercel.json` on this plan.
+
+Only if GitHub shows no Vercel status at all is the integration disconnected:
+Vercel → project → Settings → Git → reconnect the GitHub repository. Until then, a manual deploy has to come from a **clean
 checkout of `origin/main`**, never from the working folder, which holds
 untracked files that are not meant to ship:
 
