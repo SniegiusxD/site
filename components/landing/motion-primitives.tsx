@@ -1,23 +1,24 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 
 const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)'
+
+const subscribeNever = () => () => {}
 
 /** True once the element has come 12 % into the viewport; never flips back. */
 export function useInViewOnce<T extends Element>(rootMargin = '0px 0px -12% 0px') {
   const ref = useRef<T>(null)
   const [seen, setSeen] = useState(false)
+  // A browser without IntersectionObserver shows everything at once. The
+  // server assumes it has one, so the first render matches the server HTML.
+  const noObserver = useSyncExternalStore(subscribeNever, () => typeof IntersectionObserver === 'undefined', () => false)
 
   useEffect(() => {
     const element = ref.current
-    if (!element || seen) return
-    if (typeof IntersectionObserver === 'undefined') {
-      setSeen(true)
-      return
-    }
+    if (!element || seen || typeof IntersectionObserver === 'undefined') return
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
@@ -31,7 +32,7 @@ export function useInViewOnce<T extends Element>(rootMargin = '0px 0px -12% 0px'
     return () => observer.disconnect()
   }, [rootMargin, seen])
 
-  return [ref, seen] as const
+  return [ref, seen || noObserver] as const
 }
 
 const HIDDEN: Record<'rise' | 'scale' | 'board', string> = {
