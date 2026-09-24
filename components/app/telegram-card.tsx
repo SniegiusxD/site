@@ -17,6 +17,7 @@ import {
 import type { TelegramState } from '@/lib/telegram'
 import { TELEGRAM_EDGE_CHOICES, TELEGRAM_HOUR_CHOICES, type TelegramSettings } from '@/lib/telegram-settings'
 import { clockLabel } from '@/lib/live-view'
+import { ApiError, fetchJson, useApi } from '@/lib/use-api'
 import { useAccount } from './account-provider'
 import { FilterChip, FilterOption } from './filter-chip'
 
@@ -35,30 +36,30 @@ const PAUSES = [
 
 export function TelegramCard() {
   const { account } = useAccount()
-  const [state, setState] = useState<TelegramState | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  // Loaded once for members with access; every change here answers with the
+  // new state, which then replaces it.
+  const loaded = useApi<TelegramState>(account.access.hasAccess ? '/api/telegram' : null)
+  const [changed, setState] = useState<TelegramState | null>(null)
+  const state = changed ?? loaded.data
+  const [commandError, setError] = useState<string | null>(null)
+  const error = commandError ?? (loaded.error ? (loaded.error.serverMessage ?? 'Nepavyko įkelti Telegram nustatymų.') : null)
   const [notice, setNotice] = useState<string | null>(null)
   const [linking, setLinking] = useState(false)
   const [testing, setTesting] = useState(false)
   const [presetName, setPresetName] = useState('')
   const saveTimer = useRef<number | null>(null)
 
+  // While linking: ask again until Telegram reports the chat connected.
   const load = useCallback(async () => {
-    const response = await fetch('/api/telegram', { cache: 'no-store' })
-    const body = await response.json().catch(() => null)
-    if (!response.ok) {
-      setError(body?.error ?? 'Nepavyko įkelti Telegram nustatymų.')
+    try {
+      const body = await fetchJson<TelegramState>('/api/telegram')
+      setState(body)
+      return body
+    } catch (caught) {
+      setError(caught instanceof ApiError ? (caught.serverMessage ?? 'Nepavyko įkelti Telegram nustatymų.') : 'Nepavyko įkelti Telegram nustatymų.')
       return null
     }
-    setState(body)
-    return body as TelegramState
   }, [])
-
-  useEffect(() => {
-    if (!account.access.hasAccess) return
-    const frame = requestAnimationFrame(() => { void load() })
-    return () => cancelAnimationFrame(frame)
-  }, [load, account.access.hasAccess])
 
   useEffect(() => () => {
     if (saveTimer.current) window.clearTimeout(saveTimer.current)
