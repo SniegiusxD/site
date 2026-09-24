@@ -4,6 +4,7 @@ import { formatEdge, formatOdds } from '@/lib/format-lt'
 import { useApi } from '@/lib/use-api'
 import type { BookName } from '@/lib/landing-signals'
 import { BookMark } from '@/components/landing/book-mark'
+import { LoadError } from './load-error'
 
 type Point = { book: BookName; odds: number; at: string }
 
@@ -14,11 +15,12 @@ type Point = { book: BookName; odds: number; at: string }
  */
 export function PriceHistoryChart({ signalId, book, fairOdds }: { signalId: string; book: BookName; fairOdds: number }) {
   // Switching signals shows nothing rather than the previous signal's history
-  // while the new one loads; a failed request reads as no history yet.
-  const { data, error, loading } = useApi<{ points?: Point[] }>(`/api/signals/${encodeURIComponent(signalId)}/history`)
+  // while the new one loads. A failure says so: "no history yet" would be wrong.
+  const { data, error, loading, reload } = useApi<{ points?: Point[] }>(`/api/signals/${encodeURIComponent(signalId)}/history`)
   if (loading || (!data && !error)) return null
+  if (error) return <LoadError error={error} what="kainos istorijos" onRetry={reload} className="mt-4" />
 
-  const mine = (error ? [] : (data?.points ?? [])).filter((point) => point.book === book)
+  const mine = (data?.points ?? []).filter((point) => point.book === book)
   if (mine.length < 2) {
     return (
       <p className="mt-4 text-[0.9rem] text-haze">
