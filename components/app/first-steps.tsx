@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { FIRST_STEPS_COOKIE } from '@/lib/first-steps'
 import type { BoardBet } from '@/lib/exposure'
+import { useApi } from '@/lib/use-api'
 import { useAccount } from './account-provider'
 
 const DISMISS_KEY = 'first-steps-dismissed'
@@ -28,10 +29,6 @@ export function FirstSteps({ bets, initiallyDismissed = false }: { bets: BoardBe
   // The server reads the dismissal cookie, so the first frame is already right:
   // a card that appeared after load pushed the whole list down (layout shift).
   const [dismissed, setDismissed] = useState(initiallyDismissed)
-  // Unknown means "not connected yet" here: a failed or skipped check must not
-  // hide the whole checklist.
-  const [telegram, setTelegram] = useState(false)
-  const [settled, setSettled] = useState(false)
 
   // Dismissals from before the cookie lived only in localStorage: carry them
   // over once, so they are known to the server from the next visit on.
@@ -49,22 +46,12 @@ export function FirstSteps({ bets, initiallyDismissed = false }: { bets: BoardBe
     return () => window.clearTimeout(id)
   }, [initiallyDismissed])
 
-  useEffect(() => {
-    fetch('/api/bets', { cache: 'no-store' })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body) => setSettled(Boolean((body?.bets ?? []).some((bet: { profit: number | null }) => bet.profit !== null))))
-      .catch(() => setSettled(false))
-  }, [])
-
-  useEffect(() => {
-    if (!account.access.hasAccess) return
-    fetch('/api/telegram', { cache: 'no-store' })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((state) => setTelegram(Boolean(state?.connected)))
-      .catch(() => {
-        // Leave it as not connected; the step stays actionable.
-      })
-  }, [account.access.hasAccess])
+  // Unknown means "not connected yet" here: a failed or skipped check must not
+  // hide the whole checklist.
+  const betsState = useApi<{ bets: Array<{ profit: number | null }> }>('/api/bets')
+  const telegramState = useApi<{ connected?: boolean }>(account.access.hasAccess ? '/api/telegram' : null)
+  const settled = Boolean(betsState.data?.bets.some((bet) => bet.profit !== null))
+  const telegram = Boolean(telegramState.data?.connected)
 
   // The board only carries recent bets and no status, so "a result arrived" is
   // asked of the bets endpoint rather than guessed from this list.
