@@ -89,9 +89,14 @@ function GapChapter() {
                   style={{ animationDelay: `${row * 0.7}s` }}
                 />
               </div>
+              {/* Labels never cross the 2,00 line: below it a label ends at its
+                  dot; above it, a dot close to the line starts its label just
+                  right of the line, a far one centres it under the dot. */}
               <div
-                className="absolute top-[24px] flex -translate-x-1/2 items-center gap-1.5 text-[0.8125rem] whitespace-nowrap text-moss transition-[left] duration-[620ms]"
-                style={{ left: `${at(book.odds)}%`, transitionTimingFunction: MOVE }}
+                className={`absolute top-[24px] flex items-center gap-1.5 text-[0.8125rem] whitespace-nowrap text-moss transition-[left,translate] duration-[620ms] ${
+                  !book.value ? '-translate-x-[calc(100%-0.5rem)]' : at(book.odds) - at(2) < 20 ? 'translate-x-2' : '-translate-x-1/2'
+                }`}
+                style={{ left: `${book.value && at(book.odds) - at(2) < 20 ? at(2) : at(book.odds)}%`, transitionTimingFunction: MOVE }}
               >
                 <BookMark book={book.label} size="sm" />
                 {book.label} <span className="font-semibold text-ink tnum">{formatOdds(book.odds)}</span>
