@@ -50,3 +50,15 @@ observed after the coder's canary).
 - Lighthouse: `npx lighthouse@12 <url> --only-categories=performance,...`.
 - Member pages: the same with a throwaway `e2e-check-*` account.
 - Errors: `npx vercel logs <deployment> --since 1h | grep -E "client-error|server-error"`.
+
+## Later the same day
+
+- Phone landing: the footer's glyph counter was unreadable on phones (≈5 cells
+  per character) — finer cells, taller field, euro sign on its own line; the
+  closing-price line in "Kaina juda" crossed every name and caption — now drawn
+  only through the bar rows.
+- Rate limits and shared mobile IPs (CGNAT): auth is now 60/15 min per IP plus
+  8/15 min per account (HMAC of the email) on sign-in/sign-up/password reset;
+  sign-out is never limited. Signed-in expensive actions (trial, checkout,
+  cancel, export…) count per session cookie hash instead of per IP, so members
+  on one mobile address no longer share a 5-per-10-minutes window.
