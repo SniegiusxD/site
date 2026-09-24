@@ -38,6 +38,7 @@ import {
 import { sportName } from '@/lib/sports-lt'
 import type { Access } from '@/lib/subscription'
 import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
+import { useLastVisit } from '@/lib/use-last-visit'
 import { stringSet, useStoredState } from '@/lib/use-stored-state'
 import { useAccount } from './account-provider'
 import { ChipGroup } from './chip-group'
@@ -205,17 +206,7 @@ export function SignalBoard({
   const [onlyNew, setOnlyNew] = useState(false)
   // The moment this member last had the board open, on this device. Read once,
   // then frozen for the visit so rows do not stop being new while being read.
-  const [lastVisit, setLastVisit] = useState<number | null>(null)
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(SEEN_KEY)
-      setLastVisit(raw ? Number(raw) : null)
-      window.localStorage.setItem(SEEN_KEY, String(Date.now()))
-    } catch {
-      // Without storage every signal is simply not marked as new.
-    }
-  }, [])
+  const lastVisit = useLastVisit(SEEN_KEY)
 
   // The board a member left is the board they expect to come back to. Their own
   // device only: these are view choices, not account settings.
