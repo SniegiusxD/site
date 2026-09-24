@@ -3,6 +3,7 @@ import type { LiveSignal } from '@/lib/live-signals'
 import {
   agoLabel,
   boardRows,
+  compactUntilLabel,
   eventLabel,
   isInterpolatedLabel,
   isStale,
@@ -198,5 +199,34 @@ describe('linkedRow', () => {
 
   it('finds nothing for a signal that is not on the board', () => {
     expect(linkedRow(rows, 'gone', 'TopSport')).toBeNull()
+  })
+})
+
+describe('compactUntilLabel', () => {
+  const at = (minutes: number) => new Date(NOW.getTime() + minutes * 60_000).toISOString()
+
+  it('says the match started once kickoff has passed', () => {
+    expect(compactUntilLabel(at(0), NOW)).toBe('prasidėjo')
+    expect(compactUntilLabel(at(-30), NOW)).toBe('prasidėjo')
+  })
+
+  it('counts minutes under an hour', () => {
+    expect(compactUntilLabel(at(1), NOW)).toBe('1 min')
+    expect(compactUntilLabel(at(59), NOW)).toBe('59 min')
+  })
+
+  it('keeps minutes under three hours, where they still matter', () => {
+    expect(compactUntilLabel(at(60), NOW)).toBe('1 val.')
+    expect(compactUntilLabel(at(165), NOW)).toBe('2 val. 45 min')
+  })
+
+  it('drops minutes from three hours up', () => {
+    expect(compactUntilLabel(at(180), NOW)).toBe('3 val.')
+    expect(compactUntilLabel(at(23 * 60 + 59), NOW)).toBe('23 val.')
+  })
+
+  it('counts days past a day', () => {
+    expect(compactUntilLabel(at(24 * 60), NOW)).toBe('1 d.')
+    expect(compactUntilLabel(at(28 * 60 + 10), NOW)).toBe('1 d. 4 val.')
   })
 })

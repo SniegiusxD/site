@@ -99,6 +99,23 @@ export function timeUntilLabel(startsAt: string, now: Date): string {
   return `po ${days} d. ${hours % 24} val.`
 }
 
+/**
+ * Time to kickoff for the compact board, where the column is narrow: minutes
+ * under an hour, minutes kept only while they still matter (under 3 hours),
+ * days past a day.
+ */
+export function compactUntilLabel(startsAt: string, now: Date): string {
+  const minutes = Math.round((new Date(startsAt).getTime() - now.getTime()) / 60_000)
+  if (minutes <= 0) return 'prasidėjo'
+  if (minutes < 60) return `${minutes} min`
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  if (hours < 3) return rest ? `${hours} val. ${rest} min` : `${hours} val.`
+  if (hours < 24) return `${hours} val.`
+  const days = Math.floor(hours / 24)
+  return hours % 24 ? `${days} d. ${hours % 24} val.` : `${days} d.`
+}
+
 export function agoLabel(iso: string, now: Date): string {
   const minutes = Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 60_000))
   if (minutes < 1) return 'ką tik'
