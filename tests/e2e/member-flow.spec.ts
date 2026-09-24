@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import { layoutShift, observeVitals, PERF_VIEWPORTS, scrollToBottom } from './perf'
 
@@ -6,6 +7,8 @@ test.beforeEach(async ({}, testInfo) => {
 })
 
 test('member can onboard, inspect a signal, record it, and open tracker and help', async ({ page }) => {
+  // One journey through every member page, with accessibility and layout checks along the way.
+  test.setTimeout(120_000)
   const email = `e2e-check-${Date.now()}-member@example.com`
   const password = 'Slaptazodis123!'
   try {
@@ -80,6 +83,47 @@ test('member can onboard, inspect a signal, record it, and open tracker and help
 
     await page.goto('/pagalba')
     await expect(page.getByRole('heading', { name: /Pagalba/ })).toBeVisible()
+
+    // Accessibility of the member pages, at phone and desktop width. Entrance
+    // animations fade text in, so each check waits for them to finish.
+    const axe = async (label: string) => {
+      await page.waitForTimeout(1200)
+      const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze()
+      expect(violations.map((violation) => `${label} ${violation.id}: ${violation.nodes.map((node) => node.target.join(' ')).join(', ')}`)).toEqual([])
+    }
+    for (const size of [PERF_VIEWPORTS.phone, PERF_VIEWPORTS.desktop]) {
+      await page.setViewportSize(size)
+      for (const path of ['/signalai', '/signalai?signal=ci-signal-1&book=TopSport', '/statymai', '/profilis', '/pagalba', '/atrakinti']) {
+        await page.goto(path)
+        await axe(`${path} at ${size.width}px`)
+      }
+    }
+
+    // Dialogs: focus moves in, Escape closes, focus comes back to the opener.
+    await page.goto('/signalai')
+    const month = page.getByRole('button', { name: 'Mėnuo' })
+    await month.focus()
+    await page.keyboard.press('Enter')
+    const monthDialog = page.getByRole('dialog')
+    await expect(monthDialog).toBeVisible()
+    await expect.poll(() => monthDialog.evaluate((dialog) => dialog.contains(document.activeElement))).toBe(true)
+    await axe('month dialog')
+    await page.keyboard.press('Escape')
+    await expect(monthDialog).toHaveCount(0)
+    await expect(month).toBeFocused()
+
+    await page.getByRole('radio', { name: 'Kompaktiškas' }).click()
+    await axe('compact board')
+    await page.getByRole('radio', { name: 'Įprastas' }).click()
+
+    await page.setViewportSize(PERF_VIEWPORTS.phone)
+    await page.goto('/signalai?signal=ci-signal-1&book=TopSport')
+    const sheet = page.getByRole('dialog', { name: 'Signalo informacija' })
+    await expect(sheet).toBeVisible()
+    await expect.poll(() => sheet.evaluate((dialog) => dialog.contains(document.activeElement))).toBe(true)
+    await page.keyboard.press('Escape')
+    await expect(sheet).toHaveCount(0)
+    await page.setViewportSize(PERF_VIEWPORTS.desktop)
   } finally {
     await page.request.post('/api/account/delete', { data: { confirm: email } }).catch(() => null)
   }
