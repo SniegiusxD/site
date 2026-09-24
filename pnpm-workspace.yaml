@@ -11,3 +11,11 @@ allowBuilds:
   msw: true
   sharp: true
   unrs-resolver: true
+# Security floors for transitive packages (pnpm audit --prod, 2026-09-24):
+# browserslist and baseline-browser-mapping come in through next/styled-jsx,
+# vitest through better-auth. Raise or remove when the parents catch up.
+overrides:
+  browserslist: '^4.28.7'
+  baseline-browser-mapping: '^2.11.0'
+  vitest: '^4.1.11'
+  '@vitest/mocker': '^4.1.11'
