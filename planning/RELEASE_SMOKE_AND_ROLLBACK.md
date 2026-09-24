@@ -86,6 +86,20 @@ Two deeper checks run against Stripe **test** mode only, locally:
 
 Both refuse to run with a live key.
 
+## 3b. Errors after a release
+
+Every browser crash a visitor sees is posted to `/api/client-error` and
+logged as one `[client-error]` JSON line (message, top of the stack, page
+path, release, browser; extension and network noise dropped). Every server
+error is logged as `[server-error]` by `instrumentation.ts`. After a release,
+and whenever something seems off:
+
+```bash
+npx vercel logs <deployment-url> --since 1h | grep -E "client-error|server-error"
+```
+
+A new error that names the new release is a reason to roll back (below).
+
 ## 4. Rollback
 
 **Code.** Vercel keeps every deployment. Promote the previous good one:

@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Bricolage_Grotesque, Schibsted_Grotesk } from 'next/font/google'
+import { ErrorReporter } from '@/components/error-reporter'
 import { MotionProvider } from '@/components/motion-provider'
 import { brand } from '@/lib/brand'
 import { MOTION_BOOT_SCRIPT } from '@/lib/motion-mode'
@@ -64,6 +65,7 @@ export default function RootLayout({
       <body className="bg-background text-foreground font-sans antialiased">
         {/* Picks the motion mode before the first frame, so nothing flickers. */}
         <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
+        <ErrorReporter />
         <MotionProvider>{children}</MotionProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
