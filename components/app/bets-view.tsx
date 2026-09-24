@@ -105,7 +105,7 @@ const timeOf = (bet: ActiveBet) => new Date(betTime(bet) ?? 0).getTime()
 export function BetsView() {
   const [bets, setBets] = useState<ActiveBet[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<Period>('month')
   const [book, setBook] = useState('')
   const [sport, setSport] = useState('')
@@ -119,39 +119,52 @@ export function BetsView() {
   const sinceChecked = useRef(false)
 
   // Once per visit: what settled since the last one, then remember the newest result as seen.
-  useEffect(() => {
-    if (!bets || sinceChecked.current) return
-    sinceChecked.current = true
-    const key = `${SEEN_KEY}${email}`
-    try {
-      const marker = window.localStorage.getItem(key)
-      setSince(settledSince(bets, marker))
-      const latest = latestSettlement(bets)
-      window.localStorage.setItem(key, marker && marker > latest ? marker : latest)
-    } catch {
-      // Storage refused (private window): no summary this visit.
-    }
-  }, [bets, email])
+  const noteSince = useCallback(
+    (list: ActiveBet[]) => {
+      if (sinceChecked.current) return
+      sinceChecked.current = true
+      const key = `${SEEN_KEY}${email}`
+      try {
+        const marker = window.localStorage.getItem(key)
+        setSince(settledSince(list, marker))
+        const latest = latestSettlement(list)
+        window.localStorage.setItem(key, marker && marker > latest ? marker : latest)
+      } catch {
+        // Storage refused (private window): no summary this visit.
+      }
+    },
+    [email],
+  )
 
-  const load = useCallback(async () => {
+  const fetchBets = useCallback(
+    () =>
+      fetch('/api/bets', { cache: 'no-store' })
+        .then((response) => {
+          if (!response.ok) throw new Error()
+          return response.json()
+        })
+        .then((body) => {
+          setBets(body.bets)
+          setError(null)
+          noteSince(body.bets)
+        })
+        .catch(() => setError('Nepavyko įkelti statymų. Bandyk dar kartą.'))
+        .finally(() => {
+          setLoading(false)
+          setNow(new Date())
+        }),
+    [noteSince],
+  )
+
+  const load = useCallback(() => {
     setLoading(true)
-    try {
-      const response = await fetch('/api/bets', { cache: 'no-store' })
-      if (!response.ok) throw new Error()
-      const body = await response.json()
-      setBets(body.bets)
-      setError(null)
-    } catch {
-      setError('Nepavyko įkelti statymų. Bandyk dar kartą.')
-    } finally {
-      setLoading(false)
-      setNow(new Date())
-    }
-  }, [])
+    return fetchBets()
+  }, [fetchBets])
 
+  // The first load: the list starts in its loading state, so nothing is set here.
   useEffect(() => {
-    load()
-  }, [load])
+    fetchBets()
+  }, [fetchBets])
 
   // Results are graded after the list is sent. If a bet's match should be over
   // but it still waits, look once more half a minute later.
