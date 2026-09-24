@@ -39,11 +39,12 @@ function ResponsibleUse() {
   )
 }
 
+// Only what paying adds; the free card lists the rest.
 const FULL = [
   'Visi signalai, be vertės ir koeficiento ribų',
-  'Visų kontorų kainos ir tikroji kaina prie kiekvieno',
+  'Kainų judėjimas: kurių signalų kaina krenta ar kyla',
+  'Kiekvieno signalo kainų istorija',
   'Telegram pranešimai su suma pagal tavo banką',
-  'Statymų sekimas, rezultatai ir CLV',
 ]
 
 export function UnlockView({ access, billing }: { access: Access; billing: boolean }) {
@@ -80,7 +81,7 @@ export function UnlockView({ access, billing }: { access: Access; billing: boole
   }
 
   return (
-    <main className="mx-auto w-full max-w-[38rem] px-5 py-14 sm:px-8">
+    <main className="mx-auto w-full max-w-[46rem] px-5 py-14 sm:px-8">
       <h1 className="text-[2.6rem] leading-[1.02] sm:text-[3.2rem]">
         {access.state === 'expired' ? `Tavo ${TRIAL_DAYS} dienos baigėsi` : 'Atrakink visus signalus'}
       </h1>
@@ -89,8 +90,10 @@ export function UnlockView({ access, billing }: { access: Access; billing: boole
         bankrollas ir statymų istorija. Prenumerata atrakina likusius.
       </p>
 
+      {/* Phones see the paid card and its button first; wider screens keep the
+          familiar free-left, paid-right order. */}
       <div className="mt-9 grid gap-4 sm:grid-cols-2">
-        <section className="rounded-3xl bg-stand/60 p-6 hairline">
+        <section className="order-2 rounded-3xl bg-stand/60 p-6 hairline sm:order-1">
           <p className="flex items-center gap-2 text-[0.95rem] text-haze">
             <Lock className="size-4" aria-hidden />
             Nemokamai
@@ -103,13 +106,14 @@ export function UnlockView({ access, billing }: { access: Access; billing: boole
           </ul>
         </section>
 
-        <section className="lift rounded-3xl bg-stand p-6">
+        <section className="lift order-1 rounded-3xl bg-stand p-6 sm:order-2">
           <p className="text-[0.95rem] text-haze">Viskas</p>
           <p className="mt-3 flex items-baseline gap-2">
             <span className="font-display text-[2.2rem] font-extrabold tnum">{PRICE_EUR_PER_MONTH} €</span>
             <span className="text-haze">/ mėn.</span>
           </p>
-          <ul className="mt-5 space-y-2.5 text-[0.95rem]">
+          <p className="mt-5 text-[0.9rem] text-haze">Viskas, kas nemokamai, ir:</p>
+          <ul className="mt-2.5 space-y-2.5 text-[0.95rem]">
             {FULL.map((item) => (
               <li key={item} className="flex gap-2.5">
                 <Check className="mt-0.5 size-4 shrink-0 text-pitch" aria-hidden />
@@ -117,43 +121,42 @@ export function UnlockView({ access, billing }: { access: Access; billing: boole
               </li>
             ))}
           </ul>
+          {access.canStartTrial ? (
+            <>
+              <button
+                type="button"
+                onClick={start}
+                disabled={starting}
+                className="mt-6 min-h-12 w-full rounded-xl px-4 py-2.5 bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
+              >
+                {starting ? 'Atrakinam…' : `Išbandyti ${TRIAL_DAYS} dienas nemokamai`}
+              </button>
+              <p className="mt-2.5 text-center text-[0.9rem] text-haze">Kortelės nereikia. Pasibaigus lieki nemokamoje paskyroje.</p>
+            </>
+          ) : billing ? (
+            <>
+              <button
+                type="button"
+                onClick={subscribe}
+                disabled={paying}
+                className="mt-6 min-h-12 w-full rounded-xl px-4 py-2.5 bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
+              >
+                {paying ? 'Atidarom apmokėjimą…' : `Prenumeruoti už ${PRICE_EUR_PER_MONTH} € per mėnesį`}
+              </button>
+              <p className="mt-2.5 text-center text-[0.9rem] text-haze">
+                Apmokėjimas per Stripe. Atšaukti gali bet kada — prieiga lieka iki apmokėto laikotarpio pabaigos.
+              </p>
+            </>
+          ) : (
+            <>
+              <button type="button" disabled className="mt-6 min-h-12 w-full cursor-not-allowed rounded-xl px-4 py-2.5 bg-floodlight/60 font-semibold text-night">
+                Mokėjimai įjungiami netrukus
+              </button>
+              <p className="mt-2.5 text-center text-[0.9rem] text-haze">Kol kas gali naudotis nemokama paskyra.</p>
+            </>
+          )}
         </section>
       </div>
-
-      {access.canStartTrial ? (
-        <>
-          <button
-            type="button"
-            onClick={start}
-            disabled={starting}
-            className="mt-8 h-12 w-full rounded-xl bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
-          >
-            {starting ? 'Atrakinam…' : `Išbandyti ${TRIAL_DAYS} dienas nemokamai`}
-          </button>
-          <p className="mt-2.5 text-center text-[0.9rem] text-haze">Kortelės nereikia. Pasibaigus lieki nemokamoje paskyroje.</p>
-        </>
-      ) : billing ? (
-        <>
-          <button
-            type="button"
-            onClick={subscribe}
-            disabled={paying}
-            className="mt-8 h-12 w-full rounded-xl bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
-          >
-            {paying ? 'Atidarom apmokėjimą…' : `Prenumeruoti už ${PRICE_EUR_PER_MONTH} € per mėnesį`}
-          </button>
-          <p className="mt-2.5 text-center text-[0.9rem] text-haze">
-            Apmokėjimas per Stripe. Atšaukti gali bet kada — prieiga lieka iki apmokėto laikotarpio pabaigos.
-          </p>
-        </>
-      ) : (
-        <>
-          <button type="button" disabled className="mt-8 h-12 w-full cursor-not-allowed rounded-xl bg-floodlight/60 font-semibold text-night">
-            Mokėjimai įjungiami netrukus
-          </button>
-          <p className="mt-2.5 text-center text-[0.9rem] text-haze">Kol kas gali naudotis nemokama paskyra.</p>
-        </>
-      )}
 
       {/* Someone still in their free days can pay now and keep them: the
           subscription starts when the trial would have ended. */}
