@@ -51,7 +51,7 @@ test('member can onboard, inspect a signal, record it, and open tracker and help
 
     await page.goto('/statymai')
     await expect(page.getByRole('heading', { name: 'Statymai' })).toBeVisible()
-    await expect(page.getByText('Vilniaus Testas vs Kauno Testas')).toBeVisible()
+    await expect(page.getByText('Vilniaus Testas – Kauno Testas')).toBeVisible()
 
     await page.goto('/pagalba')
     await expect(page.getByRole('heading', { name: /Pagalba/ })).toBeVisible()
