@@ -4,16 +4,17 @@ import NumberFlow from '@number-flow/react'
 import { Check, LogOut } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useId, useState } from 'react'
+import { useCallback, useId, useMemo, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
 import { authClient } from '@/lib/auth-client'
-import { type BetStats, betStats } from '@/lib/bet-value'
+import { betStats } from '@/lib/bet-value'
 import { formatEdge, formatEuro } from '@/lib/format-lt'
 import type { ActiveBet } from '@/lib/types'
 import { signedEuro } from './value-chart'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { SuggestBook } from './suggest-book'
 import { DAILY_BET_CHOICES, KELLY_CHOICES, type Preferences } from '@/lib/preferences'
+import { useApi } from '@/lib/use-api'
 import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
 import { useAccount } from './account-provider'
 import { BankrollDialog } from './bankroll-dialog'
@@ -225,24 +226,9 @@ export function ProfileView() {
 
 /** Who the member is and how their bets are going, above the settings. */
 function ProfileSummary({ email, plan, memberSince }: { email: string; plan: string; memberSince: string | null }) {
-  const [summary, setSummary] = useState<{ stats: BetStats; count: number } | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    fetch('/api/bets', { cache: 'no-store' })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body) => {
-        if (cancelled || !body) return
-        const bets = body.bets as ActiveBet[]
-        setSummary({ stats: betStats(bets), count: bets.length })
-      })
-      .catch(() => {
-        // The settings below still work; the numbers stay as placeholders.
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  // On failure the settings below still work; the numbers stay as placeholders.
+  const { data } = useApi<{ bets: ActiveBet[] }>('/api/bets')
+  const summary = useMemo(() => (data ? { stats: betStats(data.bets), count: data.bets.length } : null), [data])
 
   const stats = summary?.stats
   const tone = (value: number) => (value > 0.004 ? 'text-pitch' : value < -0.004 ? 'text-brick' : '')
