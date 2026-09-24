@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import type { BookName } from '@/lib/landing-signals'
 
 /**
@@ -16,7 +17,9 @@ export function BookMark({ book, size = 'md' }: { book: BookName; size?: 'sm' | 
   const box = size === 'sm' ? 'size-6' : size === 'lg' ? 'size-10' : 'size-8'
   return (
     <span aria-hidden className={`inline-grid shrink-0 place-items-center overflow-hidden rounded-[7px] ${box} ${logo.ground}`}>
-      <img src={logo.src} alt="" loading="lazy" decoding="async" className="size-full" />
+      {/* Images are unoptimized (next.config.mjs), so this is the same plain,
+          lazy <img>; the box above fixes its size, so nothing shifts. */}
+      <Image src={logo.src} alt="" width={40} height={40} loading="lazy" className="size-full" />
     </span>
   )
 }
