@@ -31,6 +31,7 @@ export function SiteFooter() {
               {[
                 { href: '/skaiciuokle', label: 'Skaičiuoklė' },
                 { href: '/metodika', label: 'Kaip mes matuojam' },
+                { href: '/gidai', label: 'Gidai' },
                 { href: '/taisykles', label: 'Naudojimosi taisyklės' },
                 { href: '/privatumas', label: 'Privatumo politika' },
               ].map((link) => (
