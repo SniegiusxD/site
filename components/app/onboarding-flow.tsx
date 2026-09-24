@@ -18,9 +18,10 @@ import { sampleStretches, simulate } from '@/lib/simulate'
 import { HardTimes } from './hard-times'
 import { Outlook } from './outlook'
 import { signedWhole } from './scenario-chart'
+import { SuggestBook } from './suggest-book'
 
 const EASE = [0.22, 1, 0.36, 1] as const
-const STEPS = ['Bankrollas', 'Kontoros', 'Signalai', 'Rizika', 'Tempas', 'Pranešimai'] as const
+const STEPS = ['Prieš pradedant', 'Bankrollas', 'Kontoros', 'Signalai', 'Rizika', 'Tempas', 'Pranešimai'] as const
 
 const BANKROLL_PRESETS = [250, 500, 1000, 2500]
 const EDGE_CHOICES = [0.01, 0.02, 0.03, 0.05]
@@ -62,9 +63,9 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
   const last = step === STEPS.length - 1
 
   function stepError(): string | null {
-    if (step === 0 && !(prefs.bankroll >= 10)) return 'Bankrollas turi būti bent 10 €.'
-    if (step === 1 && prefs.books.length === 0) return 'Pasirink bent vieną kontorą.'
-    if (step === 2 && !(prefs.minOdds < prefs.maxOdds)) return 'Mažiausias koeficientas turi būti mažesnis už didžiausią.'
+    if (step === 1 && !(prefs.bankroll >= 10)) return 'Bankrollas turi būti bent 10 €.'
+    if (step === 2 && prefs.books.length === 0) return 'Pasirink bent vieną kontorą.'
+    if (step === 3 && !(prefs.minOdds < prefs.maxOdds)) return 'Mažiausias koeficientas turi būti mažesnis už didžiausią.'
     return null
   }
 
@@ -159,7 +160,8 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
               exit={reduced ? { opacity: 0 } : { opacity: 0, x: direction * -32 }}
               transition={{ duration: 0.35, ease: EASE }}
             >
-              {step === 0 && (
+              {step === 0 && <BeforeStep />}
+              {step === 1 && (
                 <BankrollStep
                   prefs={prefs}
                   text={bankrollText}
@@ -170,16 +172,16 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
                   }}
                 />
               )}
-              {step === 1 && <BooksStep prefs={prefs} update={update} counts={counts} />}
-              {step === 2 && <SignalsStep prefs={prefs} update={update} />}
-              {step === 3 && <RiskStep prefs={prefs} update={update} />}
-              {step === 4 && (
+              {step === 2 && <BooksStep prefs={prefs} update={update} counts={counts} />}
+              {step === 3 && <SignalsStep prefs={prefs} update={update} />}
+              {step === 4 && <RiskStep prefs={prefs} update={update} />}
+              {step === 5 && (
                 <>
                   <PaceStep prefs={prefs} update={update} />
                   <SampleSignal prefs={prefs} />
                 </>
               )}
-              {step === 5 && <NotifyStep value={notify} onChange={setNotify} />}
+              {step === 6 && <NotifyStep value={notify} onChange={setNotify} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -206,7 +208,7 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
             className="inline-flex items-center gap-2 rounded-xl bg-floodlight px-7 py-3.5 font-semibold text-night transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-70"
           >
             {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
-            {last ? (notify.channel === 'telegram' ? 'Prijungti Telegram' : 'Rodyti signalus') : 'Toliau'}
+            {last ? (notify.channel === 'telegram' ? 'Prijungti Telegram' : 'Rodyti signalus') : step === 0 ? 'Supratau' : 'Toliau'}
           </button>
         </div>
       </form>
@@ -259,6 +261,49 @@ function SampleSignal({ prefs }: { prefs: Preferences }) {
         Tikras signalas iš mūsų skenavimo. Suma suskaičiuota nuo tavo {formatEuro(prefs.bankroll)} banko.
       </p>
     </section>
+  )
+}
+
+const BEFORE_POINTS = [
+  {
+    lead: 'Signalas nėra statymas.',
+    body: 'Statai tu, savo kontoroje. Mes parodom kainą, kuri atrodo didesnė, nei turėtų būti, ir kiek už ją statyti.',
+  },
+  {
+    lead: 'Prieš statydamas patikrink kainą.',
+    body: 'Koeficientai keičiasi kas kelias minutes. Jei kontora jau siūlo mažiau ir vertės neliko, praleisk.',
+  },
+  {
+    lead: 'Minusinės dienos ir savaitės yra normalu.',
+    body: 'Vertė atsiperka per šimtus statymų, o ne per vieną ar dešimt. Vienas pralaimėjimas nieko nepasako.',
+  },
+  {
+    lead: 'Suma skaičiuojama nuo tavo bankrollo.',
+    body: 'Rezultatus vertinam pagal atskiras rungtynes: kelios linijos tose pačiose rungtynėse yra viena nuomonė, ne kelios.',
+  },
+] as const
+
+/** What a signal is and is not, before any numbers are asked for. */
+function BeforeStep() {
+  return (
+    <div>
+      <StepTitle title="Prieš pradedant" body="Keturi dalykai, kuriuos verta žinoti prieš pirmą signalą. Užtruks minutę." />
+      <ul className="mt-10 grid gap-3">
+        {BEFORE_POINTS.map((point) => (
+          <li key={point.lead} className="rounded-2xl bg-stand p-5 hairline">
+            <p className="text-[1.1rem] font-medium">{point.lead}</p>
+            <p className="mt-1 text-[0.95rem] text-haze">{point.body}</p>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-6 text-[0.9rem] text-haze-dim">
+        Tai nėra rekomendacija statyti. Tai matematinis būdas nustatyti statymus, kurių siūlomas koeficientas gali būti didesnis, nei
+        rodo apskaičiuota tikimybė.{' '}
+        <Link href="/metodika" className="underline decoration-rail-strong underline-offset-4 hover:text-chalk">
+          Kaip mes matuojam
+        </Link>
+      </p>
+    </div>
   )
 }
 
@@ -457,6 +502,7 @@ function BooksStep({ prefs, update, counts }: StepProps & { counts: SignalCounts
           )
         })}
       </div>
+      <SuggestBook />
     </div>
   )
 }
