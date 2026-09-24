@@ -4,8 +4,9 @@ import NumberFlow from '@number-flow/react'
 import { motion } from 'framer-motion'
 import { AlertTriangle, ArrowDown, ArrowUp, Check, Eye, Star, X } from 'lucide-react'
 import { BookMark } from '@/components/landing/book-mark'
+import { CopyButton } from '@/components/landing/copy-button'
 import { formatEdge, formatEuro, formatOdds } from '@/lib/format-lt'
-import { type BoardRow, ltSelection, timeUntilLabel } from '@/lib/live-view'
+import { type BoardRow, compactUntilLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
 import { driftOf, DRIFT_FLOOR, type Movement, type Pulse } from '@/lib/price-movement'
 import { sportName } from '@/lib/sports-lt'
 
@@ -169,5 +170,187 @@ export function SignalRow({
         </button>
       )}
     </motion.li>
+  )
+}
+
+/**
+ * The same signal in one line, for the compact board: sport, match, bet, book,
+ * odds, fair odds, value, suggested stake and time to start. Phones get two
+ * lines. On desktop, copy, pin and hide sit at the end of the line.
+ */
+export function CompactSignalRow({
+  row,
+  now,
+  active,
+  stake,
+  tracked,
+  sameMatch,
+  isHidden,
+  pulse,
+  pinned,
+  onTogglePinned,
+  onSelect,
+  onToggleHidden,
+  onCopied,
+}: {
+  row: BoardRow
+  now: Date
+  active: boolean
+  stake: number
+  tracked: number
+  sameMatch: number
+  isHidden?: boolean
+  pulse?: Pulse
+  pinned: boolean
+  onTogglePinned: () => void
+  onSelect: () => void
+  onToggleHidden?: () => void
+  /** The event name went to the clipboard. */
+  onCopied?: () => void
+}) {
+  const { signal, price } = row
+  const open = signal.status === 'open'
+  const when = open ? compactUntilLabel(signal.startsAt, now) : signal.status === 'started' ? 'prasidėjo' : 'užsidarė'
+  const oddsTone = pulse === 'up' ? 'text-pitch' : pulse === 'down' ? 'text-brick' : ''
+  const edgeTone = open ? 'text-floodlight' : 'text-haze-dim line-through'
+  const amount =
+    tracked > 0 ? (
+      <span className="inline-flex items-center gap-0.5 font-semibold text-pitch">
+        <Check className="size-3.5" aria-hidden />
+        <span className="sr-only">Pažymėta </span>
+        {formatEuro(tracked)}
+      </span>
+    ) : open && stake > 0 ? (
+      <span>
+        <span className="sr-only">Siūloma suma </span>
+        {formatEuro(stake)}
+      </span>
+    ) : (
+      <span className="text-haze-dim">–</span>
+    )
+
+  return (
+    <motion.li
+      layout="position"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2, ease: EASE }}
+      className={`relative flex items-stretch border-b border-rail last:border-b-0 ${pulse === 'new' ? 'animate-[row-new_2.6s_ease-out]' : ''} ${
+        active ? 'bg-stand' : 'hover:bg-stand/60'
+      }`}
+    >
+      {active && <span aria-hidden className="absolute inset-y-1 left-0 w-0.5 rounded-r bg-chalk" />}
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-current={active ? 'true' : undefined}
+        className="min-w-0 flex-1 px-4 py-2 text-left text-[0.9rem] sm:px-6 lg:py-1.5 lg:pr-2"
+      >
+        {/* Phones: two lines. */}
+        <span className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 lg:hidden">
+          <BookMark book={price.book} size="sm" />
+          <span className="truncate font-medium">{price.eventName}</span>
+          <span className={`font-display text-[1.05rem] font-bold tnum ${oddsTone}`}>{formatOdds(price.odds)}</span>
+          <span className="col-span-2 col-start-1 truncate text-[0.85rem] text-haze">
+            {pulse === 'new' && <span className="mr-1.5 font-semibold text-pitch">Naujas</span>}
+            {ltSelection(price.selectionLabel)} · {when}
+          </span>
+          <span className="flex items-center justify-end gap-2 text-[0.85rem] tnum">
+            <span className={`font-semibold ${edgeTone}`}>{formatEdge(price.edge)}</span>
+            {amount}
+          </span>
+        </span>
+        {/* Desktop: one line, the columns of the header above the list. */}
+        <span className={`hidden items-center gap-x-2 lg:grid ${COMPACT_COLUMNS}`}>
+          <BookMark book={price.book} size="sm" />
+          <span className="truncate text-haze">{sportName(signal.sport)}</span>
+          <span className="flex min-w-0 items-center gap-1.5">
+            {pulse === 'new' && <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-pitch" />}
+            {pulse === 'new' && <span className="sr-only">Naujas. </span>}
+            {sameMatch > 0 && tracked === 0 && (
+              <span className="shrink-0 text-warning" title="Jau statei šiose rungtynėse">
+                <AlertTriangle className="size-3.5" aria-hidden />
+                <span className="sr-only">Jau statei šiose rungtynėse. </span>
+              </span>
+            )}
+            <span className="truncate font-medium" title={price.eventName}>
+              {price.eventName}
+            </span>
+          </span>
+          <span className="truncate text-chalk/85" title={ltSelection(price.selectionLabel)}>
+            {ltSelection(price.selectionLabel)}
+          </span>
+          <span className={`text-right font-display text-[1.05rem] font-bold tnum transition-colors duration-700 ${oddsTone}`}>
+            <span className="sr-only">Koeficientas </span>
+            {formatOdds(price.odds)}
+          </span>
+          <span className="text-right text-haze tnum">
+            <span className="sr-only">Tikroji kaina </span>
+            {formatOdds(signal.fairOdds)}
+          </span>
+          <span className={`text-right font-semibold tnum ${edgeTone}`}>
+            <span className="sr-only">Vertė </span>
+            {formatEdge(price.edge)}
+          </span>
+          <span className="text-right tnum">{amount}</span>
+          <span className="truncate text-right text-haze tnum">{when}</span>
+        </span>
+      </button>
+      <span className="hidden shrink-0 items-center pr-3 lg:flex">
+        <CopyButton
+          text={price.eventName}
+          label={price.eventName}
+          icon="plain"
+          className="size-8 justify-center p-0!"
+          onCopied={onCopied}
+        />
+        <button
+          type="button"
+          onClick={onTogglePinned}
+          aria-pressed={pinned}
+          aria-label={pinned ? `Nebesekti: ${price.eventName}` : `Sekti rungtynes: ${price.eventName}`}
+          className={`grid size-8 place-items-center rounded-lg transition-colors ${pinned ? 'text-chalk' : 'text-haze-dim hover:bg-rail hover:text-chalk'}`}
+        >
+          <Star className={`size-4 ${pinned ? 'fill-current' : ''}`} aria-hidden />
+        </button>
+        {onToggleHidden ? (
+          <button
+            type="button"
+            onClick={onToggleHidden}
+            aria-label={isHidden ? `Grąžinti į sąrašą: ${price.eventName}` : `Paslėpti: ${price.eventName}`}
+            className="grid size-8 place-items-center rounded-lg text-haze-dim transition-colors hover:bg-rail hover:text-chalk"
+          >
+            {isHidden ? <Eye className="size-4" aria-hidden /> : <X className="size-4" aria-hidden />}
+          </button>
+        ) : (
+          <span aria-hidden className="size-8" />
+        )}
+      </span>
+    </motion.li>
+  )
+}
+
+/** Shared by the compact rows and their column header, so the two line up. */
+export const COMPACT_COLUMNS =
+  'grid-cols-[1.5rem_4.5rem_minmax(0,1.4fr)_minmax(0,1fr)_3.25rem_3.25rem_3.5rem_3.5rem_5.75rem]'
+
+/** The column names above the compact list, desktop only. Rows name each figure for screen readers. */
+export function CompactHeader() {
+  return (
+    <div
+      aria-hidden
+      className={`hidden items-center gap-x-2 border-b border-rail py-1.5 pr-[7.25rem] pl-6 text-[0.75rem] text-haze-dim lg:grid ${COMPACT_COLUMNS}`}
+    >
+      <span />
+      <span>Sportas</span>
+      <span>Rungtynės</span>
+      <span>Statymas</span>
+      <span className="text-right">Koef.</span>
+      <span className="text-right">Tikroji</span>
+      <span className="text-right">Vertė</span>
+      <span className="text-right">Suma</span>
+      <span className="text-right">Pradžia</span>
+    </div>
   )
 }

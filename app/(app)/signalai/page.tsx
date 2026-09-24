@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { SignalBoard } from '@/components/app/signal-board'
 import { brand } from '@/lib/brand'
+import { DENSITY_COOKIE, densityFromCookie } from '@/lib/board-density'
 import { FIRST_STEPS_COOKIE } from '@/lib/first-steps'
 import { freeBoard } from '@/lib/free-tier'
 import { loadLiveBoard } from '@/lib/live-signals'
@@ -29,6 +30,7 @@ export default async function SignalsPage({ searchParams }: { searchParams: Prom
       firstStepsDismissed={jar.get(FIRST_STEPS_COOKIE)?.value === '1'}
       justUnlocked={atrakinta === '1' && access.hasAccess}
       link={signal ? { signal, book } : undefined}
+      initialDensity={densityFromCookie(jar.get(DENSITY_COOKIE)?.value)}
     />
   )
 }

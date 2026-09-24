@@ -24,6 +24,7 @@ import {
   linkedRow,
   sportsIn,
 } from '@/lib/live-view'
+import { type Density, DENSITY_KEY, densityCookie, parseDensity } from '@/lib/board-density'
 import { DAILY_BET_CHOICES } from '@/lib/preferences'
 import {
   bandFor,
@@ -36,6 +37,7 @@ import {
 import { sportName } from '@/lib/sports-lt'
 import type { Access } from '@/lib/subscription'
 import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
+import { reportExecution } from '@/lib/report-execution'
 import { useLastVisit } from '@/lib/use-last-visit'
 import { stringSet, useStoredState } from '@/lib/use-stored-state'
 import { useAccount } from './account-provider'
@@ -44,7 +46,8 @@ import { FilterChip, FilterOption } from './filter-chip'
 import { FirstSteps } from './first-steps'
 import { MonthDialog } from './month-dialog'
 import { SignalDetail } from './signal-detail'
-import { SignalRow } from './signal-row'
+import { CompactHeader, CompactSignalRow, SignalRow } from './signal-row'
+import { Segmented } from './segmented'
 import { TrialRecap } from './trial-recap'
 
 const POLL_MS = 60_000
@@ -55,6 +58,10 @@ const HOUR_CHOICES = [
   { value: 24, label: '24 val.' },
   { value: 48, label: '2 d.' },
   { value: 168, label: '7 d.' },
+]
+const DENSITIES: Array<{ value: Density; label: string }> = [
+  { value: 'normal', label: 'Įprastas' },
+  { value: 'compact', label: 'Kompaktiškas' },
 ]
 const HIDDEN_KEY = 'hidden-signals'
 const VIEW_KEY = 'board-view'
@@ -179,6 +186,7 @@ export function SignalBoard({
   firstStepsDismissed = false,
   justUnlocked = false,
   link,
+  initialDensity = 'normal',
 }: {
   initial: LiveBoard
   initialBets: BoardBet[]
@@ -189,6 +197,8 @@ export function SignalBoard({
   justUnlocked?: boolean
   /** ?signal=<id>&book=<book>: open this signal's detail first. */
   link?: { signal?: string; book?: string }
+  /** From the kr-board-density cookie, so the chosen density is there in the first frame. */
+  initialDensity?: Density
 }) {
   const router = useRouter()
   const reduced = useReducedMotion()
@@ -228,6 +238,16 @@ export function SignalBoard({
       setPeriods: field('periods'),
     }
   }, [setView])
+  const [density, setDensity] = useStoredState(DENSITY_KEY, parseDensity, initialDensity)
+  const compact = density === 'compact'
+  const chooseDensity = useCallback(
+    (next: Density) => {
+      setDensity(next)
+      // The server reads the cookie, so the next visit renders this density at once.
+      document.cookie = densityCookie(next)
+    },
+    [setDensity],
+  )
   const [showClosed, setShowClosed] = useState(false)
   const [showHidden, setShowHidden] = useState(false)
   // The moment the trial starts: the newly visible signals rise in one after
@@ -511,6 +531,26 @@ export function SignalBoard({
   function renderRow(row: BoardRow, options: { isHidden?: boolean; enterIndex?: number } = {}) {
     const exposure = exposureFor(row.signal, bets, signalsById)
     const { suggested } = boardStake(prefs, row.signal, row.price, exposure)
+    if (compact) {
+      return (
+        <CompactSignalRow
+          key={row.signal.id}
+          row={row}
+          now={now}
+          active={selectedRow?.signal.id === row.signal.id}
+          stake={suggested}
+          tracked={exposure.selection.staked}
+          sameMatch={exposure.match.count}
+          isHidden={options.isHidden}
+          pulse={pulses.get(row.signal.id) ?? pulses.get(`${row.signal.id}:${row.price.book}`)}
+          pinned={pinned.has(pinKeyOf(row.signal))}
+          onTogglePinned={() => togglePinned(pinKeyOf(row.signal))}
+          onSelect={() => setSelected(row)}
+          onToggleHidden={row.signal.status === 'open' ? () => (options.isHidden ? unhide(row) : hide(row)) : undefined}
+          onCopied={() => reportExecution('copy_event', row.signal, row.price)}
+        />
+      )
+    }
     return (
       <SignalRow
         key={row.signal.id}
@@ -534,7 +574,13 @@ export function SignalBoard({
   }
 
   return (
-    <main className="lg:grid lg:h-dvh lg:grid-cols-[minmax(0,29rem)_minmax(0,1fr)]">
+    <main
+      className={`lg:grid lg:h-dvh ${
+        compact
+          ? 'lg:grid-cols-[minmax(0,44rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,52rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,60rem)_minmax(0,1fr)]'
+          : 'lg:grid-cols-[minmax(0,29rem)_minmax(0,1fr)]'
+      }`}
+    >
       <section aria-label="Signalų sąrašas" className="flex min-h-0 flex-col lg:border-r lg:border-rail">
         <div className="min-h-0 flex-1 lg:overflow-y-auto">
           <div className="border-b border-rail px-4 pt-5 pb-4 sm:px-6">
@@ -552,6 +598,13 @@ export function SignalBoard({
                 </p>
               </div>
               <div className="flex items-center gap-1">
+                <Segmented
+                  label="Sąrašo tankis"
+                  options={DENSITIES}
+                  value={density}
+                  onChange={chooseDensity}
+                  size="sm"
+                />
                 <Link
                   href="/profilis#telegram"
                   aria-label="Telegram pranešimai"
@@ -901,11 +954,14 @@ export function SignalBoard({
               </p>
             </div>
           ) : (
-            <ul>
-              <AnimatePresence key={unlockedAt ?? 'board'} initial={unlockedAt !== null && !reduced}>
-                {visible.map((row, index) => renderRow(row, { enterIndex: index }))}
-              </AnimatePresence>
-            </ul>
+            <>
+              {compact && <CompactHeader />}
+              <ul>
+                <AnimatePresence key={unlockedAt ?? 'board'} initial={unlockedAt !== null && !reduced}>
+                  {visible.map((row, index) => renderRow(row, { enterIndex: index }))}
+                </AnimatePresence>
+              </ul>
+            </>
           )}
 
           {hiddenRows.length > 0 && (

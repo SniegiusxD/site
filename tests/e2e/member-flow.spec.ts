@@ -36,6 +36,17 @@ test('member can onboard, inspect a signal, record it, and open tracker and help
     await page.goto('/signalai?signal=ci-signal-1&book=TopSport')
     await expect(page.getByText('Kodėl šis statymas').first()).toBeVisible()
 
+    // Compact board: one line per signal, remembered, and a row still opens its detail.
+    await page.goto('/signalai')
+    await page.getByRole('radio', { name: 'Kompaktiškas' }).click()
+    await page.reload()
+    await expect(page.getByRole('radio', { name: 'Kompaktiškas' })).toHaveAttribute('aria-checked', 'true')
+    const compactRow = page.getByRole('region', { name: 'Signalų sąrašas' }).getByRole('listitem').filter({ hasText: 'Vilniaus Testas' })
+    await compactRow.getByRole('button').first().click()
+    await expect(page).toHaveURL(/signal=ci-signal-1/)
+    await expect(page.getByText('Kodėl šis statymas').first()).toBeVisible()
+    await page.getByRole('radio', { name: 'Įprastas' }).click()
+
     const signal = live.signals[0]
     const price = signal.prices[0]
     const recorded = await page.request.post('/api/bets', {
