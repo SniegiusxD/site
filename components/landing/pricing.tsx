@@ -12,14 +12,12 @@ const FREE = [
   'Rezultatai ir CLV',
 ]
 
+// Only what paying adds; the free card above already lists the rest.
 const INCLUDED = [
   'Visi signalai, be vertės ir koeficiento ribų',
-  'Visų kontorų kainos prie kiekvieno signalo',
-  'Kopijuojamas pavadinimas kiekvienai kontorai',
-  'Bankrollas, Kelly dalis ir limitai pagal tave',
-  'Statymų sekimas su automatiniu atsiskaitymu',
-  'CLV ir rezultatai pagal kontorą',
-  'Signalai į Telegram',
+  'Kainų judėjimas: kurių signalų kaina krenta ar kyla',
+  'Kiekvieno signalo kainų istorija',
+  'Signalai į Telegram pagal tavo taisykles',
 ]
 
 export function Pricing() {
@@ -62,7 +60,8 @@ export function Pricing() {
               </span>
               <span className="text-haze">per mėnesį po bandymo</span>
             </p>
-            <ul className="mt-[26px] grid gap-[11px]">
+            <p className="mt-[26px] text-[0.9375rem] text-haze">Viskas, kas nemokamai, ir:</p>
+            <ul className="mt-3 grid gap-[11px]">
               {INCLUDED.map((item) => (
                 <li key={item} className="flex items-start gap-[11px]">
                   <Check className="mt-0.5 size-[18px] shrink-0 text-floodlight" aria-hidden />
