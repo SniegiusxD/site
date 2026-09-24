@@ -251,14 +251,12 @@ function ThousandChapter() {
 
   useEffect(() => {
     if (!seen) return
-    setDone(false)
     let frame = 0
     const onResize = () => drawSimulation(canvas.current, sim, 1)
     window.addEventListener('resize', onResize)
     if (reduced) {
       drawSimulation(canvas.current, sim, 1)
       if (counter.current) counter.current.textContent = formatInteger(BETS)
-      setDone(true)
     } else {
       const start = performance.now()
       let rolled = false
@@ -283,6 +281,8 @@ function ThousandChapter() {
   }, [seen, sim, reduced])
 
   const inTen = Math.max(1, Math.round(sim.negative * 10))
+  // In calm mode the run is drawn finished at once, so the summary is there too.
+  const summary = done || (reduced && seen)
 
   return (
     <div id="tukstantis" ref={ref} className="mt-[clamp(64px,8vw,120px)] grid scroll-mt-24 items-start gap-[clamp(28px,4vw,56px)] lg:grid-cols-2">
@@ -298,11 +298,15 @@ function ThousandChapter() {
             label="Vidutinė vertė vienam statymui"
             options={[1, 2, 3, 5].map((option) => ({ value: option, label: `${option} %` }))}
             value={value}
-            onChange={setValue}
+            onChange={(next) => {
+              // The summary waits for the new run to reach the median line.
+              setDone(false)
+              setValue(next)
+            }}
           />
         </div>
         <p className="mt-[18px] text-[0.9375rem] text-moss" aria-live="polite">
-          {done
+          {summary
             ? `Simuliacija, ne pažadas. Su ${value} % verte maždaug ${inTen} iš 10 tokių kelių baigiasi minuse.`
             : 'Simuliacija, ne pažadas.'}
         </p>
@@ -333,7 +337,7 @@ function ThousandChapter() {
               <div key={item.label}>
                 <dt className="sr-only">{item.label}</dt>
                 <dd className={`font-display text-[1.25rem] font-bold tracking-[-0.02em] ${item.tone}`}>
-                  <NumberFlow value={done ? Math.round(item.value) : 0} locales="lt-LT" format={EURO_ROLL} suffix=" €" />
+                  <NumberFlow value={summary ? Math.round(item.value) : 0} locales="lt-LT" format={EURO_ROLL} suffix=" €" />
                 </dd>
                 <p aria-hidden className="text-[0.8125rem] text-moss">
                   {item.label}
@@ -343,7 +347,7 @@ function ThousandChapter() {
             <div>
               <dt className="sr-only">Baigė minuse</dt>
               <dd className="font-display text-[1.25rem] font-bold tracking-[-0.02em] text-ink">
-                <NumberFlow value={done ? Math.round(sim.negative * 100) : 0} locales="lt-LT" suffix=" %" />
+                <NumberFlow value={summary ? Math.round(sim.negative * 100) : 0} locales="lt-LT" suffix=" %" />
               </dd>
               <p aria-hidden className="text-[0.8125rem] text-moss">
                 Baigė minuse
