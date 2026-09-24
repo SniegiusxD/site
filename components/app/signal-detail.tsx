@@ -255,6 +255,9 @@ export function SignalDetail({
           </li>
           <li>Vertė nieko negarantuoja: ji atsiperka per šimtus statymų, o ne šitame.</li>
         </ul>
+        <p className="mt-4 border-t border-rail pt-3.5 text-[0.85rem] text-haze-dim">
+          Tai nėra rekomendacija statyti. Tai matematinis būdas nustatyti statymus, kurių siūlomas koeficientas gali būti didesnis, nei rodo apskaičiuota tikimybė.
+        </p>
       </section>
 
       <section className="mt-4 rounded-2xl bg-stand p-5 hairline sm:p-6" aria-label="Kainos visose kontorose">

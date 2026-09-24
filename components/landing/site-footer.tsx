@@ -26,7 +26,7 @@ export function SiteFooter() {
             <Link href="/" className="font-display text-[1.375rem] font-extrabold tracking-[-0.03em] text-chalk">
               {brand.name}
             </Link>
-            <p className="mt-2.5 max-w-[52ch]">Informacija apie kainas, ne patarimas lažintis. Statymų nepriimam ir su kontoromis nesame susiję.</p>
+            <p className="mt-2.5 max-w-[52ch]">Tai nėra rekomendacija statyti. Tai matematinis būdas nustatyti statymus, kurių siūlomas koeficientas gali būti didesnis, nei rodo apskaičiuota tikimybė. Statymų nepriimam ir su kontoromis nesame susiję.</p>
             <nav aria-label="Nuorodos" className="mt-4 flex flex-wrap gap-x-6">
               {[
                 { href: '/skaiciuokle', label: 'Skaičiuoklė' },
