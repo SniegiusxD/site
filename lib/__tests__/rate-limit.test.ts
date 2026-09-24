@@ -74,3 +74,31 @@ describe('per-account limiting', () => {
     expect(seen).toEqual(['acct-abc:/api/auth/sign-in/email'])
   })
 })
+
+describe('per-session limiting', () => {
+  const withCookie = (path: string, token: string | null) =>
+    new Request(`https://example.com${path}`, {
+      headers: { 'x-forwarded-for': '85.206.1.1', ...(token ? { cookie: `theme=x; __Secure-better-auth.session_token=${token}; other=y` } : {}) },
+    })
+  const capture = async (request: Request, policy: 'expensive-action' | 'auth') => {
+    const seen: string[] = []
+    await rateLimitResponse(request, policy, async (key) => {
+      seen.push(key)
+      return { success: true, limit: 5, remaining: 4, reset: 2_000 }
+    })
+    return seen[0]
+  }
+
+  it('gives two members on one mobile IP separate windows for signed-in actions', async () => {
+    const a = await capture(withCookie('/api/trial', 'tokenA'), 'expensive-action')
+    const b = await capture(withCookie('/api/trial', 'tokenB'), 'expensive-action')
+    expect(a).not.toBe(b)
+    expect(a.startsWith('sess-')).toBe(true)
+    expect(a).not.toContain('tokenA')
+  })
+
+  it('falls back to the address without a session, and never uses the session for auth', async () => {
+    expect((await capture(withCookie('/api/trial', null), 'expensive-action')).startsWith('sess-')).toBe(false)
+    expect((await capture(withCookie('/api/auth/sign-in/email', 'tokenA'), 'auth')).startsWith('sess-')).toBe(false)
+  })
+})

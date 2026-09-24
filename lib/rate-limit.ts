@@ -51,6 +51,21 @@ export function clientFingerprint(request: Request, secret = process.env.BETTER_
   return createHmac('sha256', secret).update(address).digest('hex')
 }
 
+/** Policies for signed-in actions: counted per session when there is one. */
+const PER_SESSION: ReadonlySet<RateLimitPolicy> = new Set(['expensive-read', 'expensive-action'])
+const SESSION_COOKIE = /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=([^;]+)/
+
+/**
+ * A key for the signed-in session behind a request, read from its cookie
+ * without a database call. Many members share one mobile-network IP, so a
+ * per-IP window on "start trial" or "checkout" would let five strangers block
+ * the sixth. A forged cookie only gets its own bucket; it is still no session.
+ */
+export function sessionSubject(request: Request, secret = process.env.BETTER_AUTH_SECRET ?? 'local-only'): string | null {
+  const token = request.headers.get('cookie')?.match(SESSION_COOKIE)?.[1]
+  return token ? 'sess-' + createHmac('sha256', secret).update(token).digest('hex') : null
+}
+
 /** A stable, non-reversible key for one account, so emails never reach Redis. */
 export function accountSubject(email: string, secret = process.env.BETTER_AUTH_SECRET ?? 'local-only') {
   return 'acct-' + createHmac('sha256', secret).update(email.trim().toLowerCase()).digest('hex')
@@ -77,7 +92,8 @@ export async function rateLimitResponse(
   }
 
   const pathname = new URL(request.url).pathname.slice(0, 120)
-  const key = `${subject ?? clientFingerprint(request)}:${pathname}`
+  const who = subject ?? (PER_SESSION.has(policy) ? sessionSubject(request) : null) ?? clientFingerprint(request)
+  const key = `${who}:${pathname}`
   const result = override ? await override(key) : await limiter!.limit(key)
   if (result.success) return null
 
