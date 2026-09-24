@@ -40,4 +40,11 @@ describe('account data coverage', () => {
       expect(found.has(table), table).toBe(true)
     }
   })
+
+  it('exports owner actions and anonymises their target instead of deleting the audit', () => {
+    const source = readFileSync('lib/account-data.ts', 'utf8')
+    expect(source).toContain(`FROM admin_action WHERE "targetUserId" = $1`)
+    expect(source).toContain(`UPDATE admin_action SET "targetUserId" = 'deleted'`)
+    expect(MEMBER_TABLES).not.toContain('admin_action' as never)
+  })
 })

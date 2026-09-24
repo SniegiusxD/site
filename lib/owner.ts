@@ -38,7 +38,8 @@ export function countAccess(
   for (const row of rows) {
     const state = accessFrom(row, now).state
     counts[state] += 1
-    if (state === 'active' && row.provider === 'stripe') payingStripe += 1
+    const paidEnd = row.currentPeriodEnd ? new Date(row.currentPeriodEnd) : null
+    if (row.status === 'active' && row.provider === 'stripe' && (!paidEnd || paidEnd > now)) payingStripe += 1
   }
   return { counts, payingStripe }
 }
@@ -93,7 +94,8 @@ export async function ownerMetrics(now: Date = new Date()): Promise<OwnerMetrics
         GROUP BY 1 ORDER BY 1`,
     ),
     pool.query(
-      `SELECT coalesce(s.status, 'free') AS status, s."trialEndsAt", s."trialStartedAt", s."currentPeriodEnd", s.provider
+      `SELECT coalesce(s.status, 'free') AS status, s."trialEndsAt", s."trialStartedAt", s."currentPeriodEnd",
+              s."adminAccessUntil", s.provider
          FROM "user" u LEFT JOIN subscription s ON s."userId" = u.id
         WHERE ${REAL_USER}`,
     ),

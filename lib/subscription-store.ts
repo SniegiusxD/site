@@ -34,7 +34,7 @@ export async function getAccess(userId: string): Promise<Access> {
   await ensureAppSchema()
   const select = () =>
     pool.query<SubscriptionRow>(
-      `SELECT status, "trialEndsAt", "trialStartedAt", "currentPeriodEnd" FROM subscription WHERE "userId" = $1`,
+      `SELECT status, "trialEndsAt", "trialStartedAt", "currentPeriodEnd", "adminAccessUntil" FROM subscription WHERE "userId" = $1`,
       [userId],
     )
   let { rows } = await select()

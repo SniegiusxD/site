@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { FeedbackInbox } from '@/components/app/feedback-inbox'
+import { OwnerMemberActions } from '@/components/app/owner-member-actions'
+import { searchOwnerMembers } from '@/lib/admin-actions'
 import { brand } from '@/lib/brand'
 import { formatEuro, formatInteger } from '@/lib/format-lt'
 import { isOwner, ownerMetrics } from '@/lib/owner'
@@ -25,7 +27,7 @@ const share = (part: number, whole: number) => (whole ? `${Math.round((part / wh
 export default async function OwnerPage() {
   const user = await getSessionUser()
   if (!user || !isOwner(user.email)) notFound()
-  const m = await ownerMetrics()
+  const [m, members] = await Promise.all([ownerMetrics(), searchOwnerMembers('')])
   const peak = Math.max(1, ...m.signupsByDay.map((d) => d.count))
   const paying = m.access.active + m.access.ending
 
@@ -91,6 +93,11 @@ export default async function OwnerPage() {
         <p className="mt-3 text-[0.9rem] text-haze">
           Pilnos prieigos dabar: {paying + m.access.trial}. Mokančių kiekis įskaito ir rankiniu būdu suteiktą prieigą, MRR — tik Stripe.
         </p>
+      </Section>
+
+      <Section title="Nariai ir prieiga">
+        <p className="mb-4 text-sm text-haze">Rankinė prieiga nekeičia Stripe prenumeratos. Kiekvienas veiksmas saugomas audito žurnale.</p>
+        <OwnerMemberActions initial={members} />
       </Section>
 
       <Section title="Statymai ir vykdymas">

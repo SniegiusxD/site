@@ -8,6 +8,35 @@ const NOW = new Date('2026-09-14T12:00:00Z')
 const days = (n: number) => new Date(NOW.getTime() + n * 24 * 60 * 60 * 1000)
 
 describe('accessFrom', () => {
+  it('honours a temporary owner grant without changing billing state', () => {
+    expect(accessFrom({
+      status: 'free',
+      trialEndsAt: null,
+      trialStartedAt: null,
+      currentPeriodEnd: null,
+      adminAccessUntil: days(5),
+    }, NOW)).toMatchObject({ state: 'active', tier: 'full', hasAccess: true, daysLeft: 5 })
+
+    expect(accessFrom({
+      status: 'free',
+      trialEndsAt: null,
+      trialStartedAt: null,
+      currentPeriodEnd: null,
+      adminAccessUntil: days(-1),
+    }, NOW)).toMatchObject({ state: 'free', tier: 'free', hasAccess: false, canStartTrial: true })
+  })
+
+  it('keeps whichever legitimate access window ends later', () => {
+    expect(accessFrom({
+      status: 'active', trialEndsAt: null, trialStartedAt: null,
+      currentPeriodEnd: days(12), adminAccessUntil: days(5),
+    }, NOW).daysLeft).toBe(12)
+    expect(accessFrom({
+      status: 'canceled', trialEndsAt: null, trialStartedAt: null,
+      currentPeriodEnd: days(3), adminAccessUntil: days(10),
+    }, NOW)).toMatchObject({ state: 'active', daysLeft: 10 })
+  })
+
   it('gives a fresh trial 7 days of access', () => {
     const access = accessFrom({ status: 'trialing', trialEndsAt: trialEndFrom(NOW), trialStartedAt: NOW, currentPeriodEnd: null }, NOW)
     expect(access).toMatchObject({ state: 'trial', hasAccess: true, daysLeft: 7 })
