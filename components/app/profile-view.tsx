@@ -22,6 +22,7 @@ import { AccountDataControls } from './account-data-controls'
 import { BillingCard } from './billing-card'
 import { ChipGroup } from './chip-group'
 import { LimitHistory } from './limit-history'
+import { LoadError } from './load-error'
 import { TelegramCard } from './telegram-card'
 
 const KELLY_LABEL: Record<(typeof KELLY_CHOICES)[number], string> = { 0.125: 'Atsargiai (⅛)', 0.25: 'Subalansuotai (¼)', 0.5: 'Drąsiai (½)' }
@@ -226,8 +227,11 @@ export function ProfileView() {
 
 /** Who the member is and how their bets are going, above the settings. */
 function ProfileSummary({ email, plan, memberSince }: { email: string; plan: string; memberSince: string | null }) {
-  // On failure the settings below still work; the numbers stay as placeholders.
-  const { data } = useApi<{ bets: ActiveBet[] }>('/api/bets')
+  // The settings below work without these numbers. On failure the figures read
+  // "–" (not a skeleton that pulses forever) and a line says why, with a retry.
+  const { data, error, loading, reload } = useApi<{ bets: ActiveBet[] }>('/api/bets')
+  const failed = !data && error !== null && !loading
+  const missing = failed ? '–' : null
   const summary = useMemo(() => (data ? { stats: betStats(data.bets), count: data.bets.length } : null), [data])
 
   const stats = summary?.stats
@@ -252,12 +256,13 @@ function ProfileSummary({ email, plan, memberSince }: { email: string; plan: str
       </div>
       <dl className="grid grid-cols-2 gap-px border-t border-rail bg-rail sm:grid-cols-4">
         <SummaryStat label="Rezultatas" className={stats ? tone(stats.profit) : ''}>
-          {stats ? signedEuro(stats.profit) : null}
+          {stats ? signedEuro(stats.profit) : missing}
         </SummaryStat>
-        <SummaryStat label="Grąža">{stats ? (stats.roi === null ? '–' : formatEdge(stats.roi)) : null}</SummaryStat>
-        <SummaryStat label="Vidutinis CLV">{stats ? (stats.clvAverage === null ? '–' : formatEdge(stats.clvAverage)) : null}</SummaryStat>
-        <SummaryStat label="Pažymėti statymai">{summary ? String(summary.count) : null}</SummaryStat>
+        <SummaryStat label="Grąža">{stats ? (stats.roi === null ? '–' : formatEdge(stats.roi)) : missing}</SummaryStat>
+        <SummaryStat label="Vidutinis CLV">{stats ? (stats.clvAverage === null ? '–' : formatEdge(stats.clvAverage)) : missing}</SummaryStat>
+        <SummaryStat label="Pažymėti statymai">{summary ? String(summary.count) : missing}</SummaryStat>
       </dl>
+      {failed && <LoadError error={error} what="statymų suvestinės" onRetry={reload} className="m-4 sm:m-5" />}
     </section>
   )
 }
