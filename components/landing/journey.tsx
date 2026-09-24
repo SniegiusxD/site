@@ -156,16 +156,21 @@ export function Journey() {
                 {/* The newest arrives on the beat. Older ones step back through
                     their ground and scale, never by dimming the text: faded text
                     cannot hold its contrast. */}
-                {(calm || beat >= 1 ? FEED : []).map((item, position, shown) => {
+                {/* The slots are always laid out; before the alerts arrive they are
+                    only invisible. Removing them collapsed this card by ~200 px on
+                    phones every cycle and pushed the page (layout shift). */}
+                {FEED.map((item, position, shown) => {
                   const newest = position === shown.length - 1
+                  const arrived = calm || beat >= 1
                   return (
                     <div
                       // Keyed by the loop, so every pass replays the arrivals.
-                      key={`${item.id}-${cycle}`}
+                      key={`${item.id}-${cycle}-${arrived}`}
+                      aria-hidden={!arrived}
                       style={{ animationDelay: `${position * 260}ms` }}
                       className={`flex min-w-0 origin-bottom items-center gap-2.5 rounded-[14px] px-3 py-2.5 ${
                         newest ? 'bg-stand-hover shadow-[inset_0_0_0_1px_var(--floodlight)]' : 'bg-stand'
-                      } ${calm ? '' : 'kr-row-drop'}`}
+                      } ${!arrived ? 'invisible' : calm ? '' : 'kr-row-drop'}`}
                     >
                       <BookMark book={item.book} size="sm" />
                       <span className="min-w-0 flex-1">
