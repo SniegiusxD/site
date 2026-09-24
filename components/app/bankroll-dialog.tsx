@@ -3,6 +3,7 @@
 import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { useApi } from '@/lib/use-api'
 import { Loader2, X } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -43,7 +44,11 @@ function OpenBankrollDialog({ onClose }: { onClose: () => void }) {
   const { account, setAccount } = useAccount()
   const [kind, setKind] = useState<Mode>('deposit')
   const [amountText, setAmountText] = useState('')
-  const [entries, setEntries] = useState<BankrollEntry[] | null>(null)
+  // The history as the server has it, until a change here returns a newer one.
+  // A failed request shows the empty history rather than a spinner forever.
+  const history = useApi<{ entries: BankrollEntry[] }>('/api/bankroll')
+  const [posted, setPosted] = useState<BankrollEntry[] | null>(null)
+  const entries = posted ?? history.data?.entries ?? (history.error ? [] : null)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const amountId = useId()
@@ -54,10 +59,6 @@ function OpenBankrollDialog({ onClose }: { onClose: () => void }) {
     const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     window.setTimeout(() => inputRef.current?.focus(), 60)
-    fetch('/api/bankroll')
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body) => body && setEntries(body.entries))
-      .catch(() => setEntries([]))
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
@@ -81,7 +82,7 @@ function OpenBankrollDialog({ onClose }: { onClose: () => void }) {
         setError(body?.error ?? 'Nepavyko išsaugoti.')
         return
       }
-      setEntries(body.entries)
+      setPosted(body.entries)
       setAccount({
         ...account,
         bankroll: body.bankroll,
