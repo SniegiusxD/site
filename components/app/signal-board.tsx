@@ -420,8 +420,9 @@ export function SignalBoard({
   }, [desktop, selected, visible])
 
   // A link straight to one signal: /signalai?signal=<id>&book=<book>. Telegram
-  // alerts and shared links land on the detail rather than on the board, and
-  // the parameters are dropped afterwards so a refresh does not reopen it.
+  // alerts and shared links land on the detail rather than on the board. After
+  // that the address follows the selection, so a refresh or a copied link opens
+  // the same signal.
   const deepLinked = useRef(false)
   useEffect(() => {
     if (deepLinked.current) return
@@ -434,8 +435,16 @@ export function SignalBoard({
       [...rows.open, ...rows.closed].find((row) => row.signal.id === id && (!book || row.price.book === book)) ??
       [...rows.open, ...rows.closed].find((row) => row.signal.id === id)
     if (match) setSelected(match)
-    router.replace('/signalai', { scroll: false })
-  }, [rows, router])
+  }, [rows])
+
+  useEffect(() => {
+    // Wait for the deep link to be read, or the first render would erase it.
+    if (!deepLinked.current && new URLSearchParams(window.location.search).get('signal')) return
+    const target = selected
+      ? `/signalai?signal=${encodeURIComponent(selected.signal.id)}&book=${encodeURIComponent(selected.price.book)}`
+      : '/signalai'
+    if (window.location.pathname + window.location.search !== target) window.history.replaceState(null, '', target)
+  }, [selected])
 
   function toggleBook(book: BookName) {
     const next = prefs.books.includes(book) ? prefs.books.filter((b) => b !== book) : BOOKS.filter((b) => b === book || prefs.books.includes(b))
