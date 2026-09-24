@@ -86,6 +86,16 @@ Two deeper checks run against Stripe **test** mode only, locally:
 
 Both refuse to run with a live key.
 
+## 3a. Stale CSS from the build cache
+
+**2026-09-24:** a deploy restored `.next/cache` from the previous deployment and
+Turbopack reused its old compile of `app/globals.css`: new Tailwind utilities
+shipped, but every rule and keyframe changed in `globals.css` did not. The
+build now clears `.next/cache` first (`scripts/clear-build-cache.mjs`, ~10 s
+extra). If a styling change is ever missing live, compare the deployed CSS
+(`curl` the `/_next/static/…css` files linked from the page) with a local
+build before suspecting the code.
+
 ## 3b. Errors after a release
 
 Every browser crash a visitor sees is posted to `/api/client-error` and
