@@ -133,6 +133,17 @@ export function AppShell({ children, owner = false }: { children: React.ReactNod
         </button>
       </header>
 
+      {/* Phones have no sidebar: the trial countdown lives here instead. */}
+      {trialNote && (
+        <Link
+          href={access.state === 'trial' ? '/atrakinti' : '/profilis#prenumerata'}
+          className="flex items-center justify-between gap-3 border-b border-rail bg-pitch-soft px-4 py-2 text-[0.875rem] font-medium text-pitch lg:hidden"
+        >
+          <span>{trialNote}</span>
+          <span className="underline underline-offset-4">{access.state === 'trial' ? 'Tęsti po bandymo' : 'Prenumerata'}</span>
+        </Link>
+      )}
+
       <div className="min-w-0 pb-24 lg:pb-0">{children}</div>
 
       {/* Phone bottom navigation */}

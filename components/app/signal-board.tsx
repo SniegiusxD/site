@@ -43,6 +43,7 @@ import { ChipGroup } from './chip-group'
 import { FilterChip, FilterOption } from './filter-chip'
 import { FirstSteps } from './first-steps'
 import { SignalDetail } from './signal-detail'
+import { TrialRecap } from './trial-recap'
 
 const POLL_MS = 60_000
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -851,6 +852,7 @@ export function SignalBoard({
           )}
           {loadError && <Notice>{loadError}</Notice>}
 
+          {board.tier === 'free' && access.state === 'expired' && <TrialRecap />}
           <FirstSteps bets={bets} />
 
           {board.tier === 'free' && (
