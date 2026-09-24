@@ -10,6 +10,7 @@ import type { BillingState } from '@/lib/billing/store'
 import { kickoffLabel } from '@/lib/live-view'
 import { PRICE_EUR_PER_MONTH } from '@/lib/subscription'
 import { useApi } from '@/lib/use-api'
+import { LoadError } from './load-error'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -27,7 +28,7 @@ const dateOf = (iso: string | null) => (iso ? kickoffLabel(iso).replace(/\s\d{2}
 export function BillingCard() {
   const router = useRouter()
   // The status as the server has it, until a cancel or resume here returns the new billing.
-  const { data: loaded, reload: load } = useApi<Status>('/api/billing/status')
+  const { data: loaded, error: loadError, loading, reload: load } = useApi<Status>('/api/billing/status')
   const [changed, setStatus] = useState<Status | null>(null)
   const status = changed ?? loaded
   // Back from Checkout or the portal: the card says it is confirming from the first frame.
@@ -106,7 +107,14 @@ export function BillingCard() {
     }
   }
 
-  if (!status) return <p className="text-haze">Įkeliama…</p>
+  if (!status && loadError && !loading) return <LoadError error={loadError} what="prenumeratos būsenos" onRetry={load} />
+  if (!status) {
+    return (
+      <p role="status" className="text-haze">
+        Įkeliama…
+      </p>
+    )
+  }
   if (!status.enabled) return <p className="text-haze">Mokėjimai įjungiami netrukus. Kol kas gali naudotis nemokama paskyra.</p>
 
   const { billing } = status
