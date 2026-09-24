@@ -34,6 +34,11 @@ const KIND_LABEL: Record<BankrollEntry['kind'], string> = {
 const dateFormat = new Intl.DateTimeFormat('lt-LT', { timeZone: 'Europe/Vilnius', month: '2-digit', day: '2-digit' })
 
 export function BankrollDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return <AnimatePresence>{open && <OpenBankrollDialog onClose={onClose} />}</AnimatePresence>
+}
+
+/** Mounted afresh for each opening, so form reset is initialization, not an effect. */
+function OpenBankrollDialog({ onClose }: { onClose: () => void }) {
   const reduced = useReducedMotion()
   const { account, setAccount } = useAccount()
   const [kind, setKind] = useState<Mode>('deposit')
@@ -46,9 +51,6 @@ export function BankrollDialog({ open, onClose }: { open: boolean; onClose: () =
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!open) return
-    setError(null)
-    setAmountText('')
     const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     window.setTimeout(() => inputRef.current?.focus(), 60)
@@ -57,7 +59,7 @@ export function BankrollDialog({ open, onClose }: { open: boolean; onClose: () =
       .then((body) => body && setEntries(body.entries))
       .catch(() => setEntries([]))
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  }, [onClose])
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -101,9 +103,7 @@ export function BankrollDialog({ open, onClose }: { open: boolean; onClose: () =
   }
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
+    <motion.div
           className="fixed inset-0 z-[60] flex items-end justify-center bg-night/70 backdrop-blur-sm sm:items-center sm:p-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -237,8 +237,6 @@ export function BankrollDialog({ open, onClose }: { open: boolean; onClose: () =
               )}
             </div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    </motion.div>
   )
 }

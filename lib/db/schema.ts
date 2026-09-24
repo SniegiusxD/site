@@ -1,4 +1,4 @@
-import { boolean, doublePrecision, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { boolean, doublePrecision, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 // --- Better Auth required tables -------------------------------------------
 // Column names are camelCase to match Better Auth's defaults. Do not rename.
@@ -120,5 +120,18 @@ export const betEdit = pgTable('bet_edit', {
   field: text('field').notNull(),
   fromValue: text('fromValue'),
   toValue: text('toValue'),
+  at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+/** Append-only owner audit. It intentionally survives deletion and has no user FK. */
+export const adminAction = pgTable('admin_action', {
+  id: text('id').primaryKey(),
+  actorEmail: text('actorEmail').notNull(),
+  targetUserId: text('targetUserId').notNull(),
+  action: text('action').notNull(),
+  reason: text('reason').notNull(),
+  until: timestamp('until', { withTimezone: true }),
+  before: jsonb('before').notNull(),
+  after: jsonb('after').notNull(),
   at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
 })

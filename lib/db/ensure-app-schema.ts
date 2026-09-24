@@ -69,7 +69,8 @@ export function ensureAppSchema(): Promise<void> {
       ALTER TABLE subscription
         ADD COLUMN IF NOT EXISTS "cancelAtPeriodEnd" BOOLEAN NOT NULL DEFAULT FALSE,
         ADD COLUMN IF NOT EXISTS "paymentFailedAt" TIMESTAMPTZ,
-        ADD COLUMN IF NOT EXISTS "priceId" TEXT;
+        ADD COLUMN IF NOT EXISTS "priceId" TEXT,
+        ADD COLUMN IF NOT EXISTS "adminAccessUntil" TIMESTAMPTZ;
       CREATE UNIQUE INDEX IF NOT EXISTS subscription_provider_customer_idx
         ON subscription ("providerCustomerId") WHERE "providerCustomerId" IS NOT NULL;
 
@@ -215,6 +216,23 @@ export function ensureAppSchema(): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS feedback_created_idx ON feedback ("createdAt" DESC);
       CREATE INDEX IF NOT EXISTS feedback_user_idx ON feedback ("userId", "createdAt" DESC);
+
+      -- Owner mutations are audited separately from billing. targetUserId has
+      -- deliberately no FK: the row survives account deletion after the id is
+      -- anonymised to "deleted".
+      CREATE TABLE IF NOT EXISTS admin_action (
+        id TEXT PRIMARY KEY,
+        "actorEmail" TEXT NOT NULL,
+        "targetUserId" TEXT NOT NULL,
+        action TEXT NOT NULL CHECK (action IN ('grant', 'extend_trial', 'revoke')),
+        reason TEXT NOT NULL,
+        "until" TIMESTAMPTZ,
+        "before" JSONB NOT NULL,
+        "after" JSONB NOT NULL,
+        "at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS admin_action_target_idx
+        ON admin_action ("targetUserId", "at" DESC);
     `)
   })().catch((error) => {
     // Let the next request retry instead of caching a failed migration.

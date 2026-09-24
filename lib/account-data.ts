@@ -53,6 +53,8 @@ export type AccountExport = {
   user: Record<string, unknown>
   signIns: Record<string, unknown>[]
   logins: Record<string, unknown>[]
+  /** Owner access changes that affected this account. */
+  adminActions: Record<string, unknown>[]
   data: Record<(typeof MEMBER_TABLES)[number], Record<string, unknown>[]>
 }
 
@@ -71,6 +73,11 @@ export async function exportAccount(userId: string): Promise<AccountExport> {
     user: users[0] ?? {},
     signIns: await rows(pool, 'session', userId),
     logins: await rows(pool, 'account', userId),
+    adminActions: (await pool.query(
+      `SELECT id, "actorEmail", action, reason, "until", "before", "after", "at"
+         FROM admin_action WHERE "targetUserId" = $1 ORDER BY "at"`,
+      [userId],
+    )).rows,
     data,
   }
 }
@@ -88,6 +95,9 @@ export async function deleteAccount(userId: string, email: string): Promise<void
     await client.query('BEGIN')
     await client.query(`DELETE FROM bet_edit WHERE "userId" = $1`, [userId])
     await client.query(`DELETE FROM billing_event WHERE "userId" = $1`, [userId])
+    // Keep the immutable operational audit but sever its link to the deleted
+    // account. No email or member name is stored on the target side.
+    await client.query(`UPDATE admin_action SET "targetUserId" = 'deleted' WHERE "targetUserId" = $1`, [userId])
     for (const table of MEMBER_TABLES) {
       await client.query(`DELETE FROM "${table}" WHERE "userId" = $1`, [userId])
     }

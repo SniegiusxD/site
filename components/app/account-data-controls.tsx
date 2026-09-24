@@ -1,6 +1,7 @@
 'use client'
 
 import { Download, Loader2, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useId, useState } from 'react'
 import { toast } from 'sonner'
 import { authClient } from '@/lib/auth-client'
@@ -12,6 +13,7 @@ import { authClient } from '@/lib/auth-client'
  * be undone.
  */
 export function AccountDataControls({ email }: { email: string }) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [typed, setTyped] = useState('')
   const [busy, setBusy] = useState(false)
@@ -30,7 +32,8 @@ export function AccountDataControls({ email }: { email: string }) {
       if (!response.ok) throw new Error(body?.error ?? 'Nepavyko ištrinti paskyros.')
       toast.success('Paskyra ištrinta.')
       await authClient.signOut().catch(() => {})
-      window.location.assign('/')
+      router.push('/')
+      router.refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Nepavyko ištrinti paskyros.')
       setBusy(false)

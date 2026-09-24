@@ -26,10 +26,11 @@ describe('countAccess', () => {
         { status: 'active', trialEndsAt: past, trialStartedAt: past, currentPeriodEnd: future, provider: 'stripe' },
         { status: 'canceled', trialEndsAt: past, trialStartedAt: past, currentPeriodEnd: future, provider: 'stripe' },
         { status: 'trialing', trialEndsAt: past, trialStartedAt: past, currentPeriodEnd: null, provider: null },
+        { status: 'expired', trialEndsAt: past, trialStartedAt: past, currentPeriodEnd: past, adminAccessUntil: future, provider: 'stripe' },
       ],
       now,
     )
-    expect(counts).toEqual({ free: 1, trial: 1, active: 1, ending: 1, expired: 1 })
+    expect(counts).toEqual({ free: 1, trial: 1, active: 2, ending: 1, expired: 1 })
     expect(payingStripe).toBe(1)
   })
 })

@@ -34,13 +34,28 @@ jobs:
         run: pnpm audit --prod --audit-level high
 
   browser:
-    # The public pages in a real browser: they must render from a production
-    # build with no database reachable, keep one h1, never scroll sideways, and
-    # pass axe at 1440 px and on a phone.
+    # Public pages plus one authenticated member journey in a real browser.
+    # The database is an isolated service container; production is never read.
     runs-on: ubuntu-latest
     # The suite takes about a minute. On 09-23 a runner hung for 40+ minutes on
     # a commit that passes locally in 43 s; a hung job should fail fast instead.
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: statyk
+          POSTGRES_PASSWORD: statyk
+          POSTGRES_DB: statyk_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U statyk -d statyk_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://statyk:statyk@127.0.0.1:5432/statyk_test
+      BETTER_AUTH_SECRET: ci-only-secret-at-least-thirty-two-characters
+      BETTER_AUTH_URL: http://127.0.0.1:3210
+      E2E_PORT: '3210'
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -50,6 +65,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
+      - name: Seed isolated member database
+        run: node --experimental-strip-types scripts/seed-member-ci.ts
       - run: pnpm build
       - run: pnpm test:e2e
         env:

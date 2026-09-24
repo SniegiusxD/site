@@ -55,7 +55,9 @@ export function TelegramCard() {
   }, [])
 
   useEffect(() => {
-    if (account.access.hasAccess) load()
+    if (!account.access.hasAccess) return
+    const frame = requestAnimationFrame(() => { void load() })
+    return () => cancelAnimationFrame(frame)
   }, [load, account.access.hasAccess])
 
   useEffect(() => () => {
