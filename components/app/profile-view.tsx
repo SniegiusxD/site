@@ -12,6 +12,7 @@ import { formatEdge, formatEuro } from '@/lib/format-lt'
 import type { ActiveBet } from '@/lib/types'
 import { signedEuro } from './value-chart'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
+import { SuggestBook } from './suggest-book'
 import { DAILY_BET_CHOICES, KELLY_CHOICES } from '@/lib/preferences'
 import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
 import { useAccount } from './account-provider'
@@ -110,6 +111,7 @@ export function ProfileView() {
             )
           })}
         </div>
+        <SuggestBook />
       </Section>
 
       <Section title="Kokius signalus rodyti">

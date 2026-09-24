@@ -187,6 +187,19 @@ export function ensureAppSchema(): Promise<void> {
         ON execution_event ("signalId", "at");
       CREATE INDEX IF NOT EXISTS execution_event_user_idx
         ON execution_event ("userId", "at" DESC);
+
+      -- A member asking for a bookmaker we do not cover yet. A vote only.
+      CREATE TABLE IF NOT EXISTS book_request (
+        id TEXT PRIMARY KEY,
+        "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        country TEXT NOT NULL DEFAULT 'LT',
+        sports TEXT[] NOT NULL DEFAULT '{}',
+        comment TEXT,
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS book_request_user_idx
+        ON book_request ("userId", "createdAt" DESC);
     `)
   })().catch((error) => {
     // Let the next request retry instead of caching a failed migration.
