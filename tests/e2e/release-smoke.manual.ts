@@ -64,6 +64,11 @@ async function main() {
       return new URL(page.url()).pathname
     })
 
+    await check('returning from checkout does not skip onboarding', async () => {
+      await page.goto(`${ORIGIN}/profilis?billing=success#prenumerata`)
+      expect(page.url().includes('/pradzia'), `landed on ${page.url()}`)
+    })
+
     await check('onboarding', async () => {
       const response = await http.post('/api/onboarding', {
         data: {
@@ -72,6 +77,11 @@ async function main() {
         },
       })
       expect(response.ok(), `status ${response.status()}`)
+    })
+
+    await check('onboarding is not asked twice', async () => {
+      await page.goto(`${ORIGIN}/pradzia`)
+      expect(page.url().includes('/signalai'), `landed on ${page.url()}`)
     })
 
     await check('free board', async () => {

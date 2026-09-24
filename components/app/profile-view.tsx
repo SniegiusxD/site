@@ -200,6 +200,12 @@ export function ProfileView() {
       <Section title="Paskyra">
         <p>{email}</p>
         <p className="mt-1 text-haze">{plan}</p>
+        <p className="mt-3 text-[0.95rem] text-haze">
+          Nori viską nustatyti iš naujo, žingsnis po žingsnio?{' '}
+          <Link href="/pradzia?is_naujo" className="text-chalk underline decoration-rail-strong underline-offset-4 hover:decoration-chalk">
+            Pereiti pradžią dar kartą
+          </Link>
+        </p>
         <button
           type="button"
           onClick={signOut}
