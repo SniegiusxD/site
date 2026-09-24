@@ -121,33 +121,16 @@ function usePinned() {
 
 /** Signals the member hid on this device. A convenience only, so browser storage is fine. */
 function useHiddenSignals(signals: LiveSignal[]) {
-  const [hidden, setHidden] = useState<Set<string>>(() => new Set())
+  const [stored, save] = useStoredState(HIDDEN_KEY, stringSet, NO_IDS)
 
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(HIDDEN_KEY)
-      if (raw) setHidden(new Set(JSON.parse(raw) as string[]))
-    } catch {
-      // Private windows can refuse storage; hiding then lasts for this visit.
-    }
-  }, [])
-
-  const save = useCallback((next: Set<string>) => {
-    setHidden(next)
-    try {
-      window.localStorage.setItem(HIDDEN_KEY, JSON.stringify([...next]))
-    } catch {
-      // See above.
-    }
-  }, [])
-
-  // Forget signals that left the board so the list does not grow forever.
-  useEffect(() => {
-    if (hidden.size === 0 || signals.length === 0) return
+  // Signals that left the board are forgotten here, and dropped from storage
+  // with the next hide or restore, so the list does not grow forever.
+  const hidden = useMemo(() => {
+    if (stored.size === 0 || signals.length === 0) return stored
     const present = new Set(signals.map((signal) => signal.id))
-    const kept = [...hidden].filter((id) => present.has(id))
-    if (kept.length !== hidden.size) save(new Set(kept))
-  }, [signals, hidden, save])
+    const kept = [...stored].filter((id) => present.has(id))
+    return kept.length === stored.size ? stored : new Set(kept)
+  }, [stored, signals])
 
   return [hidden, save] as const
 }
