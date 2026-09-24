@@ -34,6 +34,8 @@ describe('SQL', () => {
     expect(RESULTS_SQL).toContain("WHEN 'half_lost' THEN -ub.stake / 2")
     expect(RESULTS_SQL).toContain('IS DISTINCT FROM sr.outcome')
     expect(CLOSINGS_SQL).toContain('IS DISTINCT FROM scp.closing_fair_prob')
+    // Round 23: a published row with no exact close must not erase an existing close.
+    expect(CLOSINGS_SQL).toContain('scp.closing_fair_prob IS NOT NULL')
   })
 })
 

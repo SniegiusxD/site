@@ -87,6 +87,10 @@ UPDATE user_bet ub
   FROM signal_closing_price scp
  WHERE scp.signal_id = ub."signalId"
    AND ($1::text IS NULL OR ub."userId" = $1::text)
+   -- Since Round 23 the VM publishes a row for every signal, with a NULL price
+   -- when no exact close was captured. Missing evidence must never erase a
+   -- close the bet already has.
+   AND scp.closing_fair_prob IS NOT NULL
    AND (ub."closingFairProb" IS DISTINCT FROM scp.closing_fair_prob
         OR ub."closingCapturedAt" IS DISTINCT FROM scp.closing_captured_at)`
 
