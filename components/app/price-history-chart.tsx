@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { formatEdge, formatOdds } from '@/lib/format-lt'
+import { useApi } from '@/lib/use-api'
 import type { BookName } from '@/lib/landing-signals'
 import { BookMark } from '@/components/landing/book-mark'
 
@@ -13,24 +13,12 @@ type Point = { book: BookName; odds: number; at: string }
  * flat line that looks like stability.
  */
 export function PriceHistoryChart({ signalId, book, fairOdds }: { signalId: string; book: BookName; fairOdds: number }) {
-  // Keyed by signal, so switching signals shows nothing rather than the
-  // previous signal's history while the new one loads.
-  const [loaded, setLoaded] = useState<{ id: string; points: Point[] } | null>(null)
+  // Switching signals shows nothing rather than the previous signal's history
+  // while the new one loads; a failed request reads as no history yet.
+  const { data, error, loading } = useApi<{ points?: Point[] }>(`/api/signals/${encodeURIComponent(signalId)}/history`)
+  if (loading || (!data && !error)) return null
 
-  useEffect(() => {
-    const controller = new AbortController()
-    fetch(`/api/signals/${encodeURIComponent(signalId)}/history`, { cache: 'no-store', signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : { points: [] }))
-      .then((body) => setLoaded({ id: signalId, points: (body.points ?? []) as Point[] }))
-      .catch(() => {
-        if (!controller.signal.aborted) setLoaded({ id: signalId, points: [] })
-      })
-    return () => controller.abort()
-  }, [signalId])
-
-  if (!loaded || loaded.id !== signalId) return null
-
-  const mine = loaded.points.filter((point) => point.book === book)
+  const mine = (error ? [] : (data?.points ?? [])).filter((point) => point.book === book)
   if (mine.length < 2) {
     return (
       <p className="mt-4 text-[0.9rem] text-haze">
