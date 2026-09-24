@@ -26,6 +26,7 @@ export const MEMBER_TABLES = [
   'billing_event',
   'execution_event',
   'book_request',
+  'feedback',
 ] as const
 
 /** Columns that are the site's own machinery, not the member's data. */

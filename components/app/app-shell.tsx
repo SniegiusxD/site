@@ -1,7 +1,7 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
-import { Activity, LogOut, ReceiptText, UserRound } from 'lucide-react'
+import { Activity, LifeBuoy, LogOut, ReceiptText, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
@@ -15,7 +15,12 @@ const NAV = [
   { href: '/signalai', label: 'Signalai', icon: Activity },
   { href: '/statymai', label: 'Statymai', icon: ReceiptText },
   { href: '/profilis', label: 'Profilis', icon: UserRound },
+  { href: '/pagalba', label: 'Pagalba', icon: LifeBuoy },
 ]
+
+/** Help carries the page it was opened from, so a bug report says where it happened. */
+const hrefFrom = (href: string, pathname: string) =>
+  href === '/pagalba' && !pathname.startsWith('/pagalba') ? `/pagalba?is=${encodeURIComponent(pathname)}` : href
 
 const KELLY_NAME: Record<number, string> = { 0.125: '⅛ Kelly', 0.25: '¼ Kelly', 0.5: '½ Kelly' }
 
@@ -53,7 +58,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             return (
               <Link
                 key={href}
-                href={href}
+                href={hrefFrom(href, pathname)}
                 aria-current={active ? 'page' : undefined}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 font-medium transition-colors ${
                   active ? 'bg-stand text-chalk' : 'text-haze hover:bg-stand/60 hover:text-chalk'
@@ -137,7 +142,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           return (
             <Link
               key={href}
-              href={href}
+              href={hrefFrom(href, pathname)}
               aria-current={active ? 'page' : undefined}
               className={`flex flex-col items-center gap-1 py-2.5 text-[0.75rem] font-medium ${active ? 'text-chalk' : 'text-haze-dim'}`}
             >

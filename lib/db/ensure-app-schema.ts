@@ -200,6 +200,21 @@ export function ensureAppSchema(): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS book_request_user_idx
         ON book_request ("userId", "createdAt" DESC);
+
+      -- What members tell us from the help page: a bug, an idea, a sport or
+      -- market they want. contactOk says whether we may answer by email.
+      CREATE TABLE IF NOT EXISTS feedback (
+        id TEXT PRIMARY KEY,
+        "userId" TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL CHECK (kind IN ('bug', 'idea', 'market', 'other')),
+        message TEXT NOT NULL,
+        page TEXT,
+        "contactOk" BOOLEAN NOT NULL DEFAULT FALSE,
+        status TEXT NOT NULL DEFAULT 'new',
+        "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS feedback_created_idx ON feedback ("createdAt" DESC);
+      CREATE INDEX IF NOT EXISTS feedback_user_idx ON feedback ("userId", "createdAt" DESC);
     `)
   })().catch((error) => {
     // Let the next request retry instead of caching a failed migration.

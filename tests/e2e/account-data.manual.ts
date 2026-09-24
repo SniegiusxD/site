@@ -13,7 +13,7 @@ const email = `e2e-check-${Date.now()}-delete@example.com`
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
 const api = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const step = (label: string, value: unknown) => console.log(`✓ ${label}:`, typeof value === 'string' ? value : JSON.stringify(value))
-const TABLES = ['user_settings', 'subscription', 'bankroll_entry', 'user_bet', 'bet_edit', 'book_limit_event', 'telegram_account', 'telegram_preset', 'telegram_sent', 'telegram_link_token', 'billing_event', 'execution_event', 'book_request', 'session', 'account']
+const TABLES = ['user_settings', 'subscription', 'bankroll_entry', 'user_bet', 'bet_edit', 'book_limit_event', 'telegram_account', 'telegram_preset', 'telegram_sent', 'telegram_link_token', 'billing_event', 'execution_event', 'book_request', 'feedback', 'session', 'account']
 
 async function main() {
   if (!process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')) throw new Error('needs a Stripe TEST key')

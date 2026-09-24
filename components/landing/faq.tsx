@@ -12,7 +12,8 @@ const negativeInTen = Math.round(
 
 const linkClass = 'text-chalk underline decoration-rail-strong underline-offset-4 hover:decoration-chalk'
 
-const QUESTIONS: Array<{ q: string; a: React.ReactNode }> = [
+/** Shared with the in-app help page. */
+export const FAQ_QUESTIONS: Array<{ q: string; a: React.ReactNode }> = [
   {
     q: 'Ar tikrai uždirbsiu?',
     a: (
@@ -84,7 +85,7 @@ export function Faq() {
         <Reveal>
           <h2 className="mb-[clamp(32px,4vw,56px)] text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[0.95]">Dažni klausimai</h2>
         </Reveal>
-        <FaqList items={QUESTIONS} />
+        <FaqList items={FAQ_QUESTIONS} />
       </div>
     </section>
   )
