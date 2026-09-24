@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { AlertTriangle, CreditCard, Loader2, RotateCcw } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { CANCEL_REASONS } from '@/lib/billing/cancel-reasons'
@@ -26,16 +26,23 @@ const dateOf = (iso: string | null) => (iso ? kickoffLabel(iso).replace(/\s\d{2}
 export function BillingCard() {
   const router = useRouter()
   const [status, setStatus] = useState<Status | null>(null)
-  const [busy, setBusy] = useState<'checkout' | 'portal' | 'sync' | 'cancel' | 'resume' | null>(null)
+  // Back from Checkout or the portal: the card says it is confirming from the first frame.
+  const params = useSearchParams()
+  const from = params.get('billing')
+  const returning = (from === 'success' && Boolean(params.get('session_id'))) || from === 'portal'
+  const [busy, setBusy] = useState<'checkout' | 'portal' | 'sync' | 'cancel' | 'resume' | null>(returning ? 'sync' : null)
   const [leaving, setLeaving] = useState(false)
   const [reason, setReason] = useState<string | null>(null)
   const returned = useRef(false)
   const reduced = useReducedMotion()
 
-  const load = useCallback(async () => {
-    const response = await fetch('/api/billing/status', { cache: 'no-store' })
-    if (response.ok) setStatus(await response.json())
-  }, [])
+  const load = useCallback(
+    () =>
+      fetch('/api/billing/status', { cache: 'no-store' }).then(async (response) => {
+        if (response.ok) setStatus(await response.json())
+      }),
+    [],
+  )
 
   useEffect(() => {
     load()
@@ -49,7 +56,6 @@ export function BillingCard() {
     const from = params.get('billing')
     if (!(from === 'success' && sessionId) && from !== 'portal') return
     returned.current = true
-    setBusy('sync')
     fetch('/api/billing/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
