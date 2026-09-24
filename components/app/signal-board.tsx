@@ -87,6 +87,25 @@ const SORTS: Array<{ key: SortKey; label: string }> = [
   { key: 'moving', label: 'Labiausiai juda' },
 ]
 
+/** The filters and sort a member left the board with, on this device. */
+type StoredView = { sort: SortKey; drift: 'all' | 'down' | 'up'; sports: string[]; markets: string[]; periods: string[] }
+const DEFAULT_VIEW: StoredView = { sort: 'value', drift: 'all', sports: [], markets: [], periods: [] }
+
+const strings = (value: unknown) => (Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [])
+
+/** Whatever part of a stored view still makes sense; the rest is the default. */
+function parseView(value: unknown): StoredView | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  const view = value as Record<string, unknown>
+  return {
+    sort: SORTS.find((option) => option.key === view.sort)?.key ?? 'value',
+    drift: view.drift === 'down' || view.drift === 'up' ? view.drift : 'all',
+    sports: strings(view.sports),
+    markets: strings(view.markets),
+    periods: strings(view.periods),
+  }
+}
+
 type Pulse = 'new' | 'up' | 'down'
 
 function useIsDesktop() {
@@ -162,12 +181,7 @@ export function SignalBoard({
   const [refreshing, setRefreshing] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [sport, setSport] = useState<string | null>(null)
-  const [sportsPicked, setSportsPicked] = useState<string[]>([])
-  const [markets, setMarkets] = useState<string[]>([])
-  const [periods, setPeriods] = useState<string[]>([])
-  const [drift, setDrift] = useState<'all' | 'down' | 'up'>('all')
   const [search, setSearch] = useState('')
-  const [sort, setSort] = useState<SortKey>('value')
   const [onlyNew, setOnlyNew] = useState(false)
   // The moment this member last had the board open, on this device. Read once,
   // then frozen for the visit so rows do not stop being new while being read.
@@ -185,28 +199,24 @@ export function SignalBoard({
 
   // The board a member left is the board they expect to come back to. Their own
   // device only: these are view choices, not account settings.
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(VIEW_KEY)
-      if (!raw) return
-      const view = JSON.parse(raw) as Partial<{ sort: SortKey; drift: 'all' | 'down' | 'up'; sports: string[]; markets: string[]; periods: string[] }>
-      if (view.sort && SORTS.some((option) => option.key === view.sort)) setSort(view.sort)
-      if (view.drift === 'down' || view.drift === 'up') setDrift(view.drift)
-      if (Array.isArray(view.sports)) setSportsPicked(view.sports)
-      if (Array.isArray(view.markets)) setMarkets(view.markets)
-      if (Array.isArray(view.periods)) setPeriods(view.periods)
-    } catch {
-      // A blocked or broken store just means the default board.
+  const [view, setView] = useStoredState(VIEW_KEY, parseView, DEFAULT_VIEW)
+  const { sort, drift, sports: sportsPicked, markets, periods } = view
+  const { setSort, setDrift, setSportsPicked, setMarkets, setPeriods } = useMemo(() => {
+    const field =
+      <K extends keyof StoredView>(key: K) =>
+      (next: StoredView[K] | ((current: StoredView[K]) => StoredView[K])) =>
+        setView((current) => ({
+          ...current,
+          [key]: typeof next === 'function' ? (next as (value: StoredView[K]) => StoredView[K])(current[key]) : next,
+        }))
+    return {
+      setSort: field('sort'),
+      setDrift: field('drift'),
+      setSportsPicked: field('sports'),
+      setMarkets: field('markets'),
+      setPeriods: field('periods'),
     }
-  }, [])
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(VIEW_KEY, JSON.stringify({ sort, drift, sports: sportsPicked, markets, periods }))
-    } catch {
-      // See above.
-    }
-  }, [sort, drift, sportsPicked, markets, periods])
+  }, [setView])
   const [showClosed, setShowClosed] = useState(false)
   const [showHidden, setShowHidden] = useState(false)
   const [selected, setSelected] = useState<BoardRow | null>(null)
