@@ -1,0 +1,26 @@
+name: Monitor
+
+# Every 30 minutes: is the live site answering, and has the scanner published
+# in the last 90 minutes? A failed scheduled run makes GitHub email the repo
+# owner — the alert that was missing when the scanner stood still for 3.5 hours
+# on 2026-09-24. Runs from GitHub, so it also fires when the VM itself is down.
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Site and scanner health
+        run: |
+          for attempt in 1 2 3; do
+            status=$(curl -s -o body.json -w '%{http_code}' --max-time 30 https://predictions-dashboard-two.vercel.app/api/health || echo 000)
+            echo "attempt $attempt: HTTP $status $(cat body.json 2>/dev/null)"
+            if [ "$status" = "200" ]; then exit 0; fi
+            sleep 60
+          done
+          echo "::error title=Statyk health::HTTP $status $(cat body.json 2>/dev/null)"
+          exit 1

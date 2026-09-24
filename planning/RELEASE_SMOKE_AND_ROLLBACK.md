@@ -100,6 +100,16 @@ npx vercel logs <deployment-url> --since 1h | grep -E "client-error|server-error
 
 A new error that names the new release is a reason to roll back (below).
 
+## 3c. Health monitor
+
+`/api/health` answers 200 when the database responds and the scanner published
+within 90 minutes, 503 otherwise (`problem`: `stale`, `no-status`,
+`database`). `.github/workflows/monitor.yml` calls it at :07 and :37 every hour
+from GitHub, with three tries a minute apart; a failed run makes GitHub email
+the repository owner. It only runs from the default branch, so it starts
+working once it is on `main`. Run it by hand from the Actions tab
+(workflow_dispatch) after a release.
+
 ## 4. Rollback
 
 **Code.** Vercel keeps every deployment. Promote the previous good one:
