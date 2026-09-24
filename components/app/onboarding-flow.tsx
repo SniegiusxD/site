@@ -55,6 +55,7 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
   const [step, setStep] = useState(0)
   const [direction, setDirection] = useState(1)
   const [pending, setPending] = useState(false)
+  const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // Asked last, once the member has seen what a signal contains.
   const [notify, setNotify] = useState<NotifyChoice>({ channel: 'site', minEdge: 0.03, quiet: true })
@@ -99,6 +100,10 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
         setError(body?.error ?? 'Nepavyko išsaugoti. Bandyk dar kartą.')
         return
       }
+      // A short beat of "done" before leaving: the last click should feel like
+      // finishing something, not like a page swap. Skipped in calm mode.
+      setDone(true)
+      if (!reduced) await new Promise((resolve) => window.setTimeout(resolve, 450))
       if (notify.channel === 'telegram') {
         // The rules are saved now and apply the moment a chat is connected. A
         // failure here must not undo a finished onboarding: the profile shows
@@ -204,11 +209,22 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
           </button>
           <button
             type="submit"
-            disabled={pending}
+            disabled={pending || done}
             className="inline-flex items-center gap-2 rounded-xl bg-floodlight px-7 py-3.5 font-semibold text-night transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-70"
           >
-            {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
-            {last ? (notify.channel === 'telegram' ? 'Prijungti Telegram' : 'Rodyti signalus') : step === 0 ? 'Supratau' : 'Toliau'}
+            {done ? (
+              <>
+                <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <motion.path d="M20 6 9 17l-5-5" initial={{ pathLength: reduced ? 1 : 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.3, ease: EASE }} />
+                </svg>
+                Paruošta
+              </>
+            ) : (
+              <>
+                {pending && <Loader2 className="size-5 animate-spin" aria-hidden />}
+                {last ? (notify.channel === 'telegram' ? 'Prijungti Telegram' : 'Rodyti signalus') : step === 0 ? 'Supratau' : 'Toliau'}
+              </>
+            )}
           </button>
         </div>
       </form>
