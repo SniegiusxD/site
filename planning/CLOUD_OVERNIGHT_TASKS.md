@@ -142,6 +142,27 @@ reasons. The site should say when CLV is trustworthy:
   coverage share.
 - No layout shift: the label's space is reserved in the first render.
 
+## Task 3 — split the signal board (board t19)
+
+`components/app/signal-board.tsx` is ~1,400 lines holding the board, filters,
+saved views, the locked strip, the daily target, the month dialog wiring, the
+"+1" flight and the phone sheet. After Tasks 0–2, split it into focused files
+under `components/app/board/` (for example `filters.tsx`, `daily-target.tsx`,
+`locked-strip.tsx`, `use-board-preferences.ts`), keeping `SignalBoard` as the
+composition. Rules: behaviour-preserving, one extraction per commit, no prop
+drilling deeper than two levels (use a small context only if it removes it),
+and the logged-in CI test must stay green after every commit.
+
+## Task 4 — one way to fetch data in the browser (board t20)
+
+Client components fetch with hand-written `fetch(...).then(...)` and their own
+loading/error state (`bets-view.tsx`, `billing-card.tsx`, `telegram-card.tsx`,
+`first-steps.tsx`, `month-dialog.tsx`, `trial-recap.tsx`, …). Write one small
+hook in `lib/use-api.ts` (no new dependency): GET with `cache: 'no-store'`,
+`{ data, error, loading, reload }`, abort on unmount, and a JSON error message
+taken from the body's `error` field when present. Move the components onto it
+one per commit, keeping each screen's current loading and error wording.
+
 ## If you finish early
 
 - Task 3: `components/landing/book-mark.tsx` uses `<img>`; move to
