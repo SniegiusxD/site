@@ -70,6 +70,16 @@ export function boardRows(signals: LiveSignal[], filters: BoardFilters, now: Dat
   return { open, closed }
 }
 
+/**
+ * The row a link like /signalai?signal=<id>&book=<book> points at: that book's
+ * row when it is on the board, otherwise the signal's row for another book.
+ */
+export function linkedRow(rows: { open: BoardRow[]; closed: BoardRow[] }, id: string | undefined, book?: string): BoardRow | null {
+  if (!id) return null
+  const all = [...rows.open, ...rows.closed]
+  return all.find((row) => row.signal.id === id && (!book || row.price.book === book)) ?? all.find((row) => row.signal.id === id) ?? null
+}
+
 export function sportsIn(signals: LiveSignal[]): string[] {
   return [...new Set(signals.filter((s) => s.status === 'open').map((s) => s.sport))].sort()
 }

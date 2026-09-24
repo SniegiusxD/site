@@ -7,6 +7,7 @@ import {
   isInterpolatedLabel,
   isStale,
   kickoffLabel,
+  linkedRow,
   ltNumbers,
   ltSelection,
   playablePrice,
@@ -173,5 +174,29 @@ describe('labels', () => {
     expect(isStale('2026-09-14T15:47:00Z', NOW)).toBe(false)
     expect(isStale('2026-09-14T14:00:00Z', NOW)).toBe(true)
     expect(isStale(undefined, NOW)).toBe(true)
+  })
+})
+
+describe('linkedRow', () => {
+  const rows = boardRows([signal(), signal({ id: 'closed', status: 'closed', closedAt: '2026-09-14T15:50:00Z' })], { ...filters, books: [...filters.books] }, NOW)
+
+  it('finds nothing without a link', () => {
+    expect(linkedRow(rows, undefined)).toBeNull()
+  })
+
+  it('opens the linked signal on the linked book', () => {
+    expect(linkedRow(rows, 'ls_1', 'TopSport')?.price.book).toBe('TopSport')
+  })
+
+  it("falls back to the signal's row when that book is not on the board", () => {
+    expect(linkedRow(rows, 'ls_1', 'Betsson')?.signal.id).toBe('ls_1')
+  })
+
+  it('opens a closed signal too, so an old alert still explains itself', () => {
+    expect(linkedRow(rows, 'closed')?.signal.id).toBe('closed')
+  })
+
+  it('finds nothing for a signal that is not on the board', () => {
+    expect(linkedRow(rows, 'gone', 'TopSport')).toBeNull()
   })
 })

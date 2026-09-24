@@ -22,6 +22,7 @@ import {
   boardRows,
   clockLabel,
   isStale,
+  linkedRow,
   ltSelection,
   sportsIn,
   timeUntilLabel,
@@ -179,6 +180,7 @@ export function SignalBoard({
   access,
   firstStepsDismissed = false,
   justUnlocked = false,
+  link,
 }: {
   initial: LiveBoard
   initialBets: BoardBet[]
@@ -187,6 +189,8 @@ export function SignalBoard({
   firstStepsDismissed?: boolean
   /** The trial started a moment ago on the unlock page (?atrakinta=1). */
   justUnlocked?: boolean
+  /** ?signal=<id>&book=<book>: open this signal's detail first. */
+  link?: { signal?: string; book?: string }
 }) {
   const router = useRouter()
   const reduced = useReducedMotion()
@@ -228,7 +232,6 @@ export function SignalBoard({
   }, [setView])
   const [showClosed, setShowClosed] = useState(false)
   const [showHidden, setShowHidden] = useState(false)
-  const [selected, setSelected] = useState<BoardRow | null>(null)
   // The moment the trial starts: the newly visible signals rise in one after
   // another, once. Set from the unlock page (?atrakinta=1) or the locked strip.
   // Read on the server from ?atrakinta=1, so the confirmation line is there in
@@ -384,8 +387,11 @@ export function SignalBoard({
       ).open.length,
     [board.signals, now],
   )
-  const sports = useMemo(() => sportsIn(board.signals), [board.signals])
   const signalsById = useMemo(() => new Map(board.signals.map((signal) => [signal.id, signal])), [board.signals])
+  // A link straight to one signal: /signalai?signal=<id>&book=<book>. Telegram
+  // alerts and shared links land on the detail rather than on the board. Read
+  // from the server's search params once, against the first board.
+  const [selected, setSelected] = useState<BoardRow | null>(() => linkedRow(rows, link?.signal, link?.book))
 
   // Keep the open detail in sync with fresh data; if the signal left the
   // board entirely, keep showing the last copy (it renders as closed).
@@ -396,31 +402,14 @@ export function SignalBoard({
     return { signal: { ...selected.signal, status: 'closed' as const, closedAt: selected.signal.closedAt ?? now.toISOString() }, price: selected.price }
   }, [selected, rows, now])
 
-  useEffect(() => {
-    if (desktop && !selected && visible[0]) setSelected(visible[0])
-  }, [desktop, selected, visible])
+  // On desktop the detail pane is always beside the list, so it opens on the
+  // top signal. Adjusted during render (React re-renders before painting), and
+  // then it is an ordinary selection that a re-sort or a poll does not move.
+  if (desktop && !selected && visible[0]) setSelected(visible[0])
 
-  // A link straight to one signal: /signalai?signal=<id>&book=<book>. Telegram
-  // alerts and shared links land on the detail rather than on the board. After
-  // that the address follows the selection, so a refresh or a copied link opens
-  // the same signal.
-  const deepLinked = useRef(false)
+  // After the first render the address follows the selection, so a refresh or
+  // a copied link opens the same signal.
   useEffect(() => {
-    if (deepLinked.current) return
-    const params = new URLSearchParams(window.location.search)
-    const id = params.get('signal')
-    if (!id) return
-    deepLinked.current = true
-    const book = params.get('book')
-    const match =
-      [...rows.open, ...rows.closed].find((row) => row.signal.id === id && (!book || row.price.book === book)) ??
-      [...rows.open, ...rows.closed].find((row) => row.signal.id === id)
-    if (match) setSelected(match)
-  }, [rows])
-
-  useEffect(() => {
-    // Wait for the deep link to be read, or the first render would erase it.
-    if (!deepLinked.current && new URLSearchParams(window.location.search).get('signal')) return
     const target = selected
       ? `/signalai?signal=${encodeURIComponent(selected.signal.id)}&book=${encodeURIComponent(selected.price.book)}`
       : '/signalai'
