@@ -2,10 +2,11 @@
 
 import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useFocusTrap } from '@/lib/use-focus-trap'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { useApi } from '@/lib/use-api'
 import { Loader2, X } from 'lucide-react'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { BankrollEntry } from '@/lib/account-store'
 import { formatEuro } from '@/lib/format-lt'
@@ -55,12 +56,9 @@ function OpenBankrollDialog({ onClose }: { onClose: () => void }) {
   const titleId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    window.setTimeout(() => inputRef.current?.focus(), 60)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  // Focus starts in the amount field, stays in the dialog, and returns on close.
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, true, onClose, inputRef)
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -112,6 +110,8 @@ function OpenBankrollDialog({ onClose }: { onClose: () => void }) {
           onClick={onClose}
         >
           <motion.div
+            ref={dialogRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}

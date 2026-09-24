@@ -2,10 +2,11 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
-import { useEffect, useId, useMemo } from 'react'
+import { useId, useMemo, useRef } from 'react'
 import { formatInteger } from '@/lib/format-lt'
 import { monthProgress } from '@/lib/month-progress'
 import { useApi } from '@/lib/use-api'
+import { useFocusTrap } from '@/lib/use-focus-trap'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -29,12 +30,9 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
     [data, error],
   )
 
-  useEffect(() => {
-    if (!open) return
-    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  // Focus moves in, stays in, and returns to the "Mėnuo" button; Escape closes.
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, open, onClose)
 
   const m = useMemo(() => (placed ? monthProgress(placed, now, dailyTarget) : null), [placed, now, dailyTarget])
   const peak = m ? Math.max(dailyTarget, ...m.perDay) * 1.15 : 1
@@ -51,6 +49,8 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
           onClick={onClose}
         >
           <motion.div
+            ref={dialogRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}

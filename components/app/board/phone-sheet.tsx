@@ -1,6 +1,8 @@
 'use client'
 
 import { AnimatePresence, motion, useDragControls } from 'framer-motion'
+import { useRef } from 'react'
+import { useFocusTrap } from '@/lib/use-focus-trap'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -8,15 +10,20 @@ const EASE = [0.22, 1, 0.36, 1] as const
 /**
  * The signal detail on phones: a full-screen sheet that rises from the bottom.
  * Pull the handle down to close; only the handle starts a drag, so the content
- * still scrolls.
+ * still scrolls. Escape closes it too.
  */
 export function PhoneSheet({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
   const reduced = useReducedMotion()
   const drag = useDragControls()
+  // Focus moves into the sheet, stays there, and returns to the row; Escape closes it.
+  const sheetRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(sheetRef, open, onClose)
   return (
     <AnimatePresence>
       {open && (
         <motion.div
+          ref={sheetRef}
+          tabIndex={-1}
           role="dialog"
           aria-modal="true"
           aria-label="Signalo informacija"
