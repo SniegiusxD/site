@@ -38,6 +38,7 @@ import {
 import { sportName } from '@/lib/sports-lt'
 import type { Access } from '@/lib/subscription'
 import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
+import { stringSet, useStoredState } from '@/lib/use-stored-state'
 import { useAccount } from './account-provider'
 import { ChipGroup } from './chip-group'
 import { FilterChip, FilterOption } from './filter-chip'
@@ -59,6 +60,8 @@ const HIDDEN_KEY = 'hidden-signals'
 const VIEW_KEY = 'board-view'
 const SEEN_KEY = 'board-last-visit'
 const PINNED_KEY = 'pinned-events'
+// The fallback for a stored id list: one shared, never-mutated empty set.
+const NO_IDS: Set<string> = new Set()
 const SAVED_KEY = 'board-saved-views'
 
 /** One fixture, however many lines of it are published. */
@@ -100,30 +103,18 @@ function useIsDesktop() {
 
 /** Fixtures the member is watching. Keyed by event, so every line of the same match pins together. */
 function usePinned() {
-  const [pinned, setPinned] = useState<Set<string>>(() => new Set())
+  const [pinned, setPinned] = useStoredState(PINNED_KEY, stringSet, NO_IDS)
 
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(PINNED_KEY)
-      if (raw) setPinned(new Set(JSON.parse(raw) as string[]))
-    } catch {
-      // Without storage, pinning simply lasts for this visit.
-    }
-  }, [])
-
-  const toggle = useCallback((key: string) => {
-    setPinned((current) => {
-      const next = new Set(current)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      try {
-        window.localStorage.setItem(PINNED_KEY, JSON.stringify([...next]))
-      } catch {
-        // See above.
-      }
-      return next
-    })
-  }, [])
+  const toggle = useCallback(
+    (key: string) =>
+      setPinned((current) => {
+        const next = new Set(current)
+        if (next.has(key)) next.delete(key)
+        else next.add(key)
+        return next
+      }),
+    [setPinned],
+  )
 
   return [pinned, toggle] as const
 }
