@@ -14,8 +14,11 @@ export function CopyButton({
   /** What is being copied, for screen readers: "Kopijuoti: {label}". */
   label: string
   className?: string
-  /** 'full' copies the whole bet and shows no word, to sit beside the plain one. */
-  icon?: 'full'
+  /**
+   * 'full' copies the whole bet and shows no word, to sit beside the plain one.
+   * 'plain' is the usual icon without the word, for a dense row.
+   */
+  icon?: 'full' | 'plain'
   /** Called once the text is on the clipboard. */
   onCopied?: () => void
 }) {
@@ -49,7 +52,7 @@ export function CopyButton({
       } ${className}`}
     >
       {copied ? <Check className="size-4" aria-hidden /> : icon === 'full' ? <ClipboardList className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
-      {icon === 'full' ? null : <span>{copied ? 'Nukopijuota' : 'Kopijuoti'}</span>}
+      {icon ? null : <span>{copied ? 'Nukopijuota' : 'Kopijuoti'}</span>}
     </button>
   )
 }
