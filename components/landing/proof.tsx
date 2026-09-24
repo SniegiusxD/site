@@ -1,7 +1,9 @@
 'use client'
 
+import type { TrustLabel } from '@/lib/close-evidence'
 import { EVIDENCE, evidencePeriod } from '@/lib/evidence'
 import { formatEdge, formatInteger } from '@/lib/format-lt'
+import { ClvTrust } from './clv-trust'
 import { Reveal, Roll, useInViewOnce } from './motion-primitives'
 
 // Fixture-level mean CLV by entry edge, 3,693 surfaced bets with a captured closing
@@ -51,7 +53,8 @@ const UNSURE_FILL =
 
 const clvLabel = (value: number) => (Math.abs(value) < 0.0005 ? '0,0 %' : formatEdge(value))
 
-export function Proof() {
+/** closeTrust: the scanner's current verdict on closing prices, read by the page. */
+export function Proof({ closeTrust }: { closeTrust: TrustLabel }) {
   return (
     <section id="duomenys" className="relative scroll-mt-16 overflow-hidden bg-night-alt px-5 py-[clamp(80px,10vw,160px)] sm:px-8">
       <div
@@ -85,6 +88,10 @@ export function Proof() {
               Dar nepakanka duomenų: gali būti atsitiktinumas
             </li>
           </ul>
+        </Reveal>
+        {/* The scanner's own judgement of the closing prices behind CLV, today. */}
+        <Reveal delay={170}>
+          <ClvTrust label={closeTrust} className="mt-4 max-w-[64ch]" />
         </Reveal>
 
         <div className="mt-[clamp(40px,5vw,72px)] grid gap-5 lg:grid-cols-3">

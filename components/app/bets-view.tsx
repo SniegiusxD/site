@@ -30,6 +30,8 @@ import { formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/l
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { kickoffLabel, ltSelection } from '@/lib/live-view'
 import { OUTCOME_LABEL } from '@/lib/member-outcomes'
+import { ClvTrust } from '@/components/landing/clv-trust'
+import type { TrustLabel } from '@/lib/close-evidence'
 import { type SettledSummary, latestSettlement, settledSince } from '@/lib/since-last-visit'
 import { sportName } from '@/lib/sports-lt'
 import type { ActiveBet, BetStatus } from '@/lib/types'
@@ -102,7 +104,8 @@ const splitTags = (text: string) =>
 const tone = (value: number) => (value > 0.004 ? 'text-pitch' : value < -0.004 ? 'text-brick' : 'text-chalk')
 const timeOf = (bet: ActiveBet) => new Date(betTime(bet) ?? 0).getTime()
 
-export function BetsView() {
+/** closeTrust: the scanner's verdict on closing prices, read by the server page. */
+export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
   const [bets, setBets] = useState<ActiveBet[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -297,7 +300,7 @@ export function BetsView() {
           <AnimatePresence>{since && <SinceLastVisit summary={since} onClose={() => setSince(null)} />}</AnimatePresence>
           <ThreeNumbers stats={stats} bets={scoped} />
           <Glossary />
-          <StatGrid stats={stats} bets={scoped} />
+          <StatGrid stats={stats} bets={scoped} closeTrust={closeTrust} />
           <ValueCard series={series} stats={stats} />
           <ProfitCalendar bets={scoped} />
           <WorkQueueNotice bets={scoped} />
@@ -390,7 +393,7 @@ function ThreeNumbers({ stats, bets }: { stats: BetStats; bets: ActiveBet[] }) {
   )
 }
 
-function StatGrid({ stats, bets }: { stats: BetStats; bets: ActiveBet[] }) {
+function StatGrid({ stats, bets, closeTrust }: { stats: BetStats; bets: ActiveBet[]; closeTrust?: TrustLabel }) {
   const execution = executionStats(bets)
   return (
     <>
@@ -406,6 +409,7 @@ function StatGrid({ stats, bets }: { stats: BetStats; bets: ActiveBet[] }) {
         {stats.beatClose} <span className="font-sans text-base font-normal text-haze">iš {stats.withClose}</span>
       </Stat>
     </dl>
+    {closeTrust && <ClvTrust label={closeTrust} className="mt-2.5" />}
 
     {/* What the bookmaker actually gave, against what we showed. Only bets
         recorded since the site began storing the displayed price are counted. */}

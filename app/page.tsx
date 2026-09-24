@@ -13,13 +13,15 @@ import { Proof } from '@/components/landing/proof'
 import { Rights } from '@/components/landing/rights'
 import { SiteFooter } from '@/components/landing/site-footer'
 import { SiteHeader } from '@/components/landing/site-header'
+import { trustLabel } from '@/lib/close-evidence'
+import { loadCloseEvidence } from '@/lib/close-evidence-store'
 import { loadPublicStats } from '@/lib/public-stats'
 
 // The live numbers read the database; rebuild the page at most every 5 minutes.
 export const revalidate = 300
 
 export default async function LandingPage() {
-  const stats = await loadPublicStats()
+  const [stats, closeEvidence] = await Promise.all([loadPublicStats(), loadCloseEvidence()])
   return (
     <>
       <SiteHeader />
@@ -32,7 +34,7 @@ export default async function LandingPage() {
         <ClosingLine />
         <Journey />
         <ProductTiles stats={stats} />
-        <Proof />
+        <Proof closeTrust={trustLabel(closeEvidence)} />
         <Rights />
         <Pricing />
         <Faq />

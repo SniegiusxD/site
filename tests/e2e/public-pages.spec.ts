@@ -72,3 +72,10 @@ test('the demo opens a real signal without an account', async ({ page }) => {
   await expect(page.getByText(/kainos visose kontorose/i).first()).toBeVisible()
   await expect(page.getByText(/tikroji kaina/i).first()).toBeVisible()
 })
+
+test('the proof section says whether CLV can be trusted yet', async ({ page }) => {
+  // CI has no evidence snapshot table: the label must say "not yet", never trusted.
+  await page.goto('/')
+  await expect(page.locator('#duomenys').getByText('CLV dar nepatikimas')).toBeAttached()
+  await expect(page.locator('#duomenys').getByText('CLV patikimas', { exact: true })).toHaveCount(0)
+})

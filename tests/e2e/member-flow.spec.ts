@@ -63,6 +63,8 @@ test('member can onboard, inspect a signal, record it, and open tracker and help
     await page.goto('/statymai')
     await expect(page.getByRole('heading', { name: 'Statymai' })).toBeVisible()
     await expect(page.getByText('Vilniaus Testas – Kauno Testas')).toBeVisible()
+    // No evidence snapshot in CI: CLV is labelled as not yet reliable.
+    await expect(page.getByText('CLV dar nepatikimas')).toBeVisible()
 
     await page.goto('/pagalba')
     await expect(page.getByRole('heading', { name: /Pagalba/ })).toBeVisible()
