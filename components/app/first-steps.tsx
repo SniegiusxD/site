@@ -3,37 +3,51 @@
 import { Check, X } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { FIRST_STEPS_COOKIE } from '@/lib/first-steps'
 import type { BoardBet } from '@/lib/exposure'
 import { useAccount } from './account-provider'
 
 const DISMISS_KEY = 'first-steps-dismissed'
+
+function rememberDismissal() {
+  document.cookie = `${FIRST_STEPS_COOKIE}=1; Path=/; Max-Age=31536000; SameSite=Lax`
+  try {
+    window.localStorage.setItem(DISMISS_KEY, '1')
+  } catch {
+    // The cookie alone is enough.
+  }
+}
 
 /**
  * What a new member has not done yet, from what actually happened rather than a
  * tour: a recorded bet, a settled result, Telegram connected. It disappears on
  * its own when the list is complete, so it never becomes furniture.
  */
-export function FirstSteps({ bets }: { bets: BoardBet[] }) {
+export function FirstSteps({ bets, initiallyDismissed = false }: { bets: BoardBet[]; initiallyDismissed?: boolean }) {
   const { account } = useAccount()
-  // Read once, lazily: the server renders nothing for this component anyway,
-  // and an effect that sets state on mount is a cascading render.
-  const [dismissed, setDismissed] = useState(true)
+  // The server reads the dismissal cookie, so the first frame is already right:
+  // a card that appeared after load pushed the whole list down (layout shift).
+  const [dismissed, setDismissed] = useState(initiallyDismissed)
   // Unknown means "not connected yet" here: a failed or skipped check must not
   // hide the whole checklist.
   const [telegram, setTelegram] = useState(false)
   const [settled, setSettled] = useState(false)
 
+  // Dismissals from before the cookie lived only in localStorage: carry them
+  // over once, so they are known to the server from the next visit on.
   useEffect(() => {
+    if (initiallyDismissed) return
     let stored = false
     try {
       stored = window.localStorage.getItem(DISMISS_KEY) === '1'
     } catch {
       stored = false
     }
-    // Deferred so the read is not a synchronous set inside the effect body.
-    const id = window.setTimeout(() => setDismissed(stored), 0)
+    if (!stored) return
+    rememberDismissal()
+    const id = window.setTimeout(() => setDismissed(true), 0)
     return () => window.clearTimeout(id)
-  }, [])
+  }, [initiallyDismissed])
 
   useEffect(() => {
     fetch('/api/bets', { cache: 'no-store' })
@@ -74,11 +88,7 @@ export function FirstSteps({ bets }: { bets: BoardBet[] }) {
           aria-label="Paslėpti pirmus žingsnius"
           onClick={() => {
             setDismissed(true)
-            try {
-              window.localStorage.setItem(DISMISS_KEY, '1')
-            } catch {
-              // Hiding then lasts for this visit only.
-            }
+            rememberDismissal()
           }}
           className="grid size-8 shrink-0 place-items-center rounded-lg text-haze-dim hover:bg-rail hover:text-chalk"
         >

@@ -164,10 +164,13 @@ export function SignalBoard({
   initial,
   initialBets,
   access,
+  firstStepsDismissed = false,
 }: {
   initial: LiveBoard
   initialBets: BoardBet[]
   access: Access
+  /** From the kr-first-steps cookie, so the checklist is right in the first frame. */
+  firstStepsDismissed?: boolean
 }) {
   const router = useRouter()
   const reduced = useReducedMotion()
@@ -853,7 +856,7 @@ export function SignalBoard({
           {loadError && <Notice>{loadError}</Notice>}
 
           {board.tier === 'free' && access.state === 'expired' && <TrialRecap />}
-          <FirstSteps bets={bets} />
+          <FirstSteps bets={bets} initiallyDismissed={firstStepsDismissed} />
 
           {board.tier === 'free' && (
             <LockedStrip

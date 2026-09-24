@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import { SignalBoard } from '@/components/app/signal-board'
 import { brand } from '@/lib/brand'
+import { FIRST_STEPS_COOKIE } from '@/lib/first-steps'
 import { freeBoard } from '@/lib/free-tier'
 import { loadLiveBoard } from '@/lib/live-signals'
 import { loadRecentBets } from '@/lib/recent-bets'
@@ -16,7 +18,14 @@ export const dynamic = 'force-dynamic'
 export default async function SignalsPage() {
   const user = await getSessionUser()
   if (!user) return null
-  const [access, board, bets] = await Promise.all([getAccess(user.id), loadLiveBoard(), loadRecentBets(user.id)])
+  const [access, board, bets, jar] = await Promise.all([getAccess(user.id), loadLiveBoard(), loadRecentBets(user.id), cookies()])
   // Free accounts never receive the locked signals, only their headline value.
-  return <SignalBoard initial={access.hasAccess ? board : freeBoard(board)} initialBets={bets} access={access} />
+  return (
+    <SignalBoard
+      initial={access.hasAccess ? board : freeBoard(board)}
+      initialBets={bets}
+      access={access}
+      firstStepsDismissed={jar.get(FIRST_STEPS_COOKIE)?.value === '1'}
+    />
+  )
 }
