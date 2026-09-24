@@ -20,6 +20,7 @@ import { clockLabel } from '@/lib/live-view'
 import { ApiError, fetchJson, useApi } from '@/lib/use-api'
 import { useAccount } from './account-provider'
 import { FilterChip, FilterOption } from './filter-chip'
+import { LoadError } from './load-error'
 
 const SAVE_DELAY_MS = 600
 const LINK_POLL_MS = 3000
@@ -163,7 +164,16 @@ export function TelegramCard() {
   }
 
   if (!state) {
-    return error ? <p className="text-brick">{error}</p> : <Loader2 className="size-5 animate-spin text-haze" aria-label="Įkeliama" />
+    if (loaded.error && !loaded.loading) {
+      return <LoadError error={loaded.error} what="Telegram nustatymų" onRetry={loaded.reload} />
+    }
+    if (commandError) return <p className="text-brick">{commandError}</p>
+    return (
+      <p role="status" className="flex items-center gap-2 text-haze">
+        <Loader2 className="size-5 animate-spin" aria-hidden />
+        <span className="sr-only">Įkeliami Telegram nustatymai…</span>
+      </p>
+    )
   }
 
   const s = state.settings
