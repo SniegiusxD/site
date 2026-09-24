@@ -39,6 +39,7 @@ import { sportName } from '@/lib/sports-lt'
 import type { ActiveBet, BetStatus } from '@/lib/types'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { useAccount } from './account-provider'
+import { LoadError } from './load-error'
 import { ChipGroup } from './chip-group'
 import { ProfitCalendar } from './profit-calendar'
 import { Segmented } from './segmented'
@@ -113,7 +114,6 @@ const timeOf = (bet: ActiveBet) => new Date(betTime(bet) ?? 0).getTime()
 export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
   const { data, error: loadError, loading, reload: load, settledAt } = useApi<{ bets: ActiveBet[] }>('/api/bets')
   const bets = data?.bets ?? null
-  const error = loadError ? 'Nepavyko įkelti statymų. Bandyk dar kartą.' : null
   const [period, setPeriod] = useState<Period>('month')
   const [book, setBook] = useState('')
   const [sport, setSport] = useState('')
@@ -187,12 +187,16 @@ export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
       </div>
       <p className="mt-2 text-haze">Rezultatai suvedami automatiškai, kai rungtynės baigiasi.</p>
 
-      {error && <p role="alert" className="mt-6 rounded-xl bg-brick-soft px-4 py-3 text-brick">{error}</p>}
+      {loadError && <LoadError error={loadError} what="statymų" onRetry={load} retrying={loading} className="mt-6" />}
 
       {bets === null ? (
-        <div className="grid place-items-center py-24 text-haze">
-          <Loader2 className="size-6 animate-spin" aria-hidden />
-        </div>
+        // Until the first list arrives; after a failure the message above replaces it.
+        !loadError || loading ? (
+          <div role="status" className="grid place-items-center py-24 text-haze">
+            <Loader2 className="size-6 animate-spin" aria-hidden />
+            <span className="sr-only">Įkeliam statymus…</span>
+          </div>
+        ) : null
       ) : bets.length === 0 ? (
         <div className="mt-10 rounded-2xl bg-stand p-8 text-center hairline">
           <p className="font-display text-3xl font-bold">Dar nepažymėjai nė vieno statymo</p>
