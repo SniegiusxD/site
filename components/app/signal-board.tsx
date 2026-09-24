@@ -1,7 +1,7 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
-import { AnimatePresence, motion, useDragControls } from 'framer-motion'
+import { AnimatePresence, motion, useAnimate, useDragControls } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { AlertTriangle, ArrowDown, ArrowUp, Bell, Check, ChevronDown, Eye, Lock, RefreshCw, Plus, Search, Sparkles, Star, X } from 'lucide-react'
 import Link from 'next/link'
@@ -495,13 +495,38 @@ export function SignalBoard({
     unhideId(row.signal.id)
   }
 
+  // "+1 statymas": a pill flies from where the bet was recorded into the daily
+  // target, which bumps as it lands. Only when both ends are on screen (the
+  // phone sheet covers the target) and never in calm mode.
+  const targetRef = useRef<HTMLDivElement>(null)
+  const [flight, setFlight] = useState<{ bet: BoardBet; from: { x: number; y: number }; to: { x: number; y: number } } | null>(null)
+  const [bump, setBump] = useState(0)
+  const addBet = useCallback((bet: BoardBet) => setBets((current) => [bet, ...current.filter((item) => item.id !== bet.id)]), [])
   const onTracked = useCallback(
-    (bet: BoardBet) => {
-      setBets((current) => [bet, ...current.filter((item) => item.id !== bet.id)])
-      refreshBets()
+    (bet: BoardBet, from?: DOMRect) => {
+      const to = targetRef.current?.getBoundingClientRect()
+      const onScreen = (rect?: DOMRect): rect is DOMRect => Boolean(rect && rect.width > 0 && rect.bottom > 0 && rect.top < window.innerHeight)
+      if (!reduced && from && from.width > 0 && onScreen(to)) {
+        // Kept inside the screen: the detail can scroll between click and save.
+        const fromY = Math.min(window.innerHeight - 40, Math.max(40, from.top + from.height / 2))
+        setFlight({ bet, from: { x: from.left + from.width / 2, y: fromY }, to: { x: to.left + to.width / 2, y: to.top + to.height / 2 } })
+        // The server copy arrives after the landing, so the count moves once.
+        window.setTimeout(refreshBets, 1000)
+      } else {
+        addBet(bet)
+        refreshBets()
+      }
     },
-    [refreshBets],
+    [addBet, refreshBets, reduced],
   )
+  // The count changes when the pill lands, not when it leaves.
+  const land = useCallback(() => {
+    setFlight((current) => {
+      if (current) addBet(current.bet)
+      return null
+    })
+    setBump((value) => value + 1)
+  }, [addBet])
 
   const onBoard = sportsIn(board.signals)
 
@@ -601,7 +626,14 @@ export function SignalBoard({
               )}
             </p>
 
-            <DailyTarget bets={bets} now={now} target={prefs.dailyBets} onChange={(dailyBets) => updateSettings({ dailyBets })} />
+            <DailyTarget
+              ref={targetRef}
+              bump={bump}
+              bets={bets}
+              now={now}
+              target={prefs.dailyBets}
+              onChange={(dailyBets) => updateSettings({ dailyBets })}
+            />
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <label className="relative min-w-0 flex-1">
@@ -975,6 +1007,32 @@ export function SignalBoard({
         )}
       </section>
 
+      {/* "+1 statymas": from the recorded bet to the daily target, in a low arc. */}
+      <AnimatePresence>
+        {flight && (
+          <motion.div
+            key={flight.bet.id}
+            aria-hidden
+            className="pointer-events-none fixed top-0 left-0 z-[60] -translate-x-1/2 -translate-y-1/2"
+            initial={{ x: flight.from.x, y: flight.from.y, scale: 0.85, opacity: 0 }}
+            animate={{
+              x: [flight.from.x, (flight.from.x + flight.to.x) / 2, flight.to.x],
+              y: [flight.from.y, Math.min(flight.from.y, flight.to.y) - 70, flight.to.y],
+              scale: [0.85, 1.05, 0.55],
+              opacity: [0, 1, 0.15],
+            }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.75, ease: [0.45, 0, 0.2, 1], times: [0, 0.45, 1] }}
+            onAnimationComplete={land}
+          >
+            <span className="flex items-center gap-1.5 rounded-full bg-floodlight px-3.5 py-2 text-[0.95rem] font-semibold whitespace-nowrap text-night shadow-[0_12px_30px_-10px_rgb(91_229_132/0.7)]">
+              <Check className="size-4" strokeWidth={3} aria-hidden />
+              +1 statymas
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Phone detail sheet */}
       <AnimatePresence>
         {!desktop && selectedRow && (
@@ -1022,26 +1080,37 @@ export function SignalBoard({
 }
 
 function DailyTarget({
+  ref,
+  bump = 0,
   bets,
   now,
   target,
   onChange,
 }: {
+  /** The count the "+1 statymas" pill lands on. */
+  ref?: React.Ref<HTMLDivElement>
+  /** Changes when a pill lands; the card answers with a small bump. */
+  bump?: number
   bets: BoardBet[]
   now: Date
   target: number
   onChange: (value: number) => void
 }) {
   const reduced = useReducedMotion()
+  const [card, animateCard] = useAnimate()
+  useEffect(() => {
+    if (!bump || reduced || !card.current) return
+    animateCard(card.current, { scale: [1, 1.035, 1] }, { duration: 0.42, ease: EASE })
+  }, [bump, reduced, animateCard, card])
   const [editing, setEditing] = useState(false)
   const progress = useMemo(() => dailyProgress(bets, now), [bets, now])
   const reached = progress.count >= target
   const left = Math.max(0, target - progress.count)
 
   return (
-    <div className="mt-4 rounded-2xl bg-stand p-4 hairline">
+    <div ref={card} className="mt-4 rounded-2xl bg-stand p-4 hairline">
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div ref={ref}>
           <p className="text-[0.85rem] text-haze">Dienos tikslas</p>
           <p className="mt-1 font-display text-[1.9rem] leading-none font-bold tnum">
             <NumberFlow value={progress.count} />

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { AlertTriangle, ArrowLeft, Clock, ExternalLink, Loader2, Minus, Plus } from 'lucide-react'
 import Link from 'next/link'
-import { useId, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { BookMark } from '@/components/landing/book-mark'
 import { PriceHistoryChart } from './price-history-chart'
@@ -40,7 +40,8 @@ export function SignalDetail({
   movement?: Movement
   bets: BoardBet[]
   signalsById: Map<string, LiveSignal>
-  onTracked?: (bet: BoardBet) => void
+  /** `from` is where the bet was recorded on screen, for the board's "+1" flight. */
+  onTracked?: (bet: BoardBet, from?: DOMRect) => void
   onClose?: () => void
 }) {
   const reduced = useReducedMotion()
@@ -71,6 +72,7 @@ export function SignalDetail({
     }
   }
   const [tracking, setTracking] = useState<'idle' | 'pending' | 'done'>('idle')
+  const actions = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
 
   const open = signal.status === 'open'
@@ -97,6 +99,9 @@ export function SignalDetail({
       setError('Įrašyk sumą.')
       return
     }
+    // Where the member clicked, measured now: saving takes a moment and the
+    // detail may re-render or scroll before it answers.
+    const origin = actions.current?.getBoundingClientRect()
     setTracking('pending')
     setError(null)
     const result = await trackBet(signal, price, stake, actual)
@@ -105,7 +110,7 @@ export function SignalDetail({
       toast.success(`Pridėta: ${formatEuro(actual?.stake ?? stake)} už ${formatOdds(actual?.odds ?? price.odds)}`, {
         description: `${price.book}, ${ltSelection(price.selectionLabel)}`,
       })
-      onTracked?.(toBoardBet(result.bet))
+      onTracked?.(toBoardBet(result.bet), origin)
     } else {
       setTracking('idle')
       setError(result.error)
@@ -406,7 +411,7 @@ export function SignalDetail({
         </p>
       )}
 
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-rail bg-night/90 p-4 backdrop-blur-xl lg:static lg:mt-6 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+      <div ref={actions} className="fixed inset-x-0 bottom-0 z-10 border-t border-rail bg-night/90 p-4 backdrop-blur-xl lg:static lg:mt-6 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
         {tracking === 'done' ? (
           <motion.p
             initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
