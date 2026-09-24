@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { layoutShift, observeVitals, PERF_VIEWPORTS, scrollToBottom } from './perf'
 
 test.beforeEach(async ({}, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'one isolated member journey')
@@ -46,6 +47,17 @@ test('member can onboard, inspect a signal, record it, and open tracker and help
     await expect(page).toHaveURL(/signal=ci-signal-1/)
     await expect(page.getByText('Kodėl šis statymas').first()).toBeVisible()
     await page.getByRole('radio', { name: 'Įprastas' }).click()
+
+    // The board must not shift while it loads or is scrolled, at phone and desktop width.
+    await observeVitals(page)
+    for (const size of [PERF_VIEWPORTS.phone, PERF_VIEWPORTS.desktop]) {
+      await page.setViewportSize(size)
+      await page.goto('/signalai')
+      await expect(page.getByRole('heading', { name: 'Signalai', level: 1 })).toBeVisible()
+      await page.waitForTimeout(1000)
+      await scrollToBottom(page, 'section[aria-label="Signalų sąrašas"] > div')
+      expect(await layoutShift(page), `board layout shift at ${size.width}px`).toBeLessThan(0.05)
+    }
 
     const signal = live.signals[0]
     const price = signal.prices[0]

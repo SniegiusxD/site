@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, type Page, test } from '@playwright/test'
+import { layoutShift, lcpEntries, observeVitals, PERF_VIEWPORTS, scrollToBottom } from './perf'
 
 /**
  * Entrance animations fade text in from nothing, so a contrast check that runs
@@ -78,4 +79,19 @@ test('the proof section says whether CLV can be trusted yet', async ({ page }) =
   await page.goto('/')
   await expect(page.locator('#duomenys').getByText('CLV dar nepatikimas')).toBeAttached()
   await expect(page.locator('#duomenys').getByText('CLV patikimas', { exact: true })).toHaveCount(0)
+})
+
+test('the landing does not shift while it is scrolled, and its LCP is the headline', async ({ page }, testInfo) => {
+  await page.setViewportSize(PERF_VIEWPORTS[testInfo.project.name === 'phone' ? 'phone' : 'desktop'])
+  await observeVitals(page)
+  await page.goto('/')
+  await settle(page)
+
+  // LCP is final once the page is scrolled, so it is read before.
+  const lcp = await lcpEntries(page)
+  expect(lcp.length, 'no LCP entry was reported').toBeGreaterThan(0)
+  expect(lcp.at(-1), `LCP was ${JSON.stringify(lcp.at(-1))}`).toMatchObject({ inH1: true })
+
+  await scrollToBottom(page)
+  expect(await layoutShift(page)).toBeLessThan(0.05)
 })
