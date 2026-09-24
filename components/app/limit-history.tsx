@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
 import { type LimitEvent, limitDirection } from '@/lib/book-limits'
 import { formatEuro } from '@/lib/format-lt'
 import { kickoffLabel } from '@/lib/live-view'
+import { useApi } from '@/lib/use-api'
 
 const SENTENCE: Record<ReturnType<typeof limitDirection>, (event: LimitEvent) => string> = {
   cut: (event) => `nusileido iki ${formatEuro(event.to ?? 0)} (buvo ${formatEuro(event.from ?? 0)})`,
@@ -19,20 +19,8 @@ const SENTENCE: Record<ReturnType<typeof limitDirection>, (event: LimitEvent) =>
  * number in the settings, and it is the only record they have of being limited.
  */
 export function LimitHistory() {
-  const [data, setData] = useState<{ events: LimitEvent[]; cuts: Record<string, number> } | null>(null)
-
-  useEffect(() => {
-    let live = true
-    fetch('/api/preferences/limits', { cache: 'no-store' })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body) => live && body && setData(body))
-      .catch(() => {
-        // The settings above still work without the history.
-      })
-    return () => {
-      live = false
-    }
-  }, [])
+  // Without the history the settings above still work, so a failure shows nothing.
+  const { data } = useApi<{ events: LimitEvent[]; cuts: Record<string, number> }>('/api/preferences/limits')
 
   const cuts = Object.entries(data?.cuts ?? {}).filter(([, count]) => count > 0)
   if (!data || (data.events.length === 0 && cuts.length === 0)) return null
