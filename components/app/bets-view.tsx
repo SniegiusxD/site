@@ -153,6 +153,18 @@ export function BetsView() {
     load()
   }, [load])
 
+  // Results are graded after the list is sent. If a bet's match should be over
+  // but it still waits, look once more half a minute later.
+  const rechecked = useRef(false)
+  useEffect(() => {
+    if (!bets || rechecked.current) return
+    const due = bets.some((bet) => bet.status === 'laukia' && timeOf(bet) < Date.now() - 2 * 3_600_000)
+    if (!due) return
+    rechecked.current = true
+    const id = window.setTimeout(load, 30_000)
+    return () => window.clearTimeout(id)
+  }, [bets, load])
+
   // Filters scope everything below them; the calendar keeps its own month.
   const scoped = useMemo(
     () =>

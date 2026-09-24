@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { after, NextResponse } from 'next/server'
 import { parseBetInput } from '@/lib/bet-input'
 import { headers } from 'next/headers'
 import { and, desc, eq } from 'drizzle-orm'
@@ -71,7 +71,17 @@ export async function GET() {
     // Canonical results first: the site's own grader then only sees bets the
     // aggregator has not graded yet.
     await applyMemberOutcomes(pool, userId)
-    await settlePendingBets({ userId })
+    // The site's own grader asks outside score sources and can take tens of
+    // seconds (43 s measured with two unfinished bets). It runs after the
+    // response, so the tracker shows the bets at once; results it finds appear
+    // on the next load, and /api/cron/settle grades everyone on a schedule.
+    after(async () => {
+      try {
+        await settlePendingBets({ userId })
+      } catch (error) {
+        console.error('[api/bets GET settle]', error)
+      }
+    })
 
     const rows = await db.select().from(userBet).where(eq(userBet.userId, userId)).orderBy(desc(userBet.placedAt))
     return NextResponse.json({ bets: rows.map(rowToActiveBet) })
