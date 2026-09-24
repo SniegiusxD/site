@@ -1,7 +1,7 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
-import { Activity, LifeBuoy, LogOut, ReceiptText, UserRound } from 'lucide-react'
+import { Activity, Gauge, LifeBuoy, LogOut, ReceiptText, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
@@ -24,7 +24,11 @@ const hrefFrom = (href: string, pathname: string) =>
 
 const KELLY_NAME: Record<number, string> = { 0.125: '⅛ Kelly', 0.25: '¼ Kelly', 0.5: '½ Kelly' }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+/** Only for OWNER_EMAILS; decided on the server, the page itself checks again. */
+const OWNER_LINK = { href: '/savininkas', label: 'Savininkas', icon: Gauge }
+
+export function AppShell({ children, owner = false }: { children: React.ReactNode; owner?: boolean }) {
+  const nav = owner ? [...NAV, OWNER_LINK] : NAV
   const pathname = usePathname()
   const router = useRouter()
   const { account, email } = useAccount()
@@ -53,7 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {brand.name}
         </Link>
         <nav aria-label="Programėlė" className="mt-10 space-y-1">
-          {NAV.map(({ href, label, icon: Icon }) => {
+          {nav.map(({ href, label, icon: Icon }) => {
             const active = pathname.startsWith(href)
             return (
               <Link
@@ -135,9 +139,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <nav
         aria-label="Programėlė"
         className="fixed inset-x-0 bottom-0 z-40 grid border-t border-rail bg-night/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
-        style={{ gridTemplateColumns: `repeat(${NAV.length}, minmax(0, 1fr))` }}
+        style={{ gridTemplateColumns: `repeat(${nav.length}, minmax(0, 1fr))` }}
       >
-        {NAV.map(({ href, label, icon: Icon }) => {
+        {nav.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href)
           return (
             <Link

@@ -3,6 +3,7 @@ import { Toaster } from 'sonner'
 import { AccountProvider } from '@/components/app/account-provider'
 import { AppShell } from '@/components/app/app-shell'
 import { loadAccount } from '@/lib/account-store'
+import { isOwner } from '@/lib/owner'
 import { getSessionUser } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
@@ -15,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <AccountProvider initial={account} email={user.email} memberSince={user.createdAt ? new Date(user.createdAt).toISOString() : null}>
-      <AppShell>{children}</AppShell>
+      <AppShell owner={isOwner(user.email)}>{children}</AppShell>
       {/* Phones: clear the bottom navigation and the sticky "Pastačiau" bar. */}
       <Toaster
         position="bottom-right"
