@@ -2,9 +2,10 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo } from 'react'
 import { formatInteger } from '@/lib/format-lt'
 import { monthProgress } from '@/lib/month-progress'
+import { useApi } from '@/lib/use-api'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -16,16 +17,22 @@ const EASE = [0.22, 1, 0.36, 1] as const
 export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean; onClose: () => void; dailyTarget: number; now: Date }) {
   const reduced = useReducedMotion()
   const titleId = useId()
-  const [placed, setPlaced] = useState<Array<{ placedAt: string }> | null>(null)
+  // Asked each time the dialog opens; a failed request counts as no bets yet.
+  const { data, error } = useApi<{ bets: Array<{ placedAtIso?: string }> }>(open ? '/api/bets' : null)
+  const placed = useMemo(
+    () =>
+      data
+        ? data.bets.map((bet) => ({ placedAt: bet.placedAtIso ?? '' })).filter((bet) => bet.placedAt)
+        : error
+          ? []
+          : null,
+    [data, error],
+  )
 
   useEffect(() => {
     if (!open) return
     const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
-    fetch('/api/bets', { cache: 'no-store' })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body) => setPlaced((body?.bets ?? []).map((bet: { placedAtIso?: string }) => ({ placedAt: bet.placedAtIso ?? '' })).filter((bet: { placedAt: string }) => bet.placedAt)))
-      .catch(() => setPlaced([]))
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
