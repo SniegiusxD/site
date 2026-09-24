@@ -3,12 +3,16 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { NextResponse } from 'next/server'
 
-export type RateLimitPolicy = 'auth' | 'expensive-read' | 'expensive-action' | 'csp-report'
+export type RateLimitPolicy = 'auth' | 'auth-account' | 'expensive-read' | 'expensive-action' | 'csp-report'
 type LimitResult = { success: boolean; limit: number; remaining: number; reset: number }
 type LimitFunction = (key: string) => Promise<LimitResult>
 
 const definitions: Record<RateLimitPolicy, [number, `${number} ${'s' | 'm'}`]> = {
-  auth: [10, '15 m'],
+  // Per IP: generous, because Lithuanian mobile networks put many customers
+  // behind one address (CGNAT) and ten strangers must not lock everyone out.
+  auth: [60, '15 m'],
+  // Per account (hashed email): the limit that actually stops password guessing.
+  'auth-account': [8, '15 m'],
   'expensive-read': [60, '1 m'],
   'expensive-action': [5, '10 m'],
   'csp-report': [20, '1 m'],
@@ -47,11 +51,18 @@ export function clientFingerprint(request: Request, secret = process.env.BETTER_
   return createHmac('sha256', secret).update(address).digest('hex')
 }
 
+/** A stable, non-reversible key for one account, so emails never reach Redis. */
+export function accountSubject(email: string, secret = process.env.BETTER_AUTH_SECRET ?? 'local-only') {
+  return 'acct-' + createHmac('sha256', secret).update(email.trim().toLowerCase()).digest('hex')
+}
+
 export async function rateLimitResponse(
   request: Request,
   policy: RateLimitPolicy,
   override?: LimitFunction,
   now = Date.now(),
+  /** Count against this subject (e.g. accountSubject) instead of the client IP. */
+  subject?: string,
 ) {
   const limiter = sharedLimiter(policy)
   if (!override && !limiter) {
@@ -66,7 +77,7 @@ export async function rateLimitResponse(
   }
 
   const pathname = new URL(request.url).pathname.slice(0, 120)
-  const key = `${clientFingerprint(request)}:${pathname}`
+  const key = `${subject ?? clientFingerprint(request)}:${pathname}`
   const result = override ? await override(key) : await limiter!.limit(key)
   if (result.success) return null
 

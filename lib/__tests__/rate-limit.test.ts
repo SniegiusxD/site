@@ -49,3 +49,28 @@ describe('upstashCredentials', () => {
     expect(upstashCredentials({ KV_REST_API_URL: 'https://kv' })).toBeNull()
   })
 })
+
+describe('per-account limiting', () => {
+  it('keys by a hash of the email, case and spaces ignored, never the email itself', async () => {
+    const { accountSubject } = await import('@/lib/rate-limit')
+    const a = accountSubject('Jonas@Example.lt ', 's')
+    expect(a).toBe(accountSubject('jonas@example.lt', 's'))
+    expect(a).not.toContain('jonas')
+    expect(a.startsWith('acct-')).toBe(true)
+  })
+
+  it('counts a subject instead of the client address when one is given', async () => {
+    const seen: string[] = []
+    await rateLimitResponse(
+      new Request('https://example.com/api/auth/sign-in/email', { headers: { 'x-forwarded-for': '1.2.3.4' } }),
+      'auth-account',
+      async (key) => {
+        seen.push(key)
+        return { success: true, limit: 8, remaining: 7, reset: 2_000 }
+      },
+      1_000,
+      'acct-abc',
+    )
+    expect(seen).toEqual(['acct-abc:/api/auth/sign-in/email'])
+  })
+})
