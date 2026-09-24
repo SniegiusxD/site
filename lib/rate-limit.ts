@@ -14,7 +14,7 @@ const definitions: Record<RateLimitPolicy, [number, `${number} ${'s' | 'm'}`]> =
   'csp-report': [20, '1 m'],
 }
 
-let limiters: Partial<Record<RateLimitPolicy, Ratelimit>> = {}
+const limiters: Partial<Record<RateLimitPolicy, Ratelimit>> = {}
 
 /**
  * The Upstash REST endpoint and token. Upstash's own names first; the Vercel
