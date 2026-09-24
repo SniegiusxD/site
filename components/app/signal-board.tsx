@@ -23,7 +23,7 @@ import {
   linkedRow,
   sportsIn,
 } from '@/lib/live-view'
-import { type Density } from '@/lib/board-density'
+import type { Density } from '@/lib/board-density'
 import {
   bandFor,
   MARKET_FAMILIES,
@@ -117,7 +117,6 @@ export function SignalBoard({
   const [now, setNow] = useState(() => new Date())
   const [refreshing, setRefreshing] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [sport, setSport] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [onlyNew, setOnlyNew] = useState(false)
   // The moment this member last had the board open, on this device. Read once,
@@ -214,7 +213,7 @@ export function SignalBoard({
       minOdds: prefs.minOdds,
       maxOdds: freeTier ? Math.min(prefs.maxOdds, FREE_MAX_ODDS) : prefs.maxOdds,
       maxHoursToStart: prefs.maxHoursToStart,
-      sport,
+      sport: null,
       sports: sportsPicked,
       markets,
       periods,
@@ -226,7 +225,6 @@ export function SignalBoard({
       prefs.maxOdds,
       prefs.maxHoursToStart,
       freeTier,
-      sport,
       sportsPicked,
       markets,
       periods,
@@ -398,7 +396,7 @@ export function SignalBoard({
   const listLabel = (keys: string[], label: (key: string) => string, all: string) =>
     keys.length === 0 ? all : keys.length <= 2 ? keys.map(label).join(', ') : `${keys.length} pasirinkti`
   const booksValue = prefs.books.length === BOOKS.length ? 'visos kontoros' : prefs.books.join(', ')
-  const sportsValue = sport ? sportName(sport) : listLabel(sportsPicked, sportName, 'visi sportai')
+  const sportsValue = listLabel(sportsPicked, sportName, 'visi sportai')
   const marketsValue = listLabel(markets, marketLabel, 'visos rinkos')
   const periodsValue = listLabel(periods, periodLabel, 'visi periodai')
 
@@ -574,7 +572,6 @@ export function SignalBoard({
                         setSportsPicked(view.sports)
                         setMarkets(view.markets)
                         setPeriods(view.periods)
-                        setSport(null)
                         updateSettings({ minEdge: view.minEdge, books: view.books })
                       }}
                       className="min-h-11 flex-1 truncate rounded-xl px-2.5 text-left text-[0.9rem] text-chalk hover:bg-stand-hover"
@@ -642,13 +639,12 @@ export function SignalBoard({
                 ))}
               </FilterChip>
 
-              <FilterChip label="Sportas" value={sportsPicked.length || sport ? sportsValue : 'Sportas'} active={sportsPicked.length > 0 || sport !== null}>
+              <FilterChip label="Sportas" value={sportsPicked.length ? sportsValue : 'Sportas'} active={sportsPicked.length > 0}>
                 <FilterOption
                   label="Visi sportai"
                   checked={sportsPicked.length === 0}
                   onChange={() => {
                     setSportsPicked([])
-                    setSport(null)
                   }}
                 />
                 {onBoard.map((key) => (
@@ -659,7 +655,6 @@ export function SignalBoard({
                     count={counts.sports[key]}
                     checked={sportsPicked.includes(key)}
                     onChange={() => {
-                      setSport(null)
                       setSportsPicked((current) => (current.includes(key) ? current.filter((item) => item !== key) : [...current, key]))
                     }}
                   />
