@@ -165,12 +165,15 @@ export function SignalBoard({
   initialBets,
   access,
   firstStepsDismissed = false,
+  justUnlocked = false,
 }: {
   initial: LiveBoard
   initialBets: BoardBet[]
   access: Access
   /** From the kr-first-steps cookie, so the checklist is right in the first frame. */
   firstStepsDismissed?: boolean
+  /** The trial started a moment ago on the unlock page (?atrakinta=1). */
+  justUnlocked?: boolean
 }) {
   const router = useRouter()
   const reduced = useReducedMotion()
@@ -232,6 +235,11 @@ export function SignalBoard({
   const [showClosed, setShowClosed] = useState(false)
   const [showHidden, setShowHidden] = useState(false)
   const [selected, setSelected] = useState<BoardRow | null>(null)
+  // The moment the trial starts: the newly visible signals rise in one after
+  // another, once. Set from the unlock page (?atrakinta=1) or the locked strip.
+  // Read on the server from ?atrakinta=1, so the confirmation line is there in
+  // the first frame and stays: appearing or leaving later would shift the list.
+  const [unlockedAt, setUnlockedAt] = useState<number | null>(justUnlocked ? 1 : null)
   const [hidden, setHidden] = useHiddenSignals(board.signals)
   const [pinned, togglePinned] = usePinned()
   const [onlyPinned, setOnlyPinned] = useState(false)
@@ -523,7 +531,7 @@ export function SignalBoard({
 
   const movementFor = (row: BoardRow) => board.movement?.[row.signal.id]?.[row.price.book]
 
-  function renderRow(row: BoardRow, options: { isHidden?: boolean } = {}) {
+  function renderRow(row: BoardRow, options: { isHidden?: boolean; enterIndex?: number } = {}) {
     const exposure = exposureFor(row.signal, bets, signalsById)
     const { suggested } = boardStake(prefs, row.signal, row.price, exposure)
     return (
@@ -537,6 +545,7 @@ export function SignalBoard({
         tracked={exposure.selection.staked}
         sameMatch={exposure.match.count}
         isHidden={options.isHidden}
+        enterDelay={unlockedAt !== null && !reduced && options.enterIndex !== undefined ? Math.min(options.enterIndex, 12) * 0.045 : 0}
         pulse={pulses.get(row.signal.id) ?? pulses.get(`${row.signal.id}:${row.price.book}`)}
         movement={movementFor(row)}
         pinned={pinned.has(pinKeyOf(row.signal))}
@@ -850,7 +859,7 @@ export function SignalBoard({
           )}
           {status?.sharpAvailable && stale && (
             <Notice>
-              Paskutinis skenavimas {clockLabel(status.publishedAt)}, {agoLabel(status.publishedAt, now)}. Kainos galėjo pasikeisti.
+              Paskutinis skenavimas {clockLabel(status.publishedAt)}, {agoLabel(status.publishedAt, now).replace(/\.$/, '')}. Kainos galėjo pasikeisti.
             </Notice>
           )}
           {loadError && <Notice>{loadError}</Notice>}
@@ -865,9 +874,26 @@ export function SignalBoard({
               onUnlocked={() => {
                 refresh()
                 router.refresh()
+                setUnlockedAt(Date.now())
               }}
             />
           )}
+
+          <AnimatePresence>
+            {unlockedAt !== null && (
+              <motion.p
+                role="status"
+                initial={reduced ? { opacity: 0 } : { opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.35, ease: EASE }}
+                className="flex items-center gap-2 border-b border-rail bg-floodlight-soft/60 px-4 py-3 text-[0.95rem] font-medium sm:px-6"
+              >
+                <Sparkles className="size-4 shrink-0 text-floodlight" aria-hidden />
+                Atrakinta {TRIAL_DAYS} dienoms: dabar matai {visible.length} {ltPlural(visible.length, 'signalą', 'signalus', 'signalų')}.
+              </motion.p>
+            )}
+          </AnimatePresence>
 
           {visible.length === 0 ? (
             <div className="px-6 py-14 text-center">
@@ -892,7 +918,9 @@ export function SignalBoard({
             </div>
           ) : (
             <ul>
-              <AnimatePresence initial={false}>{visible.map((row) => renderRow(row))}</AnimatePresence>
+              <AnimatePresence key={unlockedAt ?? 'board'} initial={unlockedAt !== null && !reduced}>
+                {visible.map((row, index) => renderRow(row, { enterIndex: index }))}
+              </AnimatePresence>
             </ul>
           )}
 
@@ -1099,6 +1127,7 @@ function SignalRow({
   onTogglePinned,
   onSelect,
   onToggleHidden,
+  enterDelay = 0,
 }: {
   row: BoardRow
   now: Date
@@ -1118,6 +1147,8 @@ function SignalRow({
   onTogglePinned: () => void
   onSelect: () => void
   onToggleHidden?: () => void
+  /** Seconds to wait before this row's entrance (the unlock moment). */
+  enterDelay?: number
 }) {
   const { signal, price } = row
   const open = signal.status === 'open'
@@ -1130,7 +1161,7 @@ function SignalRow({
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.3, ease: EASE }}
+      transition={{ duration: enterDelay ? 0.45 : 0.3, ease: EASE, delay: enterDelay }}
       className={`relative border-b border-rail last:border-b-0 ${pulse === 'new' ? 'animate-[row-new_2.6s_ease-out]' : ''}`}
     >
       <button
@@ -1282,7 +1313,6 @@ function LockedStrip({ locked, access, onUnlocked }: { locked: LockedSignal[]; a
     try {
       const response = await fetch('/api/trial', { method: 'POST' })
       if (!response.ok) throw new Error(String(response.status))
-      toast.success(`Atrakinta ${TRIAL_DAYS} dienoms`, { description: 'Visi signalai jau matomi.' })
       onUnlocked()
     } catch {
       toast.error('Nepavyko pradėti bandymo. Bandyk dar kartą.')

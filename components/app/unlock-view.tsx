@@ -70,8 +70,8 @@ export function UnlockView({ access, billing }: { access: Access; billing: boole
     try {
       const response = await fetch('/api/trial', { method: 'POST' })
       if (!response.ok) throw new Error(String(response.status))
-      toast.success(`Atrakinta ${TRIAL_DAYS} dienoms`)
-      router.push('/signalai')
+      // The board plays the unlock itself; no toast on top of it.
+      router.push('/signalai?atrakinta=1')
       router.refresh()
     } catch {
       toast.error('Nepavyko pradėti bandymo. Bandyk dar kartą.')

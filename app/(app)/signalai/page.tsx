@@ -15,10 +15,11 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic'
 
-export default async function SignalsPage() {
+export default async function SignalsPage({ searchParams }: { searchParams: Promise<{ atrakinta?: string }> }) {
   const user = await getSessionUser()
   if (!user) return null
   const [access, board, bets, jar] = await Promise.all([getAccess(user.id), loadLiveBoard(), loadRecentBets(user.id), cookies()])
+  const { atrakinta } = await searchParams
   // Free accounts never receive the locked signals, only their headline value.
   return (
     <SignalBoard
@@ -26,6 +27,7 @@ export default async function SignalsPage() {
       initialBets={bets}
       access={access}
       firstStepsDismissed={jar.get(FIRST_STEPS_COOKIE)?.value === '1'}
+      justUnlocked={atrakinta === '1' && access.hasAccess}
     />
   )
 }
