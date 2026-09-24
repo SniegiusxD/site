@@ -59,7 +59,7 @@ export async function fetchJson<T>(url: string, signal?: AbortSignal): Promise<T
 
 const asApiError = (error: unknown) => (error instanceof ApiError ? error : new ApiError('Nepavyko įkelti.', 0))
 
-type Settled<T> = { data: T | null; error: ApiError | null; request: string | null }
+type Settled<T> = { data: T | null; error: ApiError | null; request: string | null; at: number | null }
 
 export type ApiState<T> = {
   /** The last good body; kept while a reload runs or after it fails. */
@@ -70,6 +70,8 @@ export type ApiState<T> = {
   loading: boolean
   /** Ask again (after a change, or from a retry button). */
   reload: () => void
+  /** When the last request settled (ms), for "as of" times; null before the first. */
+  settledAt: number | null
 }
 
 /**
@@ -78,17 +80,17 @@ export type ApiState<T> = {
  */
 export function useApi<T>(url: string | null): ApiState<T> {
   const [attempt, setAttempt] = useState(0)
-  const [settled, setSettled] = useState<Settled<T>>({ data: null, error: null, request: null })
+  const [settled, setSettled] = useState<Settled<T>>({ data: null, error: null, request: null, at: null })
   const request = url === null ? null : `${attempt}:${url}`
 
   useEffect(() => {
     if (url === null) return
     const controller = new AbortController()
     fetchJson<T>(url, controller.signal).then(
-      (data) => setSettled({ data, error: null, request }),
+      (data) => setSettled({ data, error: null, request, at: Date.now() }),
       (error) => {
         if (controller.signal.aborted) return
-        setSettled((current) => ({ data: current.data, error: asApiError(error), request }))
+        setSettled((current) => ({ data: current.data, error: asApiError(error), request, at: Date.now() }))
       },
     )
     return () => controller.abort()
@@ -96,5 +98,11 @@ export function useApi<T>(url: string | null): ApiState<T> {
 
   const reload = useCallback(() => setAttempt((value) => value + 1), [])
 
-  return { data: settled.data, error: settled.error, loading: request !== null && settled.request !== request, reload }
+  return {
+    data: settled.data,
+    error: settled.error,
+    loading: request !== null && settled.request !== request,
+    reload,
+    settledAt: settled.at,
+  }
 }

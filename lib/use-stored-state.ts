@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 
 /**
  * Per-device view choices (pinned fixtures, hidden signals, the last board
@@ -103,4 +103,31 @@ export function useStoredState<T>(
   )
 
   return [value, set]
+}
+
+// Values read once per mount by useStoredOnce, by key.
+const frozen = new Map<string, string | null>()
+
+function frozenOf(key: string): string | null {
+  if (!frozen.has(key)) frozen.set(key, readStored(key))
+  return frozen.get(key) ?? null
+}
+
+const subscribeNever = () => () => {}
+
+/**
+ * A stored value as it was when this view opened, fixed until unmount: a
+ * "last seen" marker the page may overwrite while it is open without moving
+ * what the page shows. Server snapshot null, like useStoredState.
+ */
+export function useStoredOnce(key: string): string | null {
+  const value = useSyncExternalStore(subscribeNever, () => frozenOf(key), () => null)
+  useEffect(() => {
+    // Frozen before any write this view makes, whatever order React reads in.
+    frozenOf(key)
+    return () => {
+      frozen.delete(key)
+    }
+  }, [key])
+  return value
 }
