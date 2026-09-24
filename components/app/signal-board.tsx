@@ -79,6 +79,26 @@ type SavedView = {
   books: BookName[]
 }
 
+const NO_VIEWS: SavedView[] = []
+
+/** Saved views that are still whole; one broken entry does not cost the rest. */
+function parseSavedViews(value: unknown): SavedView[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object' || typeof item.name !== 'string') return []
+    const books = strings(item.books).filter((book): book is BookName => (BOOKS as readonly string[]).includes(book))
+    return [
+      {
+        ...parseView(item)!,
+        name: item.name,
+        minEdge: typeof item.minEdge === 'number' ? item.minEdge : 0.02,
+        // Applying a view with no book would empty the board; the filter never allows it.
+        books: books.length ? books : [...BOOKS],
+      },
+    ]
+  })
+}
+
 type SortKey = 'value' | 'new' | 'soon' | 'moving'
 const SORTS: Array<{ key: SortKey; label: string }> = [
   { key: 'value', label: 'Pagal vertę' },
@@ -228,25 +248,7 @@ export function SignalBoard({
   const [hidden, setHidden] = useHiddenSignals(board.signals)
   const [pinned, togglePinned] = usePinned()
   const [onlyPinned, setOnlyPinned] = useState(false)
-  const [savedViews, setSavedViews] = useState<SavedView[]>([])
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(SAVED_KEY)
-      if (raw) setSavedViews(JSON.parse(raw) as SavedView[])
-    } catch {
-      // Without storage there are simply no saved views.
-    }
-  }, [])
-
-  const writeViews = useCallback((views: SavedView[]) => {
-    setSavedViews(views)
-    try {
-      window.localStorage.setItem(SAVED_KEY, JSON.stringify(views))
-    } catch {
-      // See above.
-    }
-  }, [])
+  const [savedViews, writeViews] = useStoredState(SAVED_KEY, parseSavedViews, NO_VIEWS)
   const sheetDrag = useDragControls()
 
   // What changed since the previous poll: new signals glow once, moved prices flash up or down.
