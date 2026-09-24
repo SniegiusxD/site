@@ -16,14 +16,23 @@ const definitions: Record<RateLimitPolicy, [number, `${number} ${'s' | 'm'}`]> =
 
 let limiters: Partial<Record<RateLimitPolicy, Ratelimit>> = {}
 
+/**
+ * The Upstash REST endpoint and token. Upstash's own names first; the Vercel
+ * Marketplace install provides the same store as KV_REST_API_URL/TOKEN.
+ */
+export function upstashCredentials(env: Record<string, string | undefined> = process.env): { url: string; token: string } | null {
+  const url = env.UPSTASH_REDIS_REST_URL || env.KV_REST_API_URL
+  const token = env.UPSTASH_REDIS_REST_TOKEN || env.KV_REST_API_TOKEN
+  return url && token ? { url, token } : null
+}
+
 function sharedLimiter(policy: RateLimitPolicy): Ratelimit | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    return null
-  }
+  const credentials = upstashCredentials()
+  if (!credentials) return null
   if (!limiters[policy]) {
     const [count, window] = definitions[policy]
     limiters[policy] = new Ratelimit({
-      redis: Redis.fromEnv(),
+      redis: new Redis(credentials),
       limiter: Ratelimit.slidingWindow(count, window),
       prefix: `statyk:rate:${policy}`,
       analytics: false,

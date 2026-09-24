@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rate-limit'
 import { parseExecutionEvent, recordExecutionEvent } from '@/lib/execution-events'
 import { getSessionUser } from '@/lib/session'
 
@@ -10,6 +11,8 @@ export const dynamic = 'force-dynamic'
  * way of the bet itself, so every answer is small and nothing is retried.
  */
 export async function POST(request: Request) {
+  const limited = await rateLimitResponse(request, 'expensive-read')
+  if (limited) return limited
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Prisijunk iš naujo.' }, { status: 401 })
 

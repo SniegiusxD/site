@@ -36,3 +36,16 @@ describe('shared rate limiting', () => {
     expect(response).toBeNull()
   })
 })
+
+describe('upstashCredentials', () => {
+  it('reads the Vercel Marketplace names when the Upstash names are absent', async () => {
+    const { upstashCredentials } = await import('@/lib/rate-limit')
+    expect(upstashCredentials({ KV_REST_API_URL: 'https://kv.example', KV_REST_API_TOKEN: 't' })).toEqual({ url: 'https://kv.example', token: 't' })
+  })
+
+  it('prefers the Upstash names and needs both halves', async () => {
+    const { upstashCredentials } = await import('@/lib/rate-limit')
+    expect(upstashCredentials({ UPSTASH_REDIS_REST_URL: 'https://u', UPSTASH_REDIS_REST_TOKEN: 'a', KV_REST_API_URL: 'https://kv', KV_REST_API_TOKEN: 'b' })).toEqual({ url: 'https://u', token: 'a' })
+    expect(upstashCredentials({ KV_REST_API_URL: 'https://kv' })).toBeNull()
+  })
+})

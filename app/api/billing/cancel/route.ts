@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rate-limit'
 import { billingState, subscriptionIdFor } from '@/lib/billing/store'
 import { CANCEL_REASONS } from '@/lib/billing/cancel-reasons'
 import { stripe } from '@/lib/billing/stripe'
@@ -14,6 +15,8 @@ export const dynamic = 'force-dynamic'
  * The webhook will report the same change; syncing now just shows it at once.
  */
 export async function POST(request: Request) {
+  const limited = await rateLimitResponse(request, 'expensive-action')
+  if (limited) return limited
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Prisijunk iš naujo.' }, { status: 401 })
 

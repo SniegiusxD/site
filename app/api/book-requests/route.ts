@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rate-limit'
 import { parseBookRequest, saveBookRequest } from '@/lib/book-requests'
 import { getSessionUser } from '@/lib/session'
 
@@ -6,6 +7,8 @@ export const dynamic = 'force-dynamic'
 
 /** A member asks for a bookmaker we do not cover. Counted, never acted on automatically. */
 export async function POST(request: Request) {
+  const limited = await rateLimitResponse(request, 'expensive-action')
+  if (limited) return limited
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Prisijunk iš naujo.' }, { status: 401 })
 

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rate-limit'
 import { customerIdFor } from '@/lib/billing/store'
 import { portalConfigurationId, stripe } from '@/lib/billing/stripe'
 import { getSessionUser } from '@/lib/session'
@@ -10,6 +11,8 @@ export const dynamic = 'force-dynamic'
  * at the end of the paid period. Returns its URL; the page redirects.
  */
 export async function POST(request: Request) {
+  const limited = await rateLimitResponse(request, 'expensive-action')
+  if (limited) return limited
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Prisijunk iš naujo.' }, { status: 401 })
 

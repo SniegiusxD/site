@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rate-limit'
 import { deleteAccount } from '@/lib/account-data'
 import { subscriptionIdFor } from '@/lib/billing/store'
 import { stripe } from '@/lib/billing/stripe'
@@ -19,6 +20,8 @@ const CHARGING = new Set(['active', 'trialing', 'past_due', 'unpaid', 'incomplet
  * business must retain, and they hold no betting data.
  */
 export async function POST(request: Request) {
+  const limited = await rateLimitResponse(request, 'expensive-action')
+  if (limited) return limited
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Prisijunk iš naujo.' }, { status: 401 })
 

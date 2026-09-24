@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rate-limit'
 import { customerIdFor, saveCustomerId } from '@/lib/billing/store'
 import { monthlyPriceId, stripe } from '@/lib/billing/stripe'
 import { getSessionUser } from '@/lib/session'
@@ -17,6 +18,8 @@ const MIN_TRIAL_CARRY_MS = 49 * 3600_000
  * early never costs them the days they were promised.
  */
 export async function POST(request: Request) {
+  const limited = await rateLimitResponse(request, 'expensive-action')
+  if (limited) return limited
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Prisijunk iš naujo.' }, { status: 401 })
 

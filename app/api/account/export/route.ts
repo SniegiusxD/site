@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server'
+import { rateLimitResponse } from '@/lib/rate-limit'
 import { exportAccount } from '@/lib/account-data'
 import { getSessionUser } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
 /** A copy of everything stored about the signed-in member, as a JSON file. */
-export async function GET() {
+export async function GET(request: Request) {
+  const limited = await rateLimitResponse(request, 'expensive-action')
+  if (limited) return limited
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Prisijunk iš naujo.' }, { status: 401 })
   try {
