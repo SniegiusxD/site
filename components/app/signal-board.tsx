@@ -11,7 +11,7 @@ import { type BoardBet, boardStake, exposureFor } from '@/lib/exposure'
 import { formatEdge, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { FREE_MAX_EDGE, FREE_MAX_ODDS } from '@/lib/free-tier'
-import type { LiveBoard, LiveSignal } from '@/lib/live-signals'
+import type { LiveBoard } from '@/lib/live-signals'
 import { driftOf, DRIFT_FLOOR, pollPulses, type Pulse } from '@/lib/price-movement'
 import {
   agoLabel,
@@ -23,7 +23,7 @@ import {
   linkedRow,
   sportsIn,
 } from '@/lib/live-view'
-import { type Density, DENSITY_KEY, densityCookie, parseDensity } from '@/lib/board-density'
+import { type Density } from '@/lib/board-density'
 import {
   bandFor,
   MARKET_FAMILIES,
@@ -37,7 +37,6 @@ import type { Access } from '@/lib/subscription'
 import { TRIAL_DAYS } from '@/lib/subscription'
 import { reportExecution } from '@/lib/report-execution'
 import { useLastVisit } from '@/lib/use-last-visit'
-import { stringSet, useStoredState } from '@/lib/use-stored-state'
 import { useAccount } from './account-provider'
 import { FilterChip, FilterOption } from './filter-chip'
 import { FirstSteps } from './first-steps'
@@ -48,6 +47,18 @@ import { TrialRecap } from './trial-recap'
 import { DailyTarget } from './board/daily-target'
 import { Collapsible, Notice } from './board/list-parts'
 import { LockedStrip } from './board/locked-strip'
+import {
+  pinKeyOf,
+  type SavedView,
+  SEEN_KEY,
+  type SortKey,
+  SORTS,
+  useBoardView,
+  useDensity,
+  useHiddenSignals,
+  usePinned,
+  useSavedViews,
+} from './board/use-board-preferences'
 
 const POLL_MS = 60_000
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -62,76 +73,6 @@ const DENSITIES: Array<{ value: Density; label: string }> = [
   { value: 'normal', label: 'Įprastas' },
   { value: 'compact', label: 'Kompaktiškas' },
 ]
-const HIDDEN_KEY = 'hidden-signals'
-const VIEW_KEY = 'board-view'
-const SEEN_KEY = 'board-last-visit'
-const PINNED_KEY = 'pinned-events'
-// The fallback for a stored id list: one shared, never-mutated empty set.
-const NO_IDS: Set<string> = new Set()
-const SAVED_KEY = 'board-saved-views'
-
-/** One fixture, however many lines of it are published. */
-const pinKeyOf = (signal: LiveSignal) => signal.eventKey ?? `${signal.home ?? ''}|${signal.away ?? ''}`
-
-/** A board the member named, so a routine does not have to be rebuilt each time. */
-type SavedView = {
-  name: string
-  sort: SortKey
-  drift: 'all' | 'down' | 'up'
-  sports: string[]
-  markets: string[]
-  periods: string[]
-  minEdge: number
-  books: BookName[]
-}
-
-const NO_VIEWS: SavedView[] = []
-
-/** Saved views that are still whole; one broken entry does not cost the rest. */
-function parseSavedViews(value: unknown): SavedView[] | undefined {
-  if (!Array.isArray(value)) return undefined
-  return value.flatMap((item) => {
-    if (!item || typeof item !== 'object' || typeof item.name !== 'string') return []
-    const books = strings(item.books).filter((book): book is BookName => (BOOKS as readonly string[]).includes(book))
-    return [
-      {
-        ...parseView(item)!,
-        name: item.name,
-        minEdge: typeof item.minEdge === 'number' ? item.minEdge : 0.02,
-        // Applying a view with no book would empty the board; the filter never allows it.
-        books: books.length ? books : [...BOOKS],
-      },
-    ]
-  })
-}
-
-type SortKey = 'value' | 'new' | 'soon' | 'moving'
-const SORTS: Array<{ key: SortKey; label: string }> = [
-  { key: 'value', label: 'Pagal vertę' },
-  { key: 'new', label: 'Naujausi' },
-  { key: 'soon', label: 'Greičiausiai prasideda' },
-  { key: 'moving', label: 'Labiausiai juda' },
-]
-
-/** The filters and sort a member left the board with, on this device. */
-type StoredView = { sort: SortKey; drift: 'all' | 'down' | 'up'; sports: string[]; markets: string[]; periods: string[] }
-const DEFAULT_VIEW: StoredView = { sort: 'value', drift: 'all', sports: [], markets: [], periods: [] }
-
-const strings = (value: unknown) => (Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [])
-
-/** Whatever part of a stored view still makes sense; the rest is the default. */
-function parseView(value: unknown): StoredView | undefined {
-  if (!value || typeof value !== 'object') return undefined
-  const view = value as Record<string, unknown>
-  return {
-    sort: SORTS.find((option) => option.key === view.sort)?.key ?? 'value',
-    drift: view.drift === 'down' || view.drift === 'up' ? view.drift : 'all',
-    sports: strings(view.sports),
-    markets: strings(view.markets),
-    periods: strings(view.periods),
-  }
-}
-
 function useIsDesktop() {
   const [desktop, setDesktop] = useState(false)
   useEffect(() => {
@@ -142,40 +83,6 @@ function useIsDesktop() {
     return () => query.removeEventListener('change', update)
   }, [])
   return desktop
-}
-
-/** Fixtures the member is watching. Keyed by event, so every line of the same match pins together. */
-function usePinned() {
-  const [pinned, setPinned] = useStoredState(PINNED_KEY, stringSet, NO_IDS)
-
-  const toggle = useCallback(
-    (key: string) =>
-      setPinned((current) => {
-        const next = new Set(current)
-        if (next.has(key)) next.delete(key)
-        else next.add(key)
-        return next
-      }),
-    [setPinned],
-  )
-
-  return [pinned, toggle] as const
-}
-
-/** Signals the member hid on this device. A convenience only, so browser storage is fine. */
-function useHiddenSignals(signals: LiveSignal[]) {
-  const [stored, save] = useStoredState(HIDDEN_KEY, stringSet, NO_IDS)
-
-  // Signals that left the board are forgotten here, and dropped from storage
-  // with the next hide or restore, so the list does not grow forever.
-  const hidden = useMemo(() => {
-    if (stored.size === 0 || signals.length === 0) return stored
-    const present = new Set(signals.map((signal) => signal.id))
-    const kept = [...stored].filter((id) => present.has(id))
-    return kept.length === stored.size ? stored : new Set(kept)
-  }, [stored, signals])
-
-  return [hidden, save] as const
 }
 
 export function SignalBoard({
@@ -217,36 +124,10 @@ export function SignalBoard({
   // then frozen for the visit so rows do not stop being new while being read.
   const lastVisit = useLastVisit(SEEN_KEY)
 
-  // The board a member left is the board they expect to come back to. Their own
-  // device only: these are view choices, not account settings.
-  const [view, setView] = useStoredState(VIEW_KEY, parseView, DEFAULT_VIEW)
-  const { sort, drift, sports: sportsPicked, markets, periods } = view
-  const { setSort, setDrift, setSportsPicked, setMarkets, setPeriods } = useMemo(() => {
-    const field =
-      <K extends keyof StoredView>(key: K) =>
-      (next: StoredView[K] | ((current: StoredView[K]) => StoredView[K])) =>
-        setView((current) => ({
-          ...current,
-          [key]: typeof next === 'function' ? (next as (value: StoredView[K]) => StoredView[K])(current[key]) : next,
-        }))
-    return {
-      setSort: field('sort'),
-      setDrift: field('drift'),
-      setSportsPicked: field('sports'),
-      setMarkets: field('markets'),
-      setPeriods: field('periods'),
-    }
-  }, [setView])
-  const [density, setDensity] = useStoredState(DENSITY_KEY, parseDensity, initialDensity)
+  // The board a member left is the board they expect to come back to.
+  const { sort, drift, sports: sportsPicked, markets, periods, setSort, setDrift, setSportsPicked, setMarkets, setPeriods } = useBoardView()
+  const [density, chooseDensity] = useDensity(initialDensity)
   const compact = density === 'compact'
-  const chooseDensity = useCallback(
-    (next: Density) => {
-      setDensity(next)
-      // The server reads the cookie, so the next visit renders this density at once.
-      document.cookie = densityCookie(next)
-    },
-    [setDensity],
-  )
   const [showClosed, setShowClosed] = useState(false)
   const [showHidden, setShowHidden] = useState(false)
   // The moment the trial starts: the newly visible signals rise in one after
@@ -257,7 +138,7 @@ export function SignalBoard({
   const [hidden, setHidden] = useHiddenSignals(board.signals)
   const [pinned, togglePinned] = usePinned()
   const [onlyPinned, setOnlyPinned] = useState(false)
-  const [savedViews, writeViews] = useStoredState(SAVED_KEY, parseSavedViews, NO_VIEWS)
+  const [savedViews, writeViews] = useSavedViews()
   const sheetDrag = useDragControls()
 
   // What changed since the previous poll: new signals glow once, moved prices flash up or down.
