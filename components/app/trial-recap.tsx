@@ -3,13 +3,17 @@
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
 import { formatEuro, ltPlural } from '@/lib/format-lt'
 import { PRICE_EUR_PER_MONTH } from '@/lib/subscription'
 import type { TrialRecap as Recap } from '@/lib/trial-recap'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { useApi } from '@/lib/use-api'
+import { useStoredState } from '@/lib/use-stored-state'
 
 const EASE = [0.22, 1, 0.36, 1] as const
+
+/** Older visits stored '1'; new ones store true. */
+const dismissedFlag = (value: unknown) => (value === 1 || value === true ? true : undefined)
 const signed = (value: number) => `${value > 0 ? '+' : value < 0 ? '−' : ''}${formatEuro(Math.abs(value), 2)}`
 
 /**
@@ -19,39 +23,17 @@ const signed = (value: number) => `${value > 0 ? '+' : value < 0 ? '−' : ''}${
  */
 export function TrialRecap() {
   const reduced = useReducedMotion()
-  const [recap, setRecap] = useState<Recap | null>(null)
-  const [hidden, setHidden] = useState(true)
+  // A failed request simply shows nothing: the locked strip still offers the way on.
+  const { data } = useApi<{ recap: Recap | null }>('/api/trial/recap')
+  const recap = data?.recap ?? null
+  // Dismissed once per trial, in this browser. Storage blocked: closing still
+  // works for this page view.
+  const [dismissed, setDismissed] = useStoredState(`kr-trial-recap-${recap?.endedAt ?? 'none'}`, dismissedFlag, false)
 
-  useEffect(() => {
-    let alive = true
-    fetch('/api/trial/recap', { cache: 'no-store' })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body) => {
-        if (!alive || !body?.recap) return
-        let dismissed = false
-        try {
-          dismissed = localStorage.getItem(`kr-trial-recap-${body.recap.endedAt}`) === '1'
-        } catch {
-          // Storage blocked: show it; closing still works for this page view.
-        }
-        setRecap(body.recap)
-        setHidden(dismissed)
-      })
-      .catch(() => {})
-    return () => {
-      alive = false
-    }
-  }, [])
-
-  if (!recap || hidden) return null
+  if (!recap || dismissed) return null
 
   function close() {
-    setHidden(true)
-    try {
-      localStorage.setItem(`kr-trial-recap-${recap!.endedAt}`, '1')
-    } catch {
-      // Nothing to remember it in; it will show again next time.
-    }
+    setDismissed(true)
   }
 
   return (
