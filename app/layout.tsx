@@ -40,11 +40,11 @@ export const metadata: Metadata = {
     siteName: brand.name,
     title: `${brand.name}: kur Lietuvos kontoros moka daugiau, nei verta`,
     description: brand.description,
-    images: [{ url: '/og.png', width: 1200, height: 630, alt: `${brand.name}: signalai su visų kontorų kainomis` }],
+    // Images come from app/opengraph-image.tsx (and per-page ones such as
+    // app/rezultatai/opengraph-image.tsx). The old /og.png still said "Kraštas".
   },
   twitter: {
     card: 'summary_large_image',
-    images: ['/og.png'],
   },
 }
 
