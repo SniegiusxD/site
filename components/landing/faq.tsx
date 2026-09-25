@@ -58,7 +58,7 @@ export const FAQ_QUESTIONS: Array<{ q: string; a: React.ReactNode }> = [
   },
   {
     q: 'Kiek turėčiau statyti?',
-    a: 'Siūlom ketvirtį Kelly kriterijaus, bet ne daugiau kaip 5 % bankrollo. Sumą visada gali pakeisti, o įrašius kontoros limitą, siūloma suma jo neviršys.',
+    a: 'Pagal nutylėjimą siūlom ketvirtį Kelly kriterijaus: kuo didesnė vertė, tuo didesnė suma. Jei nori kiekvienam signalui statyti tą pačią sumą, profilyje pasirink fiksuotą. Bet kuriuo atveju ne daugiau kaip 5 % bankrollo, o įrašius kontoros limitą, siūloma suma jo neviršys.',
   },
   {
     q: 'Kas nutinka, kai koeficientas pasikeičia?',
