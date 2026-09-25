@@ -324,6 +324,8 @@ Therefore:
 
 ### Task 23: the brand in one place (prep for t150)
 
+**Already done by Claude on 2026-09-25 (`25ec348`); skip this task.**
+
 - The site will be renamed **valuestatymai**; the exact spelling and domain
   are not decided yet.
 - Make sure every visible brand name, email sender, share card, metadata
