@@ -109,6 +109,13 @@ test('the results page lists a finished signal with its close and result', async
   await expect(row).toContainText('Laimėta')
   // The upcoming seeded signal must never appear on a public page.
   await expect(page.getByText('Vilniaus Testas')).toHaveCount(0)
+
+  // Its own page, for sharing; an upcoming signal has none.
+  await row.getByRole('link').click()
+  await expect(page).toHaveURL(/\/rezultatai\/ci-signal-past$/)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Klaipėdos Testas – Šiaulių Testas')
+  await expect(page.getByText('Laimėta')).toBeVisible()
+  expect((await page.request.get('/rezultatai/ci-signal-1')).status()).toBe(404)
 })
 
 test('the landing does not shift while it is scrolled, and its LCP is the headline', async ({ page }, testInfo) => {

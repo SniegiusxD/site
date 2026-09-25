@@ -68,3 +68,24 @@ export async function loadPastSignals(): Promise<PastSignal[] | null> {
     return null
   }
 }
+
+/** One started signal by id, for its own page; null when unknown or not started yet. */
+export async function loadPastSignal(id: string): Promise<PastSignal | null> {
+  if (!/^[\w-]{1,64}$/.test(id)) return null
+  try {
+    await archiveStartedSignals()
+    const { rows } = await pool.query(
+      `SELECT s.id, s.sport, s.starts_at, s.market, s.direction, s.line, s.home, s.away,
+              s.best_book, s.best_odds, s.best_edge, c.closing_fair_prob, r.outcome
+         FROM signal_record s
+         LEFT JOIN signal_closing_price c ON c.signal_id = s.id
+         LEFT JOIN signal_result r ON r.signal_id = s.id
+        WHERE s.id = $1 AND s.starts_at < NOW()`,
+      [id],
+    )
+    return rows[0] ? parsePastSignal(rows[0]) : null
+  } catch (error) {
+    if ((error as { code?: string }).code !== '42P01') console.error('[public-results] one', error)
+    return null
+  }
+}

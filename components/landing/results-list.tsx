@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { Segmented } from '@/components/app/segmented'
 import { formatEdge, formatOdds } from '@/lib/format-lt'
@@ -58,7 +59,12 @@ export function ResultsList({ rows, books }: { rows: ResultRow[]; books: string[
           >
             <span className="order-3 text-[0.85rem] text-haze md:order-none">{row.when}</span>
             <span className="order-1 min-w-0 md:order-none">
-              <span className="block truncate text-chalk">{row.pick}</span>
+              <Link
+                href={`/rezultatai/${row.id}`}
+                className="block truncate text-chalk underline decoration-transparent underline-offset-4 transition-colors hover:decoration-rail-strong"
+              >
+                {row.pick}
+              </Link>
               <span className="block truncate text-[0.85rem] text-haze">
                 {row.sport} · {row.event}
               </span>
