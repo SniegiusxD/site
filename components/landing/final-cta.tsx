@@ -31,7 +31,7 @@ export function FinalCta({ stats }: { stats: PublicStats | null }) {
           </Link>
         </Reveal>
         <p className="mx-auto mt-5 max-w-[48ch] text-[0.8125rem] text-haze">
-          Tik nuo 18 metų. Lošimas gali sukelti priklausomybę. Vertė veikia per šimtus statymų, ir nė vienas statymas nėra saugus.
+          Tik nuo 21 metų. Dalyvavimas azartiniuose lošimuose gali sukelti priklausomybę. Vertė veikia per šimtus statymų, ir nė vienas statymas nėra saugus.
         </p>
       </div>
     </section>

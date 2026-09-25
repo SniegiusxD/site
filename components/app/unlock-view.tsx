@@ -22,7 +22,7 @@ function ResponsibleUse() {
         <li>Prenumerata perka kainų informaciją, o ne pelną. Vertė atsiperka per šimtus statymų ir gali neatsipirkti.</li>
         <li>Statyk tik tiek, kiek gali prarasti. Siūloma suma skaičiuojama nuo tavo banko ir niekada neviršija tavo kontoros limito.</li>
         <li>Lietuvos kontoros karpo laiminčias paskyras: gali gauti mažesnį limitą arba prastesnį koeficientą.</li>
-        <li>Tik nuo 18 metų. Lošimas gali sukelti priklausomybę.</li>
+        <li>Tik nuo 21 metų. Dalyvavimas azartiniuose lošimuose gali sukelti priklausomybę.</li>
       </ul>
       <p className="mt-3">
         Apriboti sau galimybę lošti gali per{' '}

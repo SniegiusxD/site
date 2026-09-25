@@ -192,7 +192,7 @@ export function Calculator({ counts }: { counts: SignalCounts | null }) {
                 <label htmlFor={bankrollId} className="block font-display text-[2rem] leading-none font-bold">
                   Su kokiu bankrollu pradėtum?
                 </label>
-                <p className="mt-2 text-[0.95rem] text-haze">Tik tiek, kiek gali sau leisti prarasti. 18+.</p>
+                <p className="mt-2 text-[0.95rem] text-haze">Tik tiek, kiek gali sau leisti prarasti. 21+.</p>
                 <div className="mt-5 flex items-baseline gap-2 border-b-2 border-rail pb-2 focus-within:border-chalk">
                   <input
                     id={bankrollId}

@@ -42,7 +42,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       return
     }
     if (signUp && !accepted) {
-      setError('Patvirtink, kad tau yra 18 metų ir sutinki su taisyklėmis.')
+      setError('Patvirtink, kad tau yra 21 metai ir sutinki su taisyklėmis.')
       return
     }
 
@@ -141,7 +141,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
               <Check className="pointer-events-none relative size-3.5 text-night opacity-0 peer-checked:opacity-100" aria-hidden />
             </span>
             <span>
-              Man yra 18 metų ir sutinku su{' '}
+              Man yra 21 metai ir sutinku su{' '}
               <Link href="/taisykles" className="text-chalk underline decoration-rail-strong underline-offset-4">
                 taisyklėmis
               </Link>{' '}

@@ -242,7 +242,7 @@ export const GUIDES: Guide[] = [
             tarnybą.
           </p>
           <p>
-            Tik nuo 18 metų. Lošimas gali sukelti priklausomybę. Apriboti sau galimybę lošti gali per{' '}
+            Tik nuo 21 metų. Dalyvavimas azartiniuose lošimuose gali sukelti priklausomybę. Apriboti sau galimybę lošti gali per{' '}
             <a href="https://lpt.lrv.lt" rel="noopener" className={link}>
               Lošimų priežiūros tarnybą
             </a>
@@ -315,7 +315,7 @@ export const GUIDES: Guide[] = [
             </li>
           </ul>
           <p>
-            Tik nuo 18 metų. Jei lošimas nustoja būti kontroliuojamas, apriboti sau galimybę lošti gali per{' '}
+            Tik nuo 21 metų. Jei lošimas nustoja būti kontroliuojamas, apriboti sau galimybę lošti gali per{' '}
             <a href="https://lpt.lrv.lt" rel="noopener" className={link}>
               Lošimų priežiūros tarnybą
             </a>
