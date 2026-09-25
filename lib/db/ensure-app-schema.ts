@@ -24,7 +24,9 @@ export function ensureAppSchema(): Promise<void> {
         ADD COLUMN IF NOT EXISTS "onboardedAt" TIMESTAMPTZ,
         ADD COLUMN IF NOT EXISTS "dailyBets" INTEGER NOT NULL DEFAULT 10,
         ADD COLUMN IF NOT EXISTS "topOptIn" BOOLEAN NOT NULL DEFAULT FALSE,
-        ADD COLUMN IF NOT EXISTS "topName" TEXT;
+        ADD COLUMN IF NOT EXISTS "topName" TEXT,
+        -- A flat stake in euros instead of Kelly sizing; NULL = size by value.
+        ADD COLUMN IF NOT EXISTS "fixedStake" DOUBLE PRECISION;
 
       -- Topas: members shown by nickname only after they switch it on.
       -- Nicknames are unique regardless of case.

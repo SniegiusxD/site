@@ -14,6 +14,11 @@ export type Preferences = {
   bookLimits: Partial<Record<BookName, number>>
   /** The daily target: how many signals the member plans to bet per day. */
   dailyBets: number
+  /**
+   * A flat amount in euros for every signal instead of Kelly sizing; null =
+   * size by value (Kelly). The 5 % ceiling and book limits still apply.
+   */
+  fixedStake: number | null
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -26,6 +31,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   kellyFraction: 0.25,
   bookLimits: {},
   dailyBets: 10,
+  fixedStake: null,
 }
 
 export const KELLY_CHOICES = [0.125, 0.25, 0.5] as const
@@ -101,6 +107,12 @@ export function parseSettings(input: unknown): SettingsResult {
     return { ok: false, error: 'Dienos tikslas turi būti nuo 1 iki 200 statymų.' }
   }
 
+  // Not sent (older clients, onboarding) or null: size by value.
+  const fixedStake = raw.fixedStake ?? null
+  if (fixedStake !== null && (!isNumber(fixedStake) || fixedStake < 1 || fixedStake > 100_000)) {
+    return { ok: false, error: 'Fiksuota suma turi būti nuo 1 iki 100 000 €.' }
+  }
+
   return {
     ok: true,
     value: {
@@ -112,26 +124,32 @@ export function parseSettings(input: unknown): SettingsResult {
       kellyFraction,
       bookLimits,
       dailyBets: Math.round(dailyBets),
+      fixedStake: fixedStake === null ? null : Math.round(fixedStake),
     },
   }
 }
 
+/** No single stake is ever suggested above this share of the bankroll. */
+export const STAKE_CEILING = 0.05
+
+export type StakePrefs = Pick<Preferences, 'bankroll' | 'kellyFraction' | 'bookLimits'> & {
+  fixedStake?: number | null
+}
+
 /**
- * The stake the app suggests: `kellyFraction` of full Kelly, never more than
- * 5 % of bankroll and never more than the book's limit, whole euros.
+ * The stake the app suggests: a member's fixed amount when they set one,
+ * otherwise `kellyFraction` of full Kelly. Either way never more than 5 % of
+ * bankroll and never more than the book's limit, whole euros. A signal without
+ * value gets nothing, fixed amount or not.
  */
-export function suggestedStake(
-  prefs: Pick<Preferences, 'bankroll' | 'kellyFraction' | 'bookLimits'>,
-  book: BookName,
-  odds: number,
-  fairOdds: number,
-): number {
+export function suggestedStake(prefs: StakePrefs, book: BookName, odds: number, fairOdds: number): number {
   const b = odds - 1
   if (b <= 0 || fairOdds <= 1) return 0
   const p = 1 / fairOdds
   const fullKelly = Math.max(0, (b * p - (1 - p)) / b)
-  const share = Math.min(0.05, fullKelly * prefs.kellyFraction)
+  if (fullKelly <= 0) return 0
+  const ceiling = prefs.bankroll * STAKE_CEILING
+  const stake = prefs.fixedStake ? Math.min(prefs.fixedStake, ceiling) : prefs.bankroll * Math.min(STAKE_CEILING, fullKelly * prefs.kellyFraction)
   const limit = prefs.bookLimits[book]
-  const stake = prefs.bankroll * share
   return Math.floor(limit !== undefined ? Math.min(stake, limit) : stake)
 }

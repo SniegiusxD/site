@@ -13,7 +13,7 @@ import type { ActiveBet } from '@/lib/types'
 import { signedEuro } from './value-chart'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { SuggestBook } from './suggest-book'
-import { DAILY_BET_CHOICES, KELLY_CHOICES, type Preferences } from '@/lib/preferences'
+import { DAILY_BET_CHOICES, KELLY_CHOICES, type Preferences, STAKE_CEILING, suggestedStake } from '@/lib/preferences'
 import { useApi } from '@/lib/use-api'
 import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
 import { useAccount } from './account-provider'
@@ -165,12 +165,34 @@ export function ProfileView() {
         <div className="mt-6" />
         <ChipGroup
           size="md"
-          label="Rizika: kokią Kelly dalį naudoti"
-          options={KELLY_CHOICES.map((value) => ({ value, label: KELLY_LABEL[value] }))}
-          value={prefs.kellyFraction as (typeof KELLY_CHOICES)[number]}
-          onChange={(kellyFraction) => updateSettings({ kellyFraction })}
+          label="Kaip skaičiuoti sumą"
+          options={[
+            { value: 'kelly', label: 'Pagal vertę' },
+            { value: 'fixed', label: 'Fiksuota suma' },
+          ]}
+          value={prefs.fixedStake ? 'fixed' : 'kelly'}
+          onChange={(mode) =>
+            updateSettings({
+              // Start a fixed amount where value sizing would have put the example signal.
+              fixedStake: mode === 'fixed' ? Math.max(1, suggestedStake(prefs, '7BET', EXAMPLE.odds, EXAMPLE.fair)) : null,
+            })
+          }
         />
-        <StakePreview prefs={prefs} />
+        <div className="mt-5" />
+        {prefs.fixedStake ? (
+          <FixedStakeField prefs={prefs} onChange={(fixedStake) => updateSettings({ fixedStake })} />
+        ) : (
+          <>
+            <ChipGroup
+              size="md"
+              label="Rizika: kokią Kelly dalį naudoti"
+              options={KELLY_CHOICES.map((value) => ({ value, label: KELLY_LABEL[value] }))}
+              value={prefs.kellyFraction as (typeof KELLY_CHOICES)[number]}
+              onChange={(kellyFraction) => updateSettings({ kellyFraction })}
+            />
+            <StakePreview prefs={prefs} />
+          </>
+        )}
         <p className="mt-6 font-medium">Kontorų limitai</p>
         <p className="mt-1 text-[0.95rem] text-haze">Siūloma suma niekada neviršys čia įrašyto limito. Tuščia: be limito.</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -326,6 +348,45 @@ function StakePreview({ prefs }: { prefs: Preferences }) {
           ))}
         </ul>
       )}
+    </div>
+  )
+}
+
+/**
+ * The flat amount. Kept as a draft while typing, so clearing the field to type
+ * a new number does not switch the member back to value sizing.
+ */
+function FixedStakeField({ prefs, onChange }: { prefs: Preferences; onChange: (value: number) => void }) {
+  const id = useId()
+  const [draft, setDraft] = useState(String(prefs.fixedStake ?? ''))
+  const ceiling = Math.floor(prefs.bankroll * STAKE_CEILING)
+  const amount = Number(draft) || 0
+  return (
+    <div>
+      <label htmlFor={id} className="font-medium">
+        Suma kiekvienam signalui
+      </label>
+      <div className="relative mt-2 max-w-[12rem]">
+        <input
+          id={id}
+          inputMode="numeric"
+          value={draft}
+          onChange={(event) => {
+            const digits = event.target.value.replace(/\D/g, '').slice(0, 6)
+            setDraft(digits)
+            if (Number(digits) >= 1) onChange(Number(digits))
+          }}
+          className="h-12 w-full rounded-xl bg-night/60 pr-9 pl-4 font-semibold outline-none hairline focus:shadow-[inset_0_0_0_1.5px_var(--chalk)]"
+        />
+        <span aria-hidden className="absolute top-1/2 right-4 -translate-y-1/2 text-haze">
+          €
+        </span>
+      </div>
+      <p className="mt-3 text-[0.95rem] text-haze">
+        Kiekvienam signalui siūlysim tą pačią sumą, nepriklausomai nuo vertės. Ne daugiau nei 5 % bankrollo (
+        {formatEuro(ceiling)}) ir ne daugiau nei kontoros limitas.
+        {amount > ceiling && <span className="text-warning"> Dabar suma bus apkirpta iki {formatEuro(ceiling)}.</span>}
+      </p>
     </div>
   )
 }

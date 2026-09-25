@@ -1,6 +1,6 @@
 import { vilniusDay } from '@/lib/bets-calendar'
 import type { LivePrice, LiveSignal } from '@/lib/live-signals'
-import { type Preferences, suggestedStake } from '@/lib/preferences'
+import { type StakePrefs, suggestedStake } from '@/lib/preferences'
 import type { ActiveBet } from '@/lib/types'
 
 /** The fields the signal board needs from a tracked bet. */
@@ -105,7 +105,7 @@ export function exposureFor(signal: LiveSignal, bets: BoardBet[], signalsById: M
  * of that amount. The book limit still applies on top.
  */
 export function boardStake(
-  prefs: Pick<Preferences, 'bankroll' | 'kellyFraction' | 'bookLimits'>,
+  prefs: StakePrefs,
   signal: Pick<LiveSignal, 'fairOdds'>,
   price: Pick<LivePrice, 'book' | 'odds'>,
   exposure: Exposure,

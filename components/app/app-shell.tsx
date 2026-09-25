@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import { authClient } from '@/lib/auth-client'
 import { brand } from '@/lib/brand'
-import { ltPlural } from '@/lib/format-lt'
+import { formatEuro, ltPlural } from '@/lib/format-lt'
 import { useAccount } from './account-provider'
 import { BankrollDialog } from './bankroll-dialog'
 
@@ -101,7 +101,10 @@ export function AppShell({ children, owner = false }: { children: React.ReactNod
               <NumberFlow value={account.bankroll.current} locales="lt-LT" format={{ maximumFractionDigits: 0 }} suffix=" €" />
             </span>
             <span className="mt-1 block text-[0.8rem] text-haze-dim">
-              Sumos: {KELLY_NAME[account.preferences.kellyFraction] ?? 'Kelly'}
+              Sumos:{' '}
+              {account.preferences.fixedStake
+                ? `po ${formatEuro(account.preferences.fixedStake)}`
+                : (KELLY_NAME[account.preferences.kellyFraction] ?? 'Kelly')}
             </span>
           </button>
           <div className="flex items-center justify-between gap-2 px-1">
