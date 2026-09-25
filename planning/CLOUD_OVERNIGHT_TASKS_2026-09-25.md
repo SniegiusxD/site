@@ -314,6 +314,8 @@ Therefore:
 
 ### Task 22: "Pranešti, kai statymas atsiskaito" setting (for t152)
 
+**Already done by Claude on 2026-09-26 (`e097e54`); skip this task.**
+
 - Add `user_settings.notifySettled boolean NULL`. It is additive, and NULL
   means on. Put it in `lib/db/ensure-app-schema.ts`, using `runLockedDdl` like
   the other columns.
@@ -336,6 +338,8 @@ Therefore:
 
 ### Task 24: where onboarding loses people (t153)
 
+**Already done by Claude on 2026-09-26 (`140cc24`); skip this task.**
+
 - Record anonymous onboarding step events in our own database, with no third
   parties:
   - new additive table `onboarding_event (id, session_hash, step, action, at)`;
@@ -348,6 +352,8 @@ Therefore:
 - Update the privacy policy with one sentence.
 
 ### Task 25: a member's CLV share card (t156)
+
+**On hold (legal): a public card promoting betting results may count as encouraging gambling under ALĮ 10 str. 19 d. Skip it until LPT answers (t192).**
 
 - `/api/og/member/[publicId]`, or a signed route: a next/og card with the
   member's month CLV, share beating the close, and number of bets.
