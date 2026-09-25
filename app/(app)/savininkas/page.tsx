@@ -5,6 +5,7 @@ import { OwnerMemberActions } from '@/components/app/owner-member-actions'
 import { searchOwnerMembers } from '@/lib/admin-actions'
 import { brand } from '@/lib/brand'
 import { recentErrors } from '@/lib/error-store'
+import { loadHealth } from '@/lib/health'
 import { kickoffLabel } from '@/lib/live-view'
 import { formatEuro, formatInteger } from '@/lib/format-lt'
 import { isOwner, ownerMetrics } from '@/lib/owner'
@@ -29,7 +30,7 @@ const share = (part: number, whole: number) => (whole ? `${Math.round((part / wh
 export default async function OwnerPage() {
   const user = await getSessionUser()
   if (!user || !isOwner(user.email)) notFound()
-  const [m, members, errors] = await Promise.all([ownerMetrics(), searchOwnerMembers(''), recentErrors(20)])
+  const [m, members, errors, health] = await Promise.all([ownerMetrics(), searchOwnerMembers(''), recentErrors(20), loadHealth()])
   const peak = Math.max(1, ...m.signupsByDay.map((d) => d.count))
   const paying = m.access.active + m.access.ending
 
@@ -37,6 +38,17 @@ export default async function OwnerPage() {
     <main className="mx-auto max-w-[64rem] px-4 pt-6 pb-16 sm:px-8 lg:pt-10">
       <h1 className="text-[2.4rem] sm:text-[3rem]">Savininkas</h1>
       <p className="mt-2 text-haze">Be testinių paskyrų. Atnaujinta atidarius puslapį.</p>
+
+      {/* The same facts the GitHub monitor checks, so a stuck scanner or grader is seen here too. */}
+      <p className={`mt-4 rounded-xl px-4 py-3 text-[0.95rem] ${health.ok ? 'bg-pitch-soft text-pitch' : 'bg-[rgb(245_165_36/0.12)] text-warning'}`}>
+        {health.problem === 'database'
+          ? 'Duomenų bazė neatsako.'
+          : `Skeneris: paskutinis ciklas ${health.lastPublishedAt ? kickoffLabel(health.lastPublishedAt) : '—'}. Rezultatai: paskutinis įrašas ${
+              health.lastResultAt ? kickoffLabel(health.lastResultAt) : 'dar nė vieno'
+            }.`}
+        {health.problem === 'stale' && ' Skeneris vėluoja daugiau nei 90 min.'}
+        {health.problem === 'results-stale' && ' Rezultatai neatnaujinti daugiau nei parą, nors rungtynės baigėsi.'}
+      </p>
 
       <dl className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Nariai" value={formatInteger(m.members)} note={`+${m.signups7d} per 7 d., +${m.signups30d} per 30 d.`} />
