@@ -303,7 +303,7 @@ function SummaryStat({ label, className = '', children }: { label: string; class
       <dd className={`mt-1.5 font-display text-[1.8rem] leading-none font-bold tnum ${className}`}>
         {children ?? (
           <>
-            <span aria-hidden className="inline-block h-7 w-16 animate-pulse rounded-md bg-rail align-middle" />
+            <span aria-hidden className="inline-block h-7 w-16 kr-skeleton rounded-md align-middle" />
             <span className="sr-only">Įkeliama</span>
           </>
         )}

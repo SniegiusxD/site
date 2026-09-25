@@ -554,3 +554,19 @@
     transform: scale(1.06);
   }
 }
+
+/* Every loading placeholder: one soft band sweeps across (kr-shimmer). Calm
+   mode stops it after one pass, and the grey block still says "loading". */
+.kr-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--stand);
+}
+.kr-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.06), transparent);
+  animation: kr-shimmer 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
