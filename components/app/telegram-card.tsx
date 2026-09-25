@@ -66,6 +66,27 @@ export function TelegramCard() {
     if (saveTimer.current) window.clearTimeout(saveTimer.current)
   }, [])
 
+  async function setNotifySettled(on: boolean) {
+    if (!state) return
+    const before = state
+    setState({ ...state, notifySettled: on })
+    try {
+      const response = await fetch('/api/telegram/settled', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ on }),
+      })
+      const body = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(body?.error ?? 'Nepavyko išsaugoti.')
+      setState(body)
+      setError(null)
+    } catch (caught) {
+      setState(before)
+      // fetch() throws TypeError when offline; its English text is not for members.
+      setError(caught instanceof TypeError ? 'Nepavyko susisiekti su serveriu.' : caught instanceof Error ? caught.message : 'Nepavyko išsaugoti.')
+    }
+  }
+
   function update(patch: Partial<TelegramSettings>) {
     if (!state) return
     const settings = { ...state.settings, ...patch }
@@ -255,6 +276,19 @@ export function TelegramCard() {
             checked={s.enabled}
             onChange={(event) => update({ enabled: event.target.checked })}
             className="size-5 accent-[var(--pitch)]"
+          />
+        </label>
+
+        <label className="flex items-center justify-between gap-4">
+          <span>
+            <span className="block font-medium">Pranešti, kai statymas atsiskaito</span>
+            <span className="mt-0.5 block text-[0.9rem] text-haze">Rezultatas ir CLV, o pirmadieniais savaitės suvestinė.</span>
+          </span>
+          <input
+            type="checkbox"
+            checked={state.notifySettled}
+            onChange={(event) => setNotifySettled(event.target.checked)}
+            className="size-5 shrink-0 accent-[var(--pitch)]"
           />
         </label>
 

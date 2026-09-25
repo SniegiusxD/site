@@ -29,7 +29,10 @@ export function ensureAppSchema(): Promise<void> {
         ADD COLUMN IF NOT EXISTS "fixedStake" DOUBLE PRECISION,
         -- A break the member set for themselves: no signals on the board or in
         -- Telegram until then. NULL = no break (lib/self-pause.ts).
-        ADD COLUMN IF NOT EXISTS "pausedUntil" TIMESTAMPTZ;
+        ADD COLUMN IF NOT EXISTS "pausedUntil" TIMESTAMPTZ,
+        -- Telegram message when a tracked bet settles, plus a Monday summary.
+        -- NULL = on; the bot treats a missing column as on too.
+        ADD COLUMN IF NOT EXISTS "notifySettled" BOOLEAN;
 
       -- Topas: members shown by nickname only after they switch it on.
       -- Nicknames are unique regardless of case.
@@ -133,7 +136,10 @@ export function ensureAppSchema(): Promise<void> {
         ADD COLUMN IF NOT EXISTS "maxOdds" DOUBLE PRECISION NOT NULL DEFAULT 100,
         -- A pause with an end: alerts come back on their own, so nobody has to
         -- remember that they switched them off during a match.
-        ADD COLUMN IF NOT EXISTS "pausedUntil" TIMESTAMPTZ;
+        ADD COLUMN IF NOT EXISTS "pausedUntil" TIMESTAMPTZ,
+        -- Telegram message when a tracked bet settles, plus a Monday summary.
+        -- NULL = on; the bot treats a missing column as on too.
+        ADD COLUMN IF NOT EXISTS "notifySettled" BOOLEAN;
 
       -- Saved alert rules a member can switch between ("Krepšinis 4 %+",
       -- "Tik TopSport"). Applying one writes into the same columns the bot
