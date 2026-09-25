@@ -16,8 +16,9 @@ The container had Chromium build 1194, and `@playwright/test` 1.63 expects 1243.
 I linked the installed headless shell under the expected path. This changed
 the container only, not the repo.
 
-Final state: 411 unit tests (up from 401), and 77 e2e checks passing plus the
-one intentional skip (up from 65). Browser probes for the moments live in
+Final state: 411 unit tests (up from 401), and 67 e2e checks passing plus the
+one intentional skip (up from 65). An earlier version of this report said 77:
+that count included my uncommitted `zz-local-*` probes. Browser probes for the moments live in
 `tests/e2e/zz-local-*`, which is excluded in `.git/info/exclude` and not
 committed.
 
@@ -141,9 +142,23 @@ committed.
   the new test proves it. The `StartingSoon` ring also pulses (`animate-pulse`)
   for up to 15 minutes.
 - Task 19 (cancelled) and Task 25 (on hold) were not started.
-- **Not verified by eye:** the FLIP (Task 3) mid-flight. The desktop board
-  auto-selects the first row, so my probe's click did not remount the detail.
-  The code path has no errors, and the settled state is correct.
+
+## Follow-ups after the first pass
+
+- **The section slide waited for the loading skeleton** (`279cc1b`). The
+  transition resolved as soon as the URL changed, which is when Next shows
+  `app/(app)/loading.tsx`, so each slide landed on grey blocks. It now resolves
+  once the main column (`data-app-main`) no longer holds the `aria-busy`
+  skeleton, still capped at 1.5 s. Browser probe: before, 4 of 4 section changes
+  snapshotted the skeleton; after, 0 of 4.
+- **The row-to-detail flight is now verified, and faster.** With a second
+  signal added to the local database only, the probe tracked the detail's odds
+  frame by frame. They start at the row (636,777 vs the row's 635,779), grow
+  from 37 to 46 px, and land in about 400 ms. The pane used to wait for the old
+  detail's exit first, which delayed the flight by about 230 ms. `popLayout`
+  now mounts the new detail at once (`ce7d9d9`), and the
+  flight starts on the first frame.
+- The owner decided to keep the bookmaker names on public pages as they are.
 
 ## Every new moment, and how to try it
 
