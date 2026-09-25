@@ -30,6 +30,7 @@ export function errorFingerprint(entry: Pick<ErrorEntry, 'source' | 'message' | 
 }
 
 const KEEP_DAYS = 30
+const MAX_ROWS = 5000
 
 let tableReady: Promise<void> | null = null
 
@@ -63,11 +64,16 @@ export async function recordError(entry: ErrorEntry): Promise<void> {
   try {
     await ensureTable()
     await pool.query(
+      // A new distinct error is kept only while the table is under its cap, so
+      // a flood of made-up reports cannot grow it without bound; repeats of a
+      // known error still count.
       `INSERT INTO error_event (fingerprint, source, kind, message, stack, "where", release)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       SELECT $1, $2, $3, $4, $5, $6, $7
+        WHERE (SELECT count(*) FROM error_event) < $8
+           OR EXISTS (SELECT 1 FROM error_event WHERE fingerprint = $1)
        ON CONFLICT (fingerprint) DO UPDATE
          SET count = error_event.count + 1, "lastAt" = NOW(), release = EXCLUDED.release`,
-      [errorFingerprint(entry), entry.source, entry.kind, entry.message.slice(0, 500), entry.stack?.slice(0, 2000) ?? null, entry.where, entry.release],
+      [errorFingerprint(entry), entry.source, entry.kind, entry.message.slice(0, 500), entry.stack?.slice(0, 2000) ?? null, entry.where, entry.release, MAX_ROWS],
     )
     // Cheap enough to do now and then rather than on a schedule.
     if (Math.random() < 0.02) {

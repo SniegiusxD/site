@@ -40,7 +40,9 @@ export type ContactMessage = { email: string; message: string }
 /** Messages without an account, all visitors together, per day: a flood stops here. */
 export const DAILY_CONTACT_LIMIT = 100
 
-const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,24}$/
+// Plain addresses only: the owner answers through a mailto: link, where ?, &,
+// quotes or angle brackets could smuggle in extra headers or a body.
+const EMAIL = /^[\w.+-]{1,64}@[\w-]+(\.[\w-]+)*\.[a-z]{2,24}$/i
 
 export function parseContact(input: unknown): { ok: true; value: ContactMessage } | { ok: false; error: string; spam?: true } {
   if (!input || typeof input !== 'object') return { ok: false, error: 'Parašyk žinutę.' }
