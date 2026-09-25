@@ -20,7 +20,7 @@ function ResponsibleUse() {
       <p className="font-medium text-chalk">Prieš mokant, verta žinoti</p>
       <ul className="mt-2.5 grid gap-1.5">
         <li>Prenumerata perka kainų informaciją, o ne pelną. Vertė atsiperka per šimtus statymų ir gali neatsipirkti.</li>
-        <li>Statyk tik tiek, kiek gali prarasti. Siūloma suma skaičiuojama nuo tavo banko ir niekada neviršija tavo kontoros limito.</li>
+        <li>Statymams skirk tik tiek, kiek gali prarasti. Siūloma suma skaičiuojama nuo tavo banko ir niekada neviršija tavo kontoros limito.</li>
         <li>Lietuvos kontoros karpo laiminčias paskyras: gali gauti mažesnį limitą arba prastesnį koeficientą.</li>
         <li>Tik nuo 21 metų. Dalyvavimas azartiniuose lošimuose gali sukelti priklausomybę.</li>
       </ul>

@@ -29,8 +29,8 @@ export default function MethodologyPage() {
       <section>
         <h2>Iš kur imam tikrąją kainą</h2>
         <p>
-          Lyginam Lietuvos kontorų koeficientus su Pinnacle. Pinnacle uždirba iš apyvartos, o ne iš maržos, todėl priima didelius
-          statymus ir greitai taiso kainą — jos kaina yra artimiausias turimas įvertis, kokia tikimybė iš tikrųjų.
+          Lyginam Lietuvos kontorų koeficientus su tarptautinės rinkos kaina (Pinnacle). Tokia rinka dirba su maža marža ir kainą
+          taiso greitai, todėl jos kaina yra artimiausias turimas įvertis, kokia tikimybė iš tikrųjų. Ten nestatom ir to nesiūlom.
         </p>
         <p>
           Iš Pinnacle kainos išimam maržą (angl. <i>devigging</i>, galios metodu abiem pusėms). Likusi kaina ir yra tai, ką vadinam

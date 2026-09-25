@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { brand } from '@/lib/brand'
 import { displayFont, OG, OG_SIZE, OgFrame, ogFonts } from '@/lib/og'
 
-export const alt = `${brand.name}: kur Lietuvos kontoros moka daugiau, nei verta`
+export const alt = `${brand.name}: koeficientai, aukštesni už rinkos kainą`
 export const size = OG_SIZE
 export const contentType = 'image/png'
 

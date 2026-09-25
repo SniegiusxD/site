@@ -43,8 +43,8 @@ export const GUIDES: Guide[] = [
         <section>
           <h2>Iš kur žinoti tikrąją tikimybę</h2>
           <p>
-            Tiksliai jos nežino niekas, bet yra geras įvertis: didžiųjų, laimėtojų neribojančių kontorų kaina. Labiausiai žinoma yra
-            Pinnacle. Ji priima didelius statymus iš stipriausių lošėjų, todėl jos kaina greitai prisitaiko prie visko, ką rinka
+            Tiksliai jos nežino niekas, bet yra geras įvertis: tarptautinės lažybų rinkos kaina su maža marža (dažniausiai naudojama
+            Pinnacle kaina). Ją formuoja dideli rinkos dalyviai, todėl ji greitai prisitaiko prie visko, ką rinka
             sužino. Nuėmus maržą, gaunama „tikroji kaina“.
           </p>
           <p>
@@ -231,14 +231,14 @@ export const GUIDES: Guide[] = [
           <ul>
             <li>Raštu paprašyk kontoros nurodyti taisyklių punktą, pagal kurį sumažintas limitas.</li>
             <li>Jei aiškaus pagrindo nėra, gali kreiptis į Lošimų priežiūros tarnybą.</li>
-            <li>Tuo metu statyk kitose kontorose. Kuo daugiau licencijuotų kontorų paskyrų turi, tuo mažiau priklausai nuo vienos.</li>
+            <li>Kitose licencijuotose kontorose tavo paskyros lieka, kokios buvo. Kuo daugiau jų turi, tuo mažiau priklausai nuo vienos.</li>
           </ul>
         </section>
         <section>
           <h2>Kaip gyventi su limitais</h2>
           <p>
             Įrašyk tikrą kiekvienos kontoros limitą. Tada siūloma suma jo niekada neviršys, o signalus, kurių kontora nebeleidžia
-            pastatyti verta suma, galėsi atsijoti. Statyk profilyje limitų istorija lieka tavo įrodymu, jei kreipsiesi į
+            pastatyti verta suma, galėsi atsijoti. Profilyje saugoma limitų istorija lieka tavo įrodymu, jei kreipsiesi į
             tarnybą.
           </p>
           <p>
@@ -350,7 +350,7 @@ export const GUIDES: Guide[] = [
           </p>
         </section>
         <section>
-          <h2>3. Statyk siūlomą sumą</h2>
+          <h2>3. Siūloma suma</h2>
           <p>
             Siūloma suma skaičiuojama nuo tavo bankrollo ir pasirinkto būdo (pagal vertę arba fiksuota), neviršija 5 % bankrollo ir
             tavo įrašyto kontoros limito. Jei kontora leido pastatyti mažiau, įrašyk tiek, kiek pastatei.

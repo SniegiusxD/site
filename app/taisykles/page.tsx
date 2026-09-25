@@ -131,7 +131,7 @@ export default function TermsPage() {
         <h2>Atsakingas lošimas</h2>
         <p>Dalyvavimas azartiniuose lošimuose gali sukelti priklausomybę.</p>
         <ul>
-          <li>Statyk tik tiek, kiek gali sau leisti prarasti. Profilyje gali nustatyti, kiek daugiausia statyti vienoje kontoroje.</li>
+          <li>Statymams skirk tik tiek, kiek gali sau leisti prarasti. Profilyje gali nustatyti, kiek daugiausia statyti vienoje kontoroje.</li>
           <li>
             Apriboti sau galimybę lošti visose Lietuvos lošimų bendrovėse gali per Lošimų priežiūros
             tarnybą (<a href="https://lpt.lrv.lt">lpt.lrv.lt</a>).

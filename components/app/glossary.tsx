@@ -23,7 +23,7 @@ const TERMS: Array<{ term: string; body: string }> = [
   },
   {
     term: 'Rodomas koeficientas',
-    body: 'Signalas rodo kainą, kurią pagavom skenuodami. Kol spėji atidaryti kontorą, ji gali būti pasikeitusi arba dingusi — tada statyk tik jei vertė vis dar yra.',
+    body: 'Signalas rodo kainą, kurią pagavom skenuodami. Kol spėji atidaryti kontorą, ji gali būti pasikeitusi arba dingusi — tada patikrink, ar vertė vis dar yra.',
   },
 ]
 

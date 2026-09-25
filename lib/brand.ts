@@ -7,5 +7,5 @@ export const brand = {
   name: 'Statyk',
   domain: 'statyk.me' as string | null,
   description:
-    'Lyginam 7BET, TopSport ir Betsson koeficientus su Pinnacle ir parodom, kur kontora moka daugiau, nei verta.',
+    'Lyginam Lietuvos kontorų koeficientus su tarptautinės rinkos kaina ir parodom, kur kaina aukštesnė už rinkos įvertinimą.',
 } as const

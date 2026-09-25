@@ -79,7 +79,7 @@ function PricesTile() {
   return (
     <article className={CARD}>
       <h3 className={H3}>Visų kontorų kainos prie kiekvieno signalo</h3>
-      <p className={BODY}>Matai ne tik geriausią kainą, o visą eilę ir tikrąją kainą tarp jų. Turi kelias paskyras? Statai ten, kur moka daugiausia.</p>
+      <p className={BODY}>Matai ne tik geriausią kainą, o visą eilę ir tikrąją kainą tarp jų. Turi kelias paskyras? Matai, kurios kontoros kaina aukščiausia.</p>
       <p className="mt-4 text-[0.875rem]">
         {event.event} <span className="text-haze">· {threeBook.market}: {event.selection}</span>
       </p>
