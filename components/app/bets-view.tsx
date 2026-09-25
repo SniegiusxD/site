@@ -46,6 +46,7 @@ import { Segmented } from './segmented'
 import { ValueChart, signedEuro } from './value-chart'
 import { EASE, SPRING } from '@/lib/motion'
 import { centerOf, MoneyFlight, type MoneyFlightPath, onScreen } from './money-flight'
+import { PullToRefresh } from './pull-to-refresh'
 
 const STATUS: Record<BetStatus, { label: string; tone: string }> = {
   laukia: { label: 'Laukia', tone: 'bg-rail text-haze' },
@@ -219,6 +220,7 @@ export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
         </button>
       </div>
       <p className="mt-2 text-haze">Rezultatai suvedami automatiškai, kai rungtynės baigiasi.</p>
+      <PullToRefresh onRefresh={load} />
 
       {loadError && <LoadError error={loadError} what="statymų" onRetry={load} retrying={loading} className="mt-6" />}
 

@@ -39,6 +39,7 @@ import { Segmented } from './segmented'
 import { TrialRecap } from './trial-recap'
 import { DailyTarget } from './board/daily-target'
 import { NewSignalsPill } from './board/new-signals-pill'
+import { PullToRefresh } from './pull-to-refresh'
 import { Collapsible, Notice } from './board/list-parts'
 import { FilterChips, SavedViewsChip, SortChip } from './board/filters'
 import { BetFlight, useBetFlight } from './board/bet-flight'
@@ -526,6 +527,7 @@ export function SignalBoard({
             <>
               <div ref={listTop} className="scroll-mt-24" />
               <NewSignalsPill pulses={pulses} listTop={listTop} />
+              <PullToRefresh onRefresh={refresh} />
               {compact && <CompactHeader />}
               <ul>
                 <AnimatePresence key={unlockedAt ?? 'board'} initial={unlockedAt !== null && !reduced}>
