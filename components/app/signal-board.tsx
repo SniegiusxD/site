@@ -530,7 +530,7 @@ export function SignalBoard({
               <PullToRefresh onRefresh={refresh} />
               {compact && <CompactHeader />}
               <ul>
-                <AnimatePresence key={unlockedAt ?? 'board'} initial={unlockedAt !== null && !reduced}>
+                <AnimatePresence key={unlockedAt ?? 'board'} initial={unlockedAt !== null && !reduced} custom={now.getTime()}>
                   {visible.map((row, index) => renderRow(row, { enterIndex: index }))}
                 </AnimatePresence>
               </ul>

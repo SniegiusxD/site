@@ -1,7 +1,7 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 import { useState } from 'react'
 import { AlertTriangle, ArrowDown, ArrowUp, Check, Eye, Star, X } from 'lucide-react'
 import { BookMark } from '@/components/landing/book-mark'
@@ -15,6 +15,20 @@ import { soonMinutes, StartingSoon } from './board/starting-soon'
 
 
 /** One signal on the board: the row a member scans, plus its pin and hide buttons. */
+
+/**
+ * How a row leaves the open list. The board passes the current time as
+ * AnimatePresence `custom`: a signal whose match has just started slides down,
+ * toward "Užsidarę" where it now lives; anything else (closed, filtered,
+ * hidden) fades out to the side. The rows below close the gap by transform.
+ */
+const leaveVariants = (startsAt: string): Variants => ({
+  leave: (nowMs?: number) =>
+    nowMs !== undefined && Date.parse(startsAt) <= nowMs
+      ? { opacity: 0, y: 18, transition: { duration: DURATION.settle, ease: EASE } }
+      : { opacity: 0, x: -16, transition: { duration: DURATION.settle, ease: EASE } },
+})
+
 export function SignalRow({
   row,
   now,
@@ -64,7 +78,8 @@ export function SignalRow({
       layout="position"
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: -16, transition: { duration: DURATION.settle, ease: EASE } }}
+      exit="leave"
+      variants={leaveVariants(signal.startsAt)}
       transition={{ duration: enterDelay ? 0.45 : 0.3, ease: EASE, delay: enterDelay }}
       className={`relative border-b border-rail last:border-b-0 ${pulse === 'new' ? 'animate-[row-new_2.6s_ease-out]' : ''}`}
     >
@@ -255,7 +270,8 @@ export function CompactSignalRow({
       layout="position"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, x: -16, transition: { duration: DURATION.settle, ease: EASE } }}
+      exit="leave"
+      variants={leaveVariants(signal.startsAt)}
       transition={{ duration: 0.2, ease: EASE }}
       className={`relative flex items-stretch border-b border-rail last:border-b-0 ${pulse === 'new' ? 'animate-[row-new_2.6s_ease-out]' : ''} ${
         active ? 'bg-stand' : 'hover:bg-stand/60'
