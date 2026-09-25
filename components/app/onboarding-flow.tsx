@@ -8,10 +8,10 @@ import { useRouter } from 'next/navigation'
 import { useId, useMemo, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
 import { brand } from '@/lib/brand'
-import { edgeOf, formatEdge, formatEuro, formatInteger, formatOdds, kellyFraction, ltPlural } from '@/lib/format-lt'
+import { edgeOf, formatEdge, formatEuro, formatInteger, formatOdds, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName, landingSignals } from '@/lib/landing-signals'
 import { PACE_CHOICES, TRACK_RECORD, daysTo, recordPeriodLabel, simulationStake, timeLabel } from '@/lib/pace'
-import { KELLY_CHOICES, type Preferences, suggestedStake } from '@/lib/preferences'
+import { KELLY_CHOICES, type Preferences, STAKE_CEILING, suggestedStake } from '@/lib/preferences'
 import type { SignalCounts } from '@/lib/signal-counts'
 import { DEFAULT_TELEGRAM_SETTINGS } from '@/lib/telegram-settings'
 import { sampleStretches, simulate } from '@/lib/simulate'
@@ -242,7 +242,7 @@ function SampleSignal({ prefs }: { prefs: Preferences }) {
   const signal = landingSignals.find((entry) => entry.prices.length >= 2) ?? landingSignals[0]
   const price = signal.prices.find((entry) => entry.book === signal.valueBook) ?? signal.prices[0]
   const edge = edgeOf(price.odds, signal.fairOdds)
-  const stake = prefs.bankroll * Math.min(0.05, kellyFraction(price.odds, 1 / signal.fairOdds) * prefs.kellyFraction)
+  const stake = suggestedStake(prefs, price.book, price.odds, signal.fairOdds)
 
   return (
     <section aria-label="Pavyzdinis signalas" className="mt-8 rounded-2xl bg-stand p-5 hairline sm:p-6">
@@ -640,17 +640,22 @@ function RiskStep({ prefs, update }: StepProps) {
         title="Kiek rizikuoti?"
         body="Kelly kriterijus parenka sumą pagal vertę ir koeficientą. Mes naudojam tik jo dalį, kad svyravimai būtų pakeliami."
       />
-      <div role="radiogroup" aria-label="Kelly dalis" className="mt-10 grid gap-3">
+      <div
+        role="radiogroup"
+        aria-label="Kelly dalis"
+        aria-disabled={prefs.fixedStake ? true : undefined}
+        className={`mt-10 grid gap-3 transition-opacity ${prefs.fixedStake ? 'opacity-45' : ''}`}
+      >
         {KELLY_CHOICES.map((fraction) => {
           const checked = prefs.kellyFraction === fraction
-          const stake = suggestedStake({ ...prefs, kellyFraction: fraction }, '7BET', EXAMPLE.odds, EXAMPLE.fair)
+          const stake = suggestedStake({ ...prefs, kellyFraction: fraction, fixedStake: null }, '7BET', EXAMPLE.odds, EXAMPLE.fair)
           return (
             <button
               key={fraction}
               type="button"
               role="radio"
               aria-checked={checked}
-              onClick={() => update({ kellyFraction: fraction })}
+              onClick={() => update({ kellyFraction: fraction, fixedStake: null })}
               className={`flex items-center justify-between gap-4 rounded-2xl bg-stand p-5 text-left transition-[background-color,box-shadow] duration-200 ${
                 checked ? 'shadow-[inset_0_0_0_1.5px_var(--chalk)]' : 'hairline hover:bg-stand-hover'
               }`}
@@ -667,6 +672,8 @@ function RiskStep({ prefs, update }: StepProps) {
           )
         })}
       </div>
+
+      <FixedStakeChoice prefs={prefs} update={update} />
 
       <fieldset className="mt-10">
         <legend className="font-medium">Kontorų limitai</legend>
@@ -689,6 +696,60 @@ function RiskStep({ prefs, update }: StepProps) {
           ))}
         </div>
       </fieldset>
+    </div>
+  )
+}
+
+/**
+ * For members who stake the same amount every time. Picking a Kelly card above
+ * switches back; the amount is a draft while typing so clearing it does not.
+ */
+function FixedStakeChoice({ prefs, update }: StepProps) {
+  const id = useId()
+  const on = Boolean(prefs.fixedStake)
+  const [draft, setDraft] = useState(String(prefs.fixedStake ?? ''))
+  const ceiling = Math.floor(prefs.bankroll * STAKE_CEILING)
+  return (
+    <div className="mt-5 rounded-2xl bg-stand p-5 hairline">
+      <label className="flex min-h-11 cursor-pointer items-center gap-3 font-medium">
+        <input
+          type="checkbox"
+          checked={on}
+          onChange={(event) => {
+            const start = Math.max(1, suggestedStake({ ...prefs, fixedStake: null }, '7BET', EXAMPLE.odds, EXAMPLE.fair))
+            if (event.target.checked) setDraft(String(start))
+            update({ fixedStake: event.target.checked ? start : null })
+          }}
+          className="size-5 accent-[var(--floodlight)]"
+        />
+        Statysiu fiksuotą sumą, ne pagal Kelly
+      </label>
+      {on && (
+        <div className="mt-3">
+          <label htmlFor={id} className="text-[0.95rem] text-haze">
+            Suma kiekvienam signalui
+          </label>
+          <div className="relative mt-1.5 max-w-[12rem]">
+            <input
+              id={id}
+              inputMode="numeric"
+              value={draft}
+              onChange={(event) => {
+                const digits = event.target.value.replace(/\D/g, '').slice(0, 6)
+                setDraft(digits)
+                if (Number(digits) >= 1) update({ fixedStake: Number(digits) })
+              }}
+              className="h-12 w-full rounded-xl bg-night/60 pr-9 pl-4 font-semibold outline-none hairline focus:shadow-[inset_0_0_0_1.5px_var(--chalk)]"
+            />
+            <span aria-hidden className="absolute top-1/2 right-4 -translate-y-1/2 text-haze">
+              €
+            </span>
+          </div>
+          <p className="mt-2 text-[0.9rem] text-haze">
+            Ne daugiau nei 5 % bankrollo ({formatEuro(ceiling)}) ir kontoros limito. Pakeisti galėsi profilyje.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -721,7 +782,9 @@ function LimitInput({ book, value, onChange }: { book: BookName; value: number |
 
 function PaceStep({ prefs, update }: StepProps) {
   const returns = TRACK_RECORD.returns
-  const stake = simulationStake(prefs.bankroll, prefs.kellyFraction)
+  const stake = prefs.fixedStake
+    ? Math.max(1, Math.min(prefs.fixedStake, Math.floor(prefs.bankroll * STAKE_CEILING)))
+    : simulationStake(prefs.bankroll, prefs.kellyFraction)
   const month = prefs.dailyBets * 30
   const simulation = useMemo(() => simulate({ returns, stake, bets: month, paths: 100, seed: 30, points: 60 }), [returns, stake, month])
   const days = useMemo(() => sampleStretches({ returns, stake, bets: prefs.dailyBets, count: 12, seed: 40 }), [returns, stake, prefs.dailyBets])
