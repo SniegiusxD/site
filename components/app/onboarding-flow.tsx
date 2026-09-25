@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import NumberFlow from '@number-flow/react'
 import { ArrowLeft, Check, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -455,17 +456,20 @@ function BankrollStep({ prefs, text, onText }: { prefs: Preferences; text: strin
       <div className="mt-8 rounded-xl bg-stand p-4 text-haze hairline">
         <p>
           Signalui su +3 % verte (koef. {formatOdds(EXAMPLE.odds)}) siūlytume{' '}
-          <span className="font-semibold text-chalk">{stake > 0 ? formatEuro(stake) : 'mažiau nei 1 €'}</span>.
+          <span className="font-semibold text-chalk">{stake > 0 ? <Euros value={stake} /> : 'mažiau nei 1 €'}</span>.
         </p>
         {/* The second half of the rule: one selection gets one position, so a
             bet already placed on it comes out of the same amount. */}
         <p className="mt-2">
           Jei tą pačią baigtį jau būsi pastatęs{' '}
-          <span className="font-semibold text-chalk">{formatEuro(Math.max(1, Math.floor(stake / 2)))}</span> kitoje kontoroje, tam
+          <span className="font-semibold text-chalk">
+            <Euros value={Math.max(1, Math.floor(stake / 2))} />
+          </span>{' '}
+          kitoje kontoroje, tam
           pačiam signalui liktų{' '}
           <span className="font-semibold text-chalk">
             {stake - Math.max(1, Math.floor(stake / 2)) > 0
-              ? formatEuro(stake - Math.max(1, Math.floor(stake / 2)))
+              ? <Euros value={stake - Math.max(1, Math.floor(stake / 2))} />
               : 'nieko — riba jau išnaudota'}
           </span>
           . Suma skaičiuojama vienai baigčiai, o ne vienam statymui.
@@ -867,4 +871,9 @@ function Squares({ label, values, note }: { label: string; values: number[]; not
       <p className="mt-2 text-[0.9rem] font-medium">{note}</p>
     </div>
   )
+}
+
+/** Whole euros that roll as the bankroll is typed, so the member sees what their number means. */
+function Euros({ value }: { value: number }) {
+  return <NumberFlow value={value} locales="lt-LT" format={{ maximumFractionDigits: 0 }} suffix={' €'} />
 }
