@@ -10,6 +10,7 @@ import { agoLabel, type BoardRow, compactUntilLabel, ltSelection, timeUntilLabel
 import { driftOf, DRIFT_FLOOR, type Movement, type Pulse } from '@/lib/price-movement'
 import { sportName } from '@/lib/sports-lt'
 import { EASE } from '@/lib/motion'
+import { soonMinutes, StartingSoon } from './board/starting-soon'
 
 
 /** One signal on the board: the row a member scans, plus its pin and hide buttons. */
@@ -112,7 +113,17 @@ export function SignalRow({
         <span className="col-span-2 col-start-2 mt-2 flex min-w-0 items-center gap-2 pr-8 text-[0.85rem]">
           {pulse === 'new' && <span className="shrink-0 rounded-full bg-pitch-soft px-1.5 py-0.5 text-[0.75rem] font-semibold text-pitch">Naujas</span>}
           <span className="min-w-0 truncate text-haze">
-            {sportName(signal.sport)}, {open ? timeUntilLabel(signal.startsAt, now) : signal.status === 'started' ? 'prasidėjo' : 'užsidarė'}
+            {sportName(signal.sport)},{' '}
+            {open ? (
+              <span className={soonMinutes(signal.startsAt, now) !== null ? 'text-warning' : undefined}>
+                <StartingSoon startsAt={signal.startsAt} now={now} />
+                {timeUntilLabel(signal.startsAt, now)}
+              </span>
+            ) : signal.status === 'started' ? (
+              'prasidėjo'
+            ) : (
+              'užsidarė'
+            )}
             {/* How long the price has stood: an old signal is more likely gone at the book. */}
             {open && <> · rastas {agoLabel(signal.firstSeenAt, now)}</>}
           </span>
@@ -296,7 +307,10 @@ export function CompactSignalRow({
             {formatEdge(price.edge)}
           </span>
           <span className="text-right tnum">{amount}</span>
-          <span className="truncate text-right text-haze tnum">{when}</span>
+          <span className={`truncate text-right tnum ${open && soonMinutes(signal.startsAt, now) !== null ? 'text-warning' : 'text-haze'}`}>
+            {open && <StartingSoon startsAt={signal.startsAt} now={now} />}
+            {when}
+          </span>
         </span>
       </button>
       <span className="hidden shrink-0 items-center pr-3 lg:flex">
