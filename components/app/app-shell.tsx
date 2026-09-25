@@ -10,6 +10,7 @@ import { brand } from '@/lib/brand'
 import { formatEuro, ltPlural } from '@/lib/format-lt'
 import { useAccount } from './account-provider'
 import { BankrollDialog } from './bankroll-dialog'
+import { ConnectionBanner } from './connection-banner'
 
 const NAV = [
   { href: '/signalai', label: 'Signalai', icon: Activity },
@@ -147,6 +148,7 @@ export function AppShell({ children, owner = false }: { children: React.ReactNod
         </Link>
       )}
 
+      <ConnectionBanner />
       <div className="min-w-0 pb-24 lg:pb-0">{children}</div>
 
       {/* Phone bottom navigation */}

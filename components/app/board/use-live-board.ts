@@ -74,10 +74,13 @@ export function useLiveBoard(initial: LiveBoard, initialBets: BoardBet[]) {
     const tick = window.setInterval(() => document.visibilityState === 'visible' && setNow(new Date()), 30_000)
     const onFocus = () => document.visibilityState === 'visible' && refresh()
     document.addEventListener('visibilitychange', onFocus)
+    // Back online: fresh prices now, not at the next minute.
+    window.addEventListener('online', onFocus)
     return () => {
       window.clearInterval(poll)
       window.clearInterval(tick)
       document.removeEventListener('visibilitychange', onFocus)
+      window.removeEventListener('online', onFocus)
     }
   }, [refresh])
 
