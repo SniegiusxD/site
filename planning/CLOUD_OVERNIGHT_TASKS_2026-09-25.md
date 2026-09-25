@@ -162,6 +162,8 @@ In the open signal detail, when a poll changes the price:
 
 ### Task 6: "Tuoj prasideda" (t175)
 
+**Mostly done by Claude on 2026-09-26:** the ring and the amber time (`components/app/board/starting-soon.tsx`). Still to do: the slide into "Užsidarę" at kickoff.
+
 - Under 15 minutes to the start, the row's start time becomes a small
   countdown ring that empties.
 - At the start, the row slides into the "Užsidarę" state.
