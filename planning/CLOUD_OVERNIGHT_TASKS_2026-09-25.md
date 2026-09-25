@@ -253,6 +253,25 @@ When `daily-target.tsx` reaches its target:
   sentence that says what to do, and a button that does it.
 - Walk every screen.
 
+
+## Legal rule added 2026-09-25 (read before Part 3)
+
+Lithuanian law (ALĮ 10 str. 19 d. and LPT's 2025-06-30 guidance) treats a
+**public** page that names a betting company, or links to one, as prohibited
+gambling advertising. It also bans anything that urges people to bet.
+
+- On public pages (landing, `/rezultatai`, share cards, guides): **no book
+  names, no book logos, no links to books, and no "pays more" wording.**
+- Inside the logged-in app, book names as plain text are fine for now.
+- The minimum age is 21 (already fixed in `a7652c7`).
+
+Therefore:
+- **Task 18** plays real signals **without the book name**: sport, event,
+  price → close → CLV.
+- **Task 19 is cancelled.** Do not add a flash that highlights an LT book
+  paying more.
+- **Task 25**'s card must not name books.
+
 ## Part 3: public pages
 
 ### Task 18: a live landing hero from real signals (t164)
