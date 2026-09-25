@@ -71,6 +71,33 @@ async function main() {
   INSERT INTO runner_status VALUES (
     1, NOW() - INTERVAL '2 minutes', NOW(), TRUE, 1, 20, 10, 10, 5
   );
+
+  -- A finished, graded signal for /rezultatai: it exercises the archive into
+  -- signal_record and the joins to the VM's result and closing-price tables.
+  -- Closed two days ago, so neither the board nor the 24-hour counts see it.
+  CREATE TABLE signal_result (
+    signal_id TEXT PRIMARY KEY, identity_version SMALLINT NOT NULL, canonical_market TEXT NOT NULL,
+    market_period TEXT, overtime_rule TEXT, outcome TEXT NOT NULL, home_score INTEGER,
+    away_score INTEGER, result_source TEXT NOT NULL, result_event_id TEXT,
+    settlement_contract_version TEXT NOT NULL, graded_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+  CREATE TABLE signal_closing_price (
+    signal_id TEXT PRIMARY KEY, closing_fair_prob DOUBLE PRECISION NOT NULL,
+    closing_captured_at TIMESTAMPTZ NOT NULL, minutes_before_start DOUBLE PRECISION,
+    source TEXT NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+  INSERT INTO live_signal VALUES (
+    'ci-signal-past', 'basketball', NOW() - INTERVAL '2 days', 'total', 'over', 160.5,
+    0.5, 1.95, 'Klaipėdos Testas', 'Šiaulių Testas', '7BET', 2.1, 0.05,
+    'closed', NOW() - INTERVAL '3 days', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days', 'ci-fixture-past', NULL
+  );
+  INSERT INTO signal_closing_price VALUES (
+    'ci-signal-past', 0.52, NOW() - INTERVAL '2 days', 5, 'pinnacle', NOW()
+  );
+  INSERT INTO signal_result VALUES (
+    'ci-signal-past', 2, 'total', NULL, NULL, 'won', 85, 80, 'ci', NULL, 'v1', NOW() - INTERVAL '1 day', NOW()
+  );
   `)
 
   await pool.end()

@@ -84,6 +84,19 @@ test('the proof section says whether CLV can be trusted yet', async ({ page }) =
   await expect(page.locator('#duomenys').getByText('CLV patikimas', { exact: true })).toHaveCount(0)
 })
 
+test('the results page lists a finished signal with its close and result', async ({ page }) => {
+  // Seeded: a 7BET over 160.5 at 2.10, closing fair probability 0.52 (CLV +9.2 %), won.
+  // It reaches the page only through the signal_record archive and the joins.
+  await page.goto('/rezultatai')
+  await expect(page.getByText('Duomenų dabar nepavyko įkelti')).toHaveCount(0)
+  const row = page.getByRole('listitem').filter({ hasText: 'Daugiau nei 160,5' })
+  await expect(row).toContainText('Klaipėdos Testas – Šiaulių Testas')
+  await expect(row).toContainText('+9,2')
+  await expect(row).toContainText('Laimėta')
+  // The upcoming seeded signal must never appear on a public page.
+  await expect(page.getByText('Vilniaus Testas')).toHaveCount(0)
+})
+
 test('the landing does not shift while it is scrolled, and its LCP is the headline', async ({ page }, testInfo) => {
   await page.setViewportSize(PERF_VIEWPORTS[testInfo.project.name === 'phone' ? 'phone' : 'desktop'])
   await observeVitals(page)

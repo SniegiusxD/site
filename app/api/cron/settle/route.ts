@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import { pool } from '@/lib/db'
 import { ensureBetsSchema } from '@/lib/db/ensure-bets-schema'
 import { applyMemberOutcomes } from '@/lib/member-outcomes'
+import { archiveStartedSignals } from '@/lib/public-results-store'
 import { settlePendingBets } from '@/lib/settle-bets'
 import { resumeExpiredPauses } from '@/lib/telegram'
 
@@ -37,7 +38,13 @@ export async function GET(req: NextRequest) {
     // Timed Telegram pauses end here for members who are not on the site when
     // theirs runs out; the bot only reads `enabled`, so the flag goes back.
     const resumed = await resumeExpiredPauses()
-    return NextResponse.json({ ok: true, outcomes, resumed, ...summary })
+    // The public record, before the VM's three-day retention deletes the
+    // signals. Its failure must not fail member settlement.
+    const archived = await archiveStartedSignals().catch((error) => {
+      console.error('[public-results] archive', error)
+      return null
+    })
+    return NextResponse.json({ ok: true, outcomes, resumed, archived, ...summary })
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : 'settle failed' },

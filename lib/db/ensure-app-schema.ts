@@ -233,6 +233,28 @@ export function ensureAppSchema(): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS admin_action_target_idx
         ON admin_action ("targetUserId", "at" DESC);
+
+      -- The public record. The VM deletes live_signal rows three days after
+      -- kickoff, while its results and closing prices (keyed by the same id)
+      -- are kept. This keeps the signal itself, so /rezultatai can show more
+      -- than three days. Snake case on purpose: it mirrors live_signal.
+      CREATE TABLE IF NOT EXISTS signal_record (
+        id TEXT PRIMARY KEY,
+        sport TEXT NOT NULL,
+        starts_at TIMESTAMPTZ NOT NULL,
+        market TEXT NOT NULL,
+        direction TEXT,
+        line DOUBLE PRECISION,
+        home TEXT,
+        away TEXT,
+        best_book TEXT NOT NULL,
+        best_odds DOUBLE PRECISION NOT NULL,
+        best_edge DOUBLE PRECISION NOT NULL,
+        first_seen_at TIMESTAMPTZ,
+        archived_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS signal_record_starts_idx
+        ON signal_record (starts_at DESC);
     `)
   })().catch((error) => {
     // Let the next request retry instead of caching a failed migration.
