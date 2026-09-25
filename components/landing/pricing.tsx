@@ -35,7 +35,7 @@ export function Pricing() {
             </p>
           </Reveal>
           <Reveal delay={140}>
-            <div className="mt-8 max-w-[30rem] rounded-[18px] bg-stand/60 p-6 hairline">
+            <div className="mt-8 max-w-[30rem] rounded-[22px] bg-stand/60 p-6 surface">
               <p className="flex items-center gap-2 text-[0.9375rem] text-haze">
                 <Lock className="size-4" aria-hidden />
                 Nemokamai, be termino
@@ -50,7 +50,7 @@ export function Pricing() {
           </Reveal>
         </div>
         <Reveal variant="board">
-          <div className="rounded-[20px] bg-stand p-[clamp(24px,3vw,36px)] shadow-[inset_0_0_0_1px_var(--rail),0_30px_80px_-30px_rgb(0_0_0/0.8)]">
+          <div className="rounded-[22px] bg-stand p-[clamp(24px,3vw,36px)] surface">
             <span className="inline-block rounded-full bg-floodlight-soft px-3 py-1.5 text-[0.8125rem] font-semibold text-floodlight">
               {TRIAL_DAYS} dienos nemokamai, kai nori visų
             </span>

@@ -225,6 +225,16 @@
   .hairline {
     box-shadow: inset 0 0 0 1px var(--rail);
   }
+  /* A card that sits on the page: hairline, a faint light along its top edge
+     and a soft drop, so it reads as a layer rather than a flat box. Radius by
+     hierarchy: page cards 22px, tiles inside them 14px, controls 12px. */
+  .surface {
+    background-image: linear-gradient(180deg, rgb(234 246 238 / 0.025), transparent 45%);
+    box-shadow:
+      inset 0 0 0 1px var(--rail),
+      inset 0 1px 0 0 rgb(234 246 238 / 0.06),
+      0 24px 60px -40px rgb(0 0 0 / 0.75);
+  }
   /* The one lift used for floating panels (board, sheets, popovers). */
   .lift {
     box-shadow:
