@@ -1,11 +1,11 @@
-import { pool } from '@/lib/db'
+import { runLockedDdl } from '@/lib/db/locked-ddl'
 
 let ensured = false
 
 /** Idempotent DDL for user bets — safe to call on every API request. */
 export async function ensureBetsSchema() {
   if (ensured) return
-  await pool.query(`
+  await runLockedDdl(`
     CREATE TABLE IF NOT EXISTS user_settings (
       "userId" TEXT PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,
       "baseBankroll" DOUBLE PRECISION NOT NULL DEFAULT 500,

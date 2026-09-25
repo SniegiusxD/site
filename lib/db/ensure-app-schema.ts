@@ -1,4 +1,4 @@
-import { pool } from '@/lib/db'
+import { runLockedDdl } from '@/lib/db/locked-ddl'
 import { ensureBetsSchema } from '@/lib/db/ensure-bets-schema'
 
 let ensured: Promise<void> | null = null
@@ -12,7 +12,7 @@ let ensured: Promise<void> | null = null
 export function ensureAppSchema(): Promise<void> {
   ensured ??= (async () => {
     await ensureBetsSchema()
-    await pool.query(`
+    await runLockedDdl(`
       ALTER TABLE user_settings
         ADD COLUMN IF NOT EXISTS books TEXT[] NOT NULL DEFAULT ARRAY['7BET','TopSport','Betsson'],
         ADD COLUMN IF NOT EXISTS "minEdge" DOUBLE PRECISION NOT NULL DEFAULT 0.02,

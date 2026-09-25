@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { pool } from '@/lib/db'
+import { runLockedDdl } from '@/lib/db/locked-ddl'
 
 /**
  * Errors kept in our own database. Vercel's Hobby plan keeps function logs for
@@ -33,8 +34,7 @@ const KEEP_DAYS = 30
 let tableReady: Promise<void> | null = null
 
 function ensureTable(): Promise<void> {
-  tableReady ??= pool
-    .query(
+  tableReady ??= runLockedDdl(
       `CREATE TABLE IF NOT EXISTS error_event (
          fingerprint TEXT PRIMARY KEY,
          source TEXT NOT NULL,
@@ -48,9 +48,7 @@ function ensureTable(): Promise<void> {
          "lastAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
        );
        CREATE INDEX IF NOT EXISTS error_event_last_idx ON error_event ("lastAt" DESC);`,
-    )
-    .then(() => undefined)
-    .catch((error) => {
+    ).catch((error) => {
       tableReady = null
       throw error
     })
