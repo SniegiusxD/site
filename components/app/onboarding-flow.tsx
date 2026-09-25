@@ -5,7 +5,7 @@ import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { ArrowLeft, Check, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
 import { brand } from '@/lib/brand'
 import { edgeOf, formatEdge, formatEuro, formatInteger, formatOdds, ltPlural } from '@/lib/format-lt'
@@ -19,6 +19,7 @@ import { HardTimes } from './hard-times'
 import { Outlook } from './outlook'
 import { signedWhole } from './scenario-chart'
 import { SuggestBook } from './suggest-book'
+import { FINISHED_STEP, reportFunnelStep } from '@/lib/funnel-client'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 const STEPS = ['Prieš pradedant', 'Bankrollas', 'Kontoros', 'Signalai', 'Rizika', 'Tempas', 'Pranešimai'] as const
@@ -59,6 +60,9 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
   const [error, setError] = useState<string | null>(null)
   // Asked last, once the member has seen what a signal contains.
   const [notify, setNotify] = useState<NotifyChoice>({ channel: 'site', minEdge: 0.03, quiet: true })
+
+  // Anonymous: which step this browser reached, for the owner's funnel.
+  useEffect(() => reportFunnelStep(step), [step])
 
   const update = (patch: Partial<Preferences>) => setPrefs((current) => ({ ...current, ...patch }))
   const last = step === STEPS.length - 1
@@ -103,6 +107,7 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
       // A short beat of "done" before leaving: the last click should feel like
       // finishing something, not like a page swap. Skipped in calm mode.
       setDone(true)
+      reportFunnelStep(FINISHED_STEP)
       if (!reduced) await new Promise((resolve) => window.setTimeout(resolve, 450))
       if (notify.channel === 'telegram') {
         // The rules are saved now and apply the moment a chat is connected. A

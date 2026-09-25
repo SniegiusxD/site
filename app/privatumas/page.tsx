@@ -60,6 +60,10 @@ export default function PrivacyPage() {
             versija. Nesiejami su tavo paskyra. Pagrindas: teisėtas interesas, kad paslauga veiktų.
           </li>
           <li>
+            <strong>Pradžios žingsniai:</strong> kurį pradžios nustatymų žingsnį pasiekė naršyklė, su atsitiktiniu naršyklės
+            identifikatoriumi, nesusietu su paskyra. Saugoma 90 dienų. Pagrindas: teisėtas interesas tobulinti paslaugą.
+          </li>
+          <li>
             <strong>Lankomumas:</strong> Vercel Analytics suskaičiuoja apsilankymus be sekimo slapukų
             ir be asmens tapatybės. Pagrindas: teisėtas interesas.
           </li>
