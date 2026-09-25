@@ -309,6 +309,46 @@
 }
 
 /* App pages arrive with a short fade. Opacity only: a transform would detach fixed sheets. */
+/* Moving between the app's sections (components/app/use-nav-transition.ts):
+   the old page leaves and the new one arrives in the direction of the nav.
+   Only the main column is named, so the sidebar and bottom nav stay put. */
+::view-transition-old(app-main) {
+  animation: vt-out 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+::view-transition-new(app-main) {
+  animation: vt-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+:root[data-nav-dir='back']::view-transition-old(app-main) {
+  animation-name: vt-out-back;
+}
+:root[data-nav-dir='back']::view-transition-new(app-main) {
+  animation-name: vt-in-back;
+}
+@keyframes vt-out {
+  to {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+@keyframes vt-out-back {
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+@keyframes vt-in-back {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+
 @keyframes page-in {
   from {
     opacity: 0;
