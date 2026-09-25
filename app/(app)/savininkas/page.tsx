@@ -135,6 +135,19 @@ export default async function OwnerPage() {
         </dl>
       </Section>
 
+      <Section title="CLV ataskaita">
+        <p className="text-haze">
+          Sportas × kontora × rinka per 30 dienų, iš to paties įrašo kaip /rezultatai. Langeliai, kuriuose mažiau nei 30
+          uždarymų, pažymėti kaip maži: tik užuomina, ne priežastis keisti.
+        </p>
+        <a
+          href="/api/owner/clv-report"
+          className="mt-4 inline-flex rounded-xl bg-rail px-4 py-2.5 font-medium transition-colors hover:bg-rail-strong"
+        >
+          Atsisiųsti ataskaitą (.md)
+        </a>
+      </Section>
+
       <Section title="Kur nubyra pradžioje">
         {funnel30 && funnel7 && funnel30[0].reached > 0 ? (
           <table className="w-full text-left text-[0.95rem]">
