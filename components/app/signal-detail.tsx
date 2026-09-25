@@ -19,9 +19,15 @@ import { sportName } from '@/lib/sports-lt'
 import { trackBet } from '@/lib/track-bet'
 import { useAccount } from './account-provider'
 import { safeBookEventUrl } from '@/lib/book-event-link'
+import type { ResultSummary } from '@/lib/public-results'
+import { marketLabel } from '@/lib/signal-taxonomy'
+import { useApi } from '@/lib/use-api'
 import { reportExecution } from '@/lib/report-execution'
 
 const EASE = [0.22, 1, 0.36, 1] as const
+
+/** "pagal ketvirtį Kelly": the member's own share, in words. */
+const KELLY_WORDS: Record<number, string> = { 0.125: 'aštuntadalį', 0.25: 'ketvirtį', 0.5: 'pusę' }
 
 export function SignalDetail({
   signal,
@@ -250,7 +256,8 @@ export function SignalDetail({
           </li>
           <li>
             Iš {formatEuro(prefs.bankroll)} bankrollo tai{' '}
-            <span className="font-semibold text-chalk tnum">{formatEuro(sizing.suggested)}</span> pagal ketvirtį Kelly
+            <span className="font-semibold text-chalk tnum">{formatEuro(sizing.suggested)}</span>{' '}
+            {prefs.fixedStake ? 'pagal tavo fiksuotą sumą' : `pagal ${KELLY_WORDS[prefs.kellyFraction] ?? 'pasirinktą dalį'} Kelly`}
             {sizing.suggested < sizing.kelly - 0.005 ? ', apkirpta pagal tavo limitą arba jau pastatytą sumą' : ''}.
           </li>
           <li>
@@ -258,6 +265,7 @@ export function SignalDetail({
               ? 'Pinnacle šitos linijos neturi, todėl tikroji kaina interpoliuota tarp gretimų — vertė čia mažiau tiksli.'
               : 'Pinnacle turi lygiai tokią pačią liniją, todėl palyginimas tikslus.'}
           </li>
+          <SimilarSignals sport={signal.sport} market={signal.market} book={price.book} />
           <li>Vertė nieko negarantuoja: ji atsiperka per šimtus statymų, o ne šitame.</li>
         </ul>
         <p className="mt-4 border-t border-rail pt-3.5 text-[0.85rem] text-haze-dim">
@@ -552,4 +560,36 @@ function ExposureNotice({ exposure, kelly, remaining }: { exposure: Exposure; ke
       )}
     </section>
   )
+}
+
+/** Fewer similar signals than this and a rate says nothing, so none is shown. */
+const MIN_SIMILAR = 10
+
+/**
+ * How past signals like this one did (same sport, market family and book),
+ * from the public record. The line keeps its place while loading, so the list
+ * below it does not jump.
+ */
+function SimilarSignals({ sport, market, book }: { sport: string; market: string; book: string }) {
+  const query = new URLSearchParams({ sport, market, book }).toString()
+  const { data, error } = useApi<ResultSummary & { family: string }>(`/api/record-context?${query}`)
+  const scope = data ? `${sportName(sport)} · ${marketLabel(data.family).toLowerCase()} · ${book}` : null
+  let text: React.ReactNode = 'Tikrinam, kaip sekėsi panašiems signalams…'
+  if (error) text = 'Panašių signalų istorijos dabar nepavyko gauti.'
+  else if (data && (data.withClose < MIN_SIMILAR || data.beatClose === null || data.meanClv === null)) {
+    text = `Panašių signalų (${scope}) istorija dar per trumpa: ${data.withClose} su uždarymo kaina.`
+  } else if (data) {
+    text = (
+      <>
+        Panašūs signalai ({scope}):{' '}
+        <span className="font-semibold text-chalk tnum">{formatPercent(data.beatClose!, 0)}</span> aplenkė uždarymo kainą, vid. CLV{' '}
+        <span className={`font-semibold tnum ${data.meanClv! > 0 ? 'text-pitch' : 'text-chalk'}`}>{formatEdge(data.meanClv!)}</span>, iš{' '}
+        {data.withClose}.{' '}
+        <Link href="/rezultatai" className="underline decoration-rail-strong underline-offset-4 hover:text-chalk">
+          Visi rezultatai
+        </Link>
+      </>
+    )
+  }
+  return <li aria-live="polite">{text}</li>
 }
