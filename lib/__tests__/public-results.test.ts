@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clvByDay, clvOf, parsePastSignal, selectionText, summarize, summarizeByBook, type PastSignal } from '@/lib/public-results'
+import { clvByDay, clvOf, marketFamilyOf, parsePastSignal, summarizeBy, selectionText, summarize, summarizeByBook, type PastSignal } from '@/lib/public-results'
 
 const base: PastSignal = {
   id: 's1',
@@ -130,5 +130,26 @@ describe('clvByDay', () => {
     expect(days.map((day) => day.day)).toEqual(['2026-09-23', '2026-09-24'])
     expect(days[1]).toMatchObject({ withClose: 2, beatClose: 0.5 })
     expect(days[1].meanClv).toBeCloseTo(0.05)
+  })
+})
+
+describe('summarizeBy', () => {
+  it('groups, drops small groups and puts the largest first', () => {
+    const rows: PastSignal[] = [
+      { ...base, id: 'a', sport: 'tennis' },
+      { ...base, id: 'b', sport: 'basketball' },
+      { ...base, id: 'c', sport: 'basketball' },
+    ]
+    expect(summarizeBy(rows, (row) => row.sport).map((row) => [row.key, row.signals])).toEqual([
+      ['basketball', 2],
+      ['tennis', 1],
+    ])
+    expect(summarizeBy(rows, (row) => row.sport, 2).map((row) => row.key)).toEqual(['basketball'])
+  })
+
+  it('maps stored markets onto the board families', () => {
+    expect(['spread', 'spreads_sets', 'total_1h', 'team_totals_1h', 'moneyline_reg', 'football_1x2', 'corner_total'].map(marketFamilyOf)).toEqual([
+      'spread', 'spread', 'total', 'team_total', 'moneyline', 'moneyline', 'corners',
+    ])
   })
 })

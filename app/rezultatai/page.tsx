@@ -13,8 +13,9 @@ import { loadCloseEvidence } from '@/lib/close-evidence-store'
 import { formatEdge, formatInteger, formatPercent } from '@/lib/format-lt'
 import { BOOKS } from '@/lib/landing-signals'
 import { kickoffLabel } from '@/lib/live-view'
-import { clvByDay, clvOf, outcomeText, type PastSignal, selectionText, summarize, summarizeByBook } from '@/lib/public-results'
+import { clvByDay, clvOf, marketFamilyOf, outcomeText, type ResultSummary, summarizeBy, type PastSignal, selectionText, summarize, summarizeByBook } from '@/lib/public-results'
 import { loadPastSignals, RESULTS_WINDOW_DAYS } from '@/lib/public-results-store'
+import { marketLabel } from '@/lib/signal-taxonomy'
 import { sportName } from '@/lib/sports-lt'
 
 export const metadata: Metadata = {
@@ -56,6 +57,53 @@ function toRow(signal: PastSignal): ResultRow {
     outcome: outcomeText(signal.outcome),
     tone: signal.outcome ? TONE[signal.outcome] : null,
   }
+}
+
+/** Groups below this many signals are left out: a rate over five signals says nothing. */
+const MIN_GROUP = 10
+
+function GroupTable({ caption, rows }: { caption: string; rows: Array<ResultSummary & { label: string }> }) {
+  return (
+    <table className="w-full text-[0.95rem]">
+      <caption className="mb-2 text-left font-medium text-chalk">{caption}</caption>
+      <thead>
+        <tr className="text-left text-[0.8rem] text-haze-dim">
+          <th scope="col" className="py-1.5 font-normal">
+            &nbsp;
+          </th>
+          <th scope="col" className="py-1.5 text-right font-normal">
+            Signalų
+          </th>
+          <th scope="col" className="py-1.5 text-right font-normal">
+            Aplenkė
+          </th>
+          <th scope="col" className="py-1.5 text-right font-normal">
+            CLV
+          </th>
+          <th scope="col" className="py-1.5 text-right font-normal">
+            L–P
+          </th>
+        </tr>
+      </thead>
+      <tbody className="tabular-nums">
+        {rows.map((row) => (
+          <tr key={row.label} className="border-t border-rail">
+            <th scope="row" className="py-2 text-left font-normal text-chalk">
+              {row.label}
+            </th>
+            <td className="py-2 text-right text-haze">{formatInteger(row.signals)}</td>
+            <td className="py-2 text-right">{row.beatClose === null ? '—' : formatPercent(row.beatClose, 0)}</td>
+            <td className={`py-2 text-right ${row.meanClv !== null && row.meanClv > 0 ? 'text-pitch' : 'text-haze'}`}>
+              {row.meanClv === null ? '—' : formatEdge(row.meanClv)}
+            </td>
+            <td className="py-2 text-right text-haze">
+              {row.won}–{row.lost}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
 }
 
 const FIGURE = 'font-display text-[clamp(2.6rem,7vw,4.2rem)] leading-none tabular-nums text-chalk'
@@ -155,6 +203,28 @@ export default async function ResultsPage() {
                   )
                 })}
               </ul>
+            </section>
+
+            <section aria-labelledby="pagal-sporta" className="mt-16">
+              <h2 id="pagal-sporta" className="text-[1.9rem] leading-tight">
+                Pagal sportą ir rinką
+              </h2>
+              <p className="mt-2 max-w-[40rem] text-haze">
+                Kur vertė laikosi, o kur ne. Grupės su mažiau nei {MIN_GROUP} signalų nerodomos. L–P — laimėta ir pralaimėta.
+              </p>
+              <div className="mt-6 grid items-start gap-8 rounded-2xl bg-stand p-5 hairline md:grid-cols-2">
+                <GroupTable
+                  caption="Sportas"
+                  rows={summarizeBy(signals, (signal) => signal.sport, MIN_GROUP).map((row) => ({ ...row, label: sportName(row.key) }))}
+                />
+                <GroupTable
+                  caption="Rinka"
+                  rows={summarizeBy(signals, (signal) => marketFamilyOf(signal.market), MIN_GROUP).map((row) => ({
+                    ...row,
+                    label: marketLabel(row.key),
+                  }))}
+                />
+              </div>
             </section>
 
             <section aria-labelledby="laimejimai" className="mt-16">

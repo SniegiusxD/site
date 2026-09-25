@@ -205,3 +205,28 @@ export function clvByDay(signals: PastSignal[], dayOf: (iso: string) => string):
       beatClose: values.filter((value) => value > 0).length / values.length,
     }))
 }
+
+/** Summaries per group (sport, market family…), largest first, groups under `min` dropped. */
+export function summarizeBy(signals: PastSignal[], keyOf: (signal: PastSignal) => string, min = 1) {
+  const groups = new Map<string, PastSignal[]>()
+  for (const signal of signals) {
+    const key = keyOf(signal)
+    groups.set(key, [...(groups.get(key) ?? []), signal])
+  }
+  return [...groups.entries()]
+    .map(([key, rows]) => ({ key, ...summarize(rows) }))
+    .filter((row) => row.signals >= min)
+    .sort((a, b) => b.signals - a.signals)
+}
+
+/** The market family a stored market name belongs to, in the board's own grouping. */
+export function marketFamilyOf(market: string): string {
+  if (market.startsWith('corner')) return 'corners'
+  if (market.startsWith('booking')) return 'bookings'
+  if (market.startsWith('team_total')) return 'team_total'
+  if (market.startsWith('btts')) return 'btts'
+  if (market.includes('total')) return 'total'
+  if (market.includes('spread') || market.includes('handicap')) return 'spread'
+  if (market.startsWith('moneyline') || market === 'draw_no_bet' || market === 'football_1x2') return 'moneyline'
+  return market
+}
