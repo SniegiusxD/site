@@ -104,6 +104,8 @@ export function GlyphField() {
         cols = Math.floor(width / cell)
         rows = Math.floor(height / cell)
       }
+      // A field smaller than one cell has nothing to draw (and getImageData throws on 0).
+      if (!cols || !rows) return false
       canvas.width = Math.round(width * ratio)
       canvas.height = Math.round(height * ratio)
       context.setTransform(ratio, 0, 0, ratio, 0, 0)
@@ -133,6 +135,7 @@ export function GlyphField() {
     }
 
     const setTarget = (text: string) => {
+      if (!cols || !rows) return
       maskContext.setTransform(1, 0, 0, 1, 0, 0)
       maskContext.clearRect(0, 0, cols, rows)
       maskContext.fillStyle = '#fff'
