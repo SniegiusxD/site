@@ -1,8 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import type { TrustLabel } from '@/lib/close-evidence'
 import { EVIDENCE, evidencePeriod } from '@/lib/evidence'
-import { formatEdge, formatInteger } from '@/lib/format-lt'
+import { formatEdge, formatInteger, formatPercent } from '@/lib/format-lt'
+import type { ResultSummary } from '@/lib/public-results'
 import { ClvTrust } from './clv-trust'
 import { Reveal, Roll, useInViewOnce } from './motion-primitives'
 
@@ -53,8 +55,11 @@ const UNSURE_FILL =
 
 const clvLabel = (value: number) => (Math.abs(value) < 0.0005 ? '0,0 %' : formatEdge(value))
 
-/** closeTrust: the scanner's current verdict on closing prices, read by the page. */
-export function Proof({ closeTrust }: { closeTrust: TrustLabel }) {
+/**
+ * closeTrust: the scanner's current verdict on closing prices, read by the page.
+ * recent: the last 30 days of started signals against the close, when there are any.
+ */
+export function Proof({ closeTrust, recent }: { closeTrust: TrustLabel; recent: ResultSummary | null }) {
   return (
     <section id="duomenys" className="relative scroll-mt-16 overflow-hidden bg-night-alt px-5 py-[clamp(80px,10vw,160px)] sm:px-8">
       <div
@@ -93,6 +98,19 @@ export function Proof({ closeTrust }: { closeTrust: TrustLabel }) {
         <Reveal delay={170}>
           <ClvTrust label={closeTrust} className="mt-4 max-w-[64ch]" />
         </Reveal>
+        {/* The study above is a fixed period; this is the rolling record, so a
+            visitor can check that it still holds. Server-rendered: no shift. */}
+        {recent && recent.withClose > 0 && recent.beatClose !== null && recent.meanClv !== null && (
+          <Reveal delay={200}>
+            <p className="mt-4 max-w-[64ch] text-[0.95rem] text-haze">
+              Paskutinės 30 dienų: {formatPercent(recent.beatClose, 0)} iš {formatInteger(recent.withClose)} signalų aplenkė uždarymo
+              kainą, vidutinis CLV {formatEdge(recent.meanClv)}.{' '}
+              <Link href="/rezultatai" className="font-medium text-chalk underline decoration-rail-strong underline-offset-4 hover:decoration-chalk">
+                Kiekvienas signalas
+              </Link>
+            </p>
+          </Reveal>
+        )}
 
         <div className="mt-[clamp(40px,5vw,72px)] grid gap-5 lg:grid-cols-3">
           {BOOKS.map((book, index) => (

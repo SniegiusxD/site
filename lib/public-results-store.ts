@@ -1,4 +1,5 @@
 import { pool } from '@/lib/db'
+import { BOOKS } from '@/lib/landing-signals'
 import { type PastSignal, parsePastSignal } from '@/lib/public-results'
 
 export const RESULTS_WINDOW_DAYS = 30
@@ -18,14 +19,16 @@ SELECT s.id, s.sport, s.starts_at, s.market, s.direction, s.line, s.home, s.away
  LIMIT 3000`
 
 /**
- * Started signals of the last month. A missing VM table (42P01) is an empty
+ * Started signals of the last month, for the books we cover. A missing VM table (42P01) is an empty
  * record; any other failure is logged and returns null, so the page can say it
  * could not load rather than claim there were no signals.
  */
 export async function loadPastSignals(): Promise<PastSignal[] | null> {
   try {
     const { rows } = await pool.query(PAST_SIGNALS_SQL, [RESULTS_WINDOW_DAYS])
-    return rows.map(parsePastSignal).filter((row): row is PastSignal => row !== null)
+    return rows
+      .map(parsePastSignal)
+      .filter((row): row is PastSignal => row !== null && (BOOKS as readonly string[]).includes(row.book))
   } catch (error) {
     if ((error as { code?: string }).code === '42P01') return []
     console.error('[public-results]', error)

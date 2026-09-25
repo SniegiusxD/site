@@ -66,7 +66,7 @@ function Figure({ value, label }: { value: string; label: string }) {
 
 export default async function ResultsPage() {
   const [loaded, closeEvidence] = await Promise.all([loadPastSignals(), loadCloseEvidence()])
-  const signals = (loaded ?? []).filter((signal) => (BOOKS as readonly string[]).includes(signal.book))
+  const signals = loaded ?? []
   const total = summarize(signals)
   const byBook = summarizeByBook(signals, BOOKS)
   const showReturn = total.graded >= MIN_GRADED_FOR_RETURN

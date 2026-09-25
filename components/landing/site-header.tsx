@@ -7,7 +7,7 @@ import { brand } from '@/lib/brand'
 // Absolute, so the header also works on other public pages such as the calculator.
 const LINKS = [
   { href: '/#kaip', label: 'Kaip tai veikia' },
-  { href: '/#duomenys', label: 'Duomenys' },
+  { href: '/rezultatai', label: 'Rezultatai' },
   { href: '/skaiciuokle', label: 'Skaičiuoklė' },
   { href: '/#kaina', label: 'Kaina' },
 ]
