@@ -33,3 +33,12 @@ describe('email', () => {
     expect(mail.text).toContain('1 valandą')
   })
 })
+
+describe('resetLinkFor', () => {
+  it('goes through the auth callback on our own origin and lands on the new-password page', async () => {
+    const { resetLinkFor } = await import('@/lib/reset-link-capture')
+    expect(resetLinkFor('tok123', 'https://statyk.me/api/auth/request-password-reset')).toBe(
+      'https://statyk.me/api/auth/reset-password/tok123?callbackURL=%2Fslaptazodis%2Fnaujas',
+    )
+  })
+})

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { OwnerMember } from '@/lib/admin-actions'
 
-type Action = 'grant' | 'extend-trial' | 'revoke'
+type Action = 'grant' | 'extend-trial' | 'revoke' | 'reset-link'
 
 const stateName: Record<string, string> = {
   free: 'Nemokama', trial: 'Bandymas', active: 'Pilna', ending: 'Baigiasi', expired: 'Pasibaigė',
@@ -19,6 +19,7 @@ export function OwnerMemberActions({ initial }: { initial: OwnerMember[] }) {
   const [until, setUntil] = useState('')
   const [days, setDays] = useState(7)
   const [message, setMessage] = useState('')
+  const [link, setLink] = useState<string | null>(null)
 
   async function search() {
     setBusy(true)
@@ -48,6 +49,24 @@ export function OwnerMemberActions({ initial }: { initial: OwnerMember[] }) {
     if (!choice) return
     setBusy(true)
     setMessage('')
+    setLink(null)
+    if (choice.action === 'reset-link') {
+      try {
+        const response = await fetch(`/api/owner/users/${encodeURIComponent(choice.member.id)}/reset-link`, {
+          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ reason }),
+        })
+        const body = await response.json()
+        if (!response.ok) throw new Error(body.error || 'Nepavyko sukurti nuorodos.')
+        setLink(body.link)
+        setMessage(`Nuoroda ${choice.member.email} galioja 1 valandą, vieną kartą. Audito įrašas: ${body.auditId}`)
+        setChoice(null)
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : 'Nepavyko sukurti nuorodos.')
+      } finally {
+        setBusy(false)
+      }
+      return
+    }
     try {
       const payload = choice.action === 'grant'
         ? { reason, until: new Date(`${until}T23:59:59Z`).toISOString() }
@@ -79,6 +98,13 @@ export function OwnerMemberActions({ initial }: { initial: OwnerMember[] }) {
         <button disabled={busy} className="rounded-xl bg-floodlight px-4 py-2 font-semibold text-night disabled:opacity-50">Ieškoti</button>
       </form>
       {message && <p className="mt-3 text-sm text-haze" role="status">{message}</p>}
+      {link && (
+        <div className="mt-2 flex gap-2">
+          <input readOnly value={link} aria-label="Slaptažodžio keitimo nuoroda" onFocus={(event) => event.target.select()}
+            className="min-w-0 flex-1 rounded-lg bg-night px-3 py-2 text-sm hairline" />
+          <button type="button" onClick={() => void navigator.clipboard.writeText(link)} className="rounded-lg px-3 py-2 text-sm hairline">Kopijuoti</button>
+        </div>
+      )}
 
       <div className="mt-4 space-y-2">
         {members.map((member) => (
@@ -93,6 +119,7 @@ export function OwnerMemberActions({ initial }: { initial: OwnerMember[] }) {
                 <button onClick={() => open(member, 'grant')} className="rounded-lg px-3 py-1.5 hairline">Suteikti</button>
                 <button onClick={() => open(member, 'extend-trial')} className="rounded-lg px-3 py-1.5 hairline">Pratęsti bandymą</button>
                 <button onClick={() => open(member, 'revoke')} className="rounded-lg px-3 py-1.5 text-coral hairline">Atšaukti grantą</button>
+                <button onClick={() => open(member, 'reset-link')} className="rounded-lg px-3 py-1.5 hairline">Slaptažodžio nuoroda</button>
               </div>
             </div>
           </article>
@@ -102,9 +129,18 @@ export function OwnerMemberActions({ initial }: { initial: OwnerMember[] }) {
 
       {choice && (
         <div className="mt-4 rounded-xl border border-floodlight/40 bg-night p-4" role="dialog" aria-modal="true" aria-labelledby="owner-confirm-title">
-          <h3 id="owner-confirm-title" className="text-lg font-semibold">Patvirtinti prieigos pakeitimą</h3>
+          <h3 id="owner-confirm-title" className="text-lg font-semibold">
+            {choice.action === 'reset-link' ? 'Sukurti slaptažodžio keitimo nuorodą' : 'Patvirtinti prieigos pakeitimą'}
+          </h3>
+          {choice.action === 'reset-link' && (
+            <p className="mt-2 text-sm text-haze">
+              Nuorodą perduok tik įsitikinęs, kad rašo paskyros savininkas (pvz. atsakydamas į jo registracijos el. paštą).
+            </p>
+          )}
+          {choice.action !== 'reset-link' && <>
           <p className="mt-2 text-sm text-haze">Prieš: {stateName[choice.member.access.state]}{choice.member.access.endsAt ? ` iki ${choice.member.access.endsAt.slice(0, 10)}` : ''}</p>
           <p className="text-sm text-chalk">Po: {choice.action === 'grant' ? `pilna prieiga iki ${until || '—'}` : choice.action === 'extend-trial' ? `bandymas +${days} d.` : 'pašalintas tik rankinis grantas; Stripe ir bandymas neliečiami'}</p>
+          </>}
           {choice.action === 'grant' && <input aria-label="Galioja iki" type="date" value={until} onChange={(event) => setUntil(event.target.value)} className="mt-3 rounded-lg bg-stand px-3 py-2 hairline" />}
           {choice.action === 'extend-trial' && <input aria-label="Dienos" type="number" min={1} max={365} value={days} onChange={(event) => setDays(Number(event.target.value))} className="mt-3 w-28 rounded-lg bg-stand px-3 py-2 hairline" />}
           <textarea aria-label="Priežastis" value={reason} onChange={(event) => setReason(event.target.value)} maxLength={500}

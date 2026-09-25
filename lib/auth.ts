@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth'
 import { username } from 'better-auth/plugins'
 import { pool } from '@/lib/db'
 import { resetPasswordEmail, sendEmail } from '@/lib/email'
+import { resetLinkFor, takeResetToken } from '@/lib/reset-link-capture'
 import { ensureSubscription } from '@/lib/subscription-store'
 
 const productionUrl =
@@ -31,8 +32,10 @@ export const auth = betterAuth({
     // session ends when the password changes, so a stolen session does too.
     resetPasswordTokenExpiresIn: 60 * 60,
     revokeSessionsOnPasswordReset: true,
-    sendResetPassword: async ({ user, url }) => {
-      await sendEmail({ to: user.email, ...resetPasswordEmail(url) })
+    sendResetPassword: async ({ user, url, token }, request) => {
+      // The owner's "reset link" action shows the link instead of mailing it.
+      if (takeResetToken(token)) return
+      await sendEmail({ to: user.email, ...resetPasswordEmail(resetLinkFor(token, request?.url ?? url)) })
     },
   },
   // June accounts signed up with a username and a placeholder email; they

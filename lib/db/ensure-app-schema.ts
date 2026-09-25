@@ -239,6 +239,11 @@ export function ensureAppSchema(): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS admin_action_target_idx
         ON admin_action ("targetUserId", "at" DESC);
+      -- The owner can also make a one-hour password-reset link for a member
+      -- who cannot receive email; it is audited like the access changes.
+      ALTER TABLE admin_action DROP CONSTRAINT IF EXISTS admin_action_action_check;
+      ALTER TABLE admin_action ADD CONSTRAINT admin_action_action_check
+        CHECK (action IN ('grant', 'extend_trial', 'revoke', 'reset_link'));
 
       -- The public record. The VM deletes live_signal rows three days after
       -- kickoff, while its results and closing prices (keyed by the same id)
