@@ -6,7 +6,7 @@ import { AlertTriangle, ArrowDown, ArrowUp, Check, Eye, Star, X } from 'lucide-r
 import { BookMark } from '@/components/landing/book-mark'
 import { CopyButton } from '@/components/landing/copy-button'
 import { formatEdge, formatEuro, formatOdds } from '@/lib/format-lt'
-import { type BoardRow, compactUntilLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
+import { agoLabel, type BoardRow, compactUntilLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
 import { driftOf, DRIFT_FLOOR, type Movement, type Pulse } from '@/lib/price-movement'
 import { sportName } from '@/lib/sports-lt'
 
@@ -113,6 +113,8 @@ export function SignalRow({
           {pulse === 'new' && <span className="shrink-0 rounded-full bg-pitch-soft px-1.5 py-0.5 text-[0.75rem] font-semibold text-pitch">Naujas</span>}
           <span className="min-w-0 truncate text-haze">
             {sportName(signal.sport)}, {open ? timeUntilLabel(signal.startsAt, now) : signal.status === 'started' ? 'prasidėjo' : 'užsidarė'}
+            {/* How long the price has stood: an old signal is more likely gone at the book. */}
+            {open && <> · rastas {agoLabel(signal.firstSeenAt, now)}</>}
           </span>
           <span className="ml-auto flex shrink-0 items-center gap-2">
             {sameMatch > 0 && tracked === 0 && (
