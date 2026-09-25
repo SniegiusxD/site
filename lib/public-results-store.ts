@@ -69,18 +69,28 @@ export async function loadPastSignals(): Promise<PastSignal[] | null> {
   }
 }
 
-/** One started signal by id, for its own page; null when unknown or not started yet. */
+/**
+ * One started signal by id, for its own page; null when unknown or not started
+ * yet. Read-only: anyone can ask for any id, so nothing here writes. A signal
+ * not archived yet (started minutes ago) is read from the VM's table instead.
+ */
 export async function loadPastSignal(id: string): Promise<PastSignal | null> {
   if (!/^[\w-]{1,64}$/.test(id)) return null
   try {
-    await archiveStartedSignals()
     const { rows } = await pool.query(
-      `SELECT s.id, s.sport, s.starts_at, s.market, s.direction, s.line, s.home, s.away,
-              s.best_book, s.best_odds, s.best_edge, c.closing_fair_prob, r.outcome
-         FROM signal_record s
+      `WITH s AS (
+         SELECT id, sport, starts_at, market, direction, line, home, away, best_book, best_odds, best_edge
+           FROM signal_record WHERE id = $1
+         UNION ALL
+         SELECT id, sport, starts_at, market, direction, line, home, away, best_book, best_odds, best_edge
+           FROM live_signal WHERE id = $1 AND NOT EXISTS (SELECT 1 FROM signal_record WHERE id = $1)
+       )
+       SELECT s.*, c.closing_fair_prob, r.outcome
+         FROM s
          LEFT JOIN signal_closing_price c ON c.signal_id = s.id
          LEFT JOIN signal_result r ON r.signal_id = s.id
-        WHERE s.id = $1 AND s.starts_at < NOW()`,
+        WHERE s.starts_at < NOW()
+        LIMIT 1`,
       [id],
     )
     return rows[0] ? parsePastSignal(rows[0]) : null
