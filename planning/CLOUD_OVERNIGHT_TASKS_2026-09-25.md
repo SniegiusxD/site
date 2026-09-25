@@ -199,12 +199,16 @@ celebrated.
 
 ### Task 9: star to "Sekami", hide with undo (t177)
 
+**Already done by Claude on 2026-09-26 (`27c97ef`; hiding already had undo); skip this task.**
+
 - Starring a signal sends a small star into the "Sekami" filter chip, and the
   chip's count bumps.
 - Hiding a signal collapses the row and leaves "Paslėpta · Atšaukti" in its
   place for 5 s.
 
 ### Task 10: micro-interactions (t165, t178)
+
+**Partly done by Claude on 2026-09-26 (`8af5500`):** the segmented control slides and copy pops a check in place. Still to do: button press on the main buttons, toggles on a spring, chip pop.
 
 - Buttons press in (`scale: 0.97`).
 - Copy buttons morph their icon into a check **in place**, instead of a toast
