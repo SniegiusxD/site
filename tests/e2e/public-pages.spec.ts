@@ -84,6 +84,20 @@ test('the proof section says whether CLV can be trusted yet', async ({ page }) =
   await expect(page.locator('#duomenys').getByText('CLV patikimas', { exact: true })).toHaveCount(0)
 })
 
+test('every page points at a share card that renders', async ({ page, request }) => {
+  // The cards are generated (next/og); a broken import or font fetch would only
+  // show as a blank preview when someone shares a link.
+  for (const path of ['/', '/rezultatai', '/gidai/kas-yra-clv']) {
+    await page.goto(path)
+    const image = await page.locator('meta[property="og:image"]').first().getAttribute('content')
+    expect(image, `${path} has no og:image`).toBeTruthy()
+    const response = await request.get(new URL(image!).pathname + new URL(image!).search)
+    expect(response.status(), `${path} card`).toBe(200)
+    expect(response.headers()['content-type']).toContain('image/png')
+    expect((await response.body()).length).toBeGreaterThan(10_000)
+  }
+})
+
 test('the results page lists a finished signal with its close and result', async ({ page }) => {
   // Seeded: a 7BET over 160.5 at 2.10, closing fair probability 0.52 (CLV +9.2 %), won.
   // It reaches the page only through the signal_record archive and the joins.
