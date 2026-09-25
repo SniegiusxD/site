@@ -140,6 +140,8 @@ each one in the browser against the seeded database.
 
 ### Task 4: a live board (t162, t176)
 
+**Partly done by Claude on 2026-09-26:** the "N nauji signalai" pill (`components/app/board/new-signals-pill.tsx`). New rows already glow and moved prices already flash (`pollPulses`). Still to do: the NumberFlow roll with tint in the rows, and closed signals fading and collapsing.
+
 `use-live-board.ts` polls. When a poll lands:
 - **New signal:** it does not push the list while the member is scrolled
   down. Show a pill "3 nauji signalai" at the top. Tapping it scrolls up, and
@@ -150,6 +152,8 @@ each one in the browser against the seeded database.
   with transform, so nothing below jumps.
 
 ### Task 5: the price changed while you were looking (t174)
+
+**Already done by Claude on 2026-09-26 (`fb0e661`); skip this task.**
 
 In the open signal detail, when a poll changes the price:
 - the old odds are struck through and fade out, and the new odds roll in;
