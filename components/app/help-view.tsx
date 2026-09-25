@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Loader2, Search } from 'lucide-react'
+import Link from 'next/link'
 import { useId, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { FaqList } from '@/components/landing/faq-list'
@@ -24,7 +25,16 @@ const fold = (text: string) =>
  * write to us. The page the member came from travels with the note, so a bug
  * report says where it happened without asking.
  */
-export function HelpView({ items, from }: { items: HelpItem[]; from: string | null }) {
+export function HelpView({
+  items,
+  from,
+  guides,
+}: {
+  items: HelpItem[]
+  from: string | null
+  /** Longer reads on the public site: titles only, so the texts stay off this bundle. */
+  guides: Array<{ slug: string; title: string; minutes: number }>
+}) {
   const [query, setQuery] = useState('')
   const searchId = useId()
   const shown = useMemo(() => {
@@ -62,6 +72,25 @@ export function HelpView({ items, from }: { items: HelpItem[]; from: string | nu
         ) : (
           <p className="py-8 text-haze">Pagal „{query.trim()}“ nieko neradom. Parašyk klausimą žemiau — atsakysim.</p>
         )}
+      </section>
+
+      <section aria-labelledby="gidai" className="mt-10">
+        <h2 id="gidai" className="text-[1.6rem]">
+          Gidai
+        </h2>
+        <ul className="mt-3 grid gap-2">
+          {guides.map((guide) => (
+            <li key={guide.slug}>
+              <Link
+                href={`/gidai/${guide.slug}`}
+                className="flex min-h-11 items-center justify-between gap-4 rounded-xl bg-stand px-4 py-3 hairline transition-colors hover:bg-stand-hover"
+              >
+                <span className="text-chalk">{guide.title}</span>
+                <span className="shrink-0 text-[0.85rem] text-haze-dim">{guide.minutes} min.</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <FeedbackForm from={from} />

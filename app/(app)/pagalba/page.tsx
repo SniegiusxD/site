@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { HelpView, type HelpItem } from '@/components/app/help-view'
 import { FAQ_QUESTIONS } from '@/components/landing/faq'
 import { brand } from '@/lib/brand'
+import { GUIDES } from '@/lib/guides'
 
 export const metadata: Metadata = {
   title: `Pagalba | ${brand.name}`,
@@ -76,5 +77,5 @@ export default async function HelpPage({ searchParams }: { searchParams: Promise
   const { is } = await searchParams
   const from = typeof is === 'string' && /^\/[\w\-/]{0,80}$/.test(is) ? is : null
   const items: HelpItem[] = [...APP_QUESTIONS, ...FAQ_QUESTIONS.map((item) => ({ ...item, search: typeof item.a === 'string' ? item.a : '' }))]
-  return <HelpView items={items} from={from} />
+  return <HelpView items={items} from={from} guides={GUIDES.map(({ slug, title, minutes }) => ({ slug, title, minutes }))} />
 }
