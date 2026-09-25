@@ -246,6 +246,8 @@ When `daily-target.tsx` reaches its target:
 
 ### Task 14: onboarding (t166, t182)
 
+**Partly done by Claude on 2026-09-26 (`1146a46`):** the bankroll-step amounts roll. Steps already slide by direction. Still to do: the progress bar on a spring.
+
 - Steps move left or right depending on direction.
 - The progress bar fills with a spring.
 - The stake examples roll **live** as the member types the bankroll and picks
@@ -263,6 +265,8 @@ When `daily-target.tsx` reaches its target:
 - Reserve no space for it: use an overlay, so there is no layout shift.
 
 ### Task 16: pull to refresh on phones (t184)
+
+**Already done by Claude on 2026-09-26; skip this task.**
 
 - On `/signalai` and `/statymai` at phone width, pulling down past a threshold
   shows a mark that rotates with the pull. Releasing it triggers a refresh,
