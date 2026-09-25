@@ -33,7 +33,6 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
 
   const m = useMemo(() => (placed ? monthProgress(placed, now, dailyTarget) : null), [placed, now, dailyTarget])
   const peak = m ? Math.max(dailyTarget, ...m.perDay) * 1.15 : 1
-  const behind = m ? m.pace : 0
 
   return (
     <AnimatePresence>
@@ -78,9 +77,9 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
                 <div>
                   <p className="font-display text-[3.2rem] leading-none font-extrabold tnum">
                     {formatInteger(m.total)}
-                    <span className="ml-2 text-[1.1rem] font-medium text-haze">iš {formatInteger(m.monthTarget)} statymų</span>
+                    <span className="ml-2 text-[1.1rem] font-medium text-haze">statymų, riba {formatInteger(m.monthTarget)}</span>
                   </p>
-                  {/* The bar is the month; the tick is where the target says you should be today. */}
+                  {/* The bar is the month's limit; no tick for where one "should" be: a pace to keep up with pushes betting. */}
                   <div className="relative mt-5 h-2.5 rounded-full bg-rail">
                     <motion.div
                       className="h-full rounded-full bg-floodlight"
@@ -88,28 +87,17 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
                       animate={{ width: `${Math.min(100, (m.total / Math.max(1, m.monthTarget)) * 100)}%` }}
                       transition={{ duration: 0.7, ease: EASE }}
                     />
-                    <span
-                      aria-hidden
-                      className="absolute -top-1 -bottom-1 w-0.5 rounded bg-chalk"
-                      style={{ left: `${Math.min(100, (m.expectedByToday / Math.max(1, m.monthTarget)) * 100)}%` }}
-                    />
                   </div>
-                  <p className="mt-2 flex justify-between gap-3 text-[0.9rem] text-haze">
-                    <span>Pagal tikslą šiandien turėtum turėti {formatInteger(m.expectedByToday)}</span>
-                    <span className={`shrink-0 font-semibold tnum ${behind >= 0 ? 'text-pitch' : 'text-warning'}`}>
-                      {behind >= 0 ? '+' : '−'}
-                      {Math.abs(Math.round(behind * 100))} %
-                    </span>
-                  </p>
+                  <p className="mt-2 text-[0.9rem] text-haze">Riba, ne tikslas: mažiau statymų yra visai gerai.</p>
                   <dl className="mt-6 grid grid-cols-3 gap-3">
-                    <Stat label="Dienų pasiektas tikslas" value={`${m.daysReached} iš ${m.today}`} />
+                    <Stat label="Dienų, kai pasiekei ribą" value={`${m.daysReached} iš ${m.today}`} />
                     <Stat label="Statymų per dieną" value={m.averagePerDay.toLocaleString('lt-LT', { maximumFractionDigits: 1 })} />
                     <Stat label="Tokiu tempu per mėnesį" value={formatInteger(m.projected)} />
                   </dl>
                 </div>
 
                 <figure>
-                  <figcaption className="text-[0.85rem] text-haze">Diena po dienos, tikslas {dailyTarget}</figcaption>
+                  <figcaption className="text-[0.85rem] text-haze">Diena po dienos, riba {dailyTarget}</figcaption>
                   <div className="relative mt-3 h-40">
                     <span
                       aria-hidden

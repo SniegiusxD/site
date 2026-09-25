@@ -159,7 +159,7 @@ export function ProfileView({ pausedUntil = null }: { pausedUntil?: string | nul
       <Section title="Sumos ir limitai">
         <ChipGroup
           size="md"
-          label="Dienos tikslas: statymų per dieną"
+          label="Dienos riba: daugiausia statymų per dieną"
           options={DAILY_BET_CHOICES.map((value): { value: number; label: string } => ({ value, label: String(value) }))}
           value={prefs.dailyBets}
           onChange={(dailyBets) => updateSettings({ dailyBets })}

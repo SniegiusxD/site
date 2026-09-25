@@ -800,8 +800,8 @@ function PaceStep({ prefs, update }: StepProps) {
   return (
     <div>
       <StepTitle
-        title="Kiek statymų per dieną?"
-        body="Tai bus tavo dienos tikslas. Raudonų dienų bus visada, bet kuo daugiau statymų, tuo mažiau lemia atsitiktinumas."
+        title="Kiek daugiausia statymų per dieną?"
+        body="Tai bus tavo dienos riba: ją pasiekęs, tą dieną sustok. Raudonų dienų bus visada; vertė atsiskleidžia per mėnesius, todėl skubėti nereikia."
       />
       <div role="radiogroup" aria-label="Statymų per dieną" className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {PACE_CHOICES.map(({ bets, minutes }) => {
