@@ -29,6 +29,7 @@ export function SiteFooter() {
             <p className="mt-2.5 max-w-[52ch]">Tai nėra rekomendacija statyti. Tai matematinis būdas nustatyti statymus, kurių siūlomas koeficientas gali būti didesnis, nei rodo apskaičiuota tikimybė. Statymų nepriimam ir su kontoromis nesame susiję.</p>
             <nav aria-label="Nuorodos" className="mt-4 flex flex-wrap gap-x-6">
               {[
+                { href: '/rezultatai', label: 'Rezultatai' },
                 { href: '/skaiciuokle', label: 'Skaičiuoklė' },
                 { href: '/metodika', label: 'Kaip mes matuojam' },
                 { href: '/gidai', label: 'Gidai' },
