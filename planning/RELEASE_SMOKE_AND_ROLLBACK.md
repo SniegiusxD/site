@@ -120,7 +120,13 @@ A new error that names the new release is a reason to roll back (below).
 
 `/api/health` answers 200 when the database responds and the scanner published
 within 90 minutes, 503 otherwise (`problem`: `stale`, `no-status`,
-`database`). `.github/workflows/monitor.yml` calls it at :07 and :37 every hour
+`database`, or `results-stale`).
+
+`results-stale` means no result has reached `signal_result` for 24 hours even
+though matches we published 6–48 hours ago have finished. That is how the
+grader froze from 09-19 to 09-25 without anyone noticing. Check the VM's
+`settlement_output/summary.json` (`progress_health`) and the `[SITE OUTCOMES]`
+log lines. `.github/workflows/monitor.yml` calls it at :07 and :37 every hour
 from GitHub, with three tries a minute apart; a failed run makes GitHub email
 the repository owner. It only runs from the default branch, so it starts
 working once it is on `main`. Run it by hand from the Actions tab

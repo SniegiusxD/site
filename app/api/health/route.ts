@@ -5,8 +5,9 @@ import { rateLimitResponse } from '@/lib/rate-limit'
 export const dynamic = 'force-dynamic'
 
 /**
- * Public liveness for monitors: 200 when the database answers and the scanner
- * published within 90 minutes, 503 otherwise. Carries only timestamps.
+ * Public liveness for monitors: 200 when the database answers, the scanner
+ * published within 90 minutes and results are still arriving (see lib/health),
+ * 503 otherwise with the problem named. Carries only timestamps.
  */
 export async function GET(request: Request) {
   const limited = await rateLimitResponse(request, 'expensive-read')
