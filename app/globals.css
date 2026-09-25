@@ -547,3 +547,10 @@
 .kr-press:active:not(:disabled) {
   scale: 0.97;
 }
+
+/* A chip just chosen swells a little once (components/app/chip-group.tsx). */
+@keyframes kr-chip-pop {
+  40% {
+    transform: scale(1.06);
+  }
+}
