@@ -108,6 +108,12 @@ and whenever something seems off:
 npx vercel logs <deployment-url> --since 1h | grep -E "client-error|server-error"
 ```
 
+The Hobby plan keeps those logs for **one hour only**. Both kinds are also
+stored in the `error_event` table (grouped: one row per distinct error with a
+count and first/last time, kept 30 days), and the owner page
+`/savininkas` lists the 20 most recent under **Klaidos** with their release.
+That list is the place to look after a release, even hours later.
+
 A new error that names the new release is a reason to roll back (below).
 
 ## 3c. Health monitor
