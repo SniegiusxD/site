@@ -252,6 +252,134 @@ export const GUIDES: Guide[] = [
       </>
     ),
   },
+  {
+    slug: 'bankrollo-valdymas',
+    title: 'Bankrollo valdymas: kiek skirti ir kiek statyti',
+    description:
+      'Kaip pasirinkti bankrollą, kodėl statyti tik mažą jo dalį, kada rinktis fiksuotą sumą ir kaip neišsigąsti blogos savaitės.',
+    updated: '2026 m. rugsėjo 25 d.',
+    updatedIso: '2026-09-25',
+    minutes: 4,
+    body: (
+      <>
+        <section>
+          <h2>Trumpai</h2>
+          <p>
+            Bankrollas yra suma, kurią skiri tik statymams ir kurios praradimas tavo gyvenimo nepakeistų. Iš jo statai mažas dalis:
+            tiek, kad net ilga bloga serija jo nesunaikintų.
+          </p>
+        </section>
+        <section>
+          <h2>Kiek skirti</h2>
+          <p>
+            Tiek, kiek galėtum prarasti visą. Tai ne formalumas: net statymai su verte ištisas savaites gali būti minuse, o nuo to
+            niekas neapsaugo. Pinigai nuomai, paskolai ar kasdienėms išlaidoms į bankrollą nepatenka.
+          </p>
+          <p>Bankrollą laikyk atskirai ir jo nepildyk po kiekvieno pralaimėjimo. Papildymą užsirašyk, kad matytum tikrą rezultatą.</p>
+        </section>
+        <section>
+          <h2>Kiek statyti vienam signalui</h2>
+          <p>
+            Yra du įprasti būdai. <strong className="text-chalk">Pagal vertę</strong> (Kelly kriterijus): kuo didesnė vertė ir mažesnis
+            koeficientas, tuo didesnė suma. Pilnas Kelly per daug svyruoja, todėl naudojama jo dalis, dažniausiai ketvirtis.{' '}
+            <strong className="text-chalk">Fiksuota suma</strong>: kiekvienam signalui ta pati suma, pavyzdžiui, 1 % bankrollo.
+            Paprasčiau skaičiuoti, šiek tiek lėčiau auga.
+          </p>
+          <p>
+            Kad ir kurį pasirinktum, viena taisyklė galioja visada: ne daugiau nei keli procentai bankrollo vienam statymui. Statyk
+            niekada nesiūlo daugiau nei 5 %, o sumą gali pasirinkti profilyje. Plačiau apie Kelly —{' '}
+            <Link href="/gidai/kelly-kriterijus" className={link}>
+              atskirame gide
+            </Link>
+            .
+          </p>
+        </section>
+        <section>
+          <h2>Kai bankrollas keičiasi</h2>
+          <p>
+            Suma skaičiuojama nuo dabartinio bankrollo: laimint ji po truputį auga, pralaimint mažėja. Tai natūrali apsauga: blogos
+            serijos metu statai mažiau ir bankrollas tirpsta lėčiau.
+          </p>
+        </section>
+        <section>
+          <h2>Kaip neišsigąsti blogos savaitės</h2>
+          <ul>
+            <li>Vertink ne pelną, o CLV: ar tavo kainos buvo geresnės už uždarymo kainą. Jis parodo kryptį daug greičiau.</li>
+            <li>Nedidink sumų, kad „atsiimtum“. Tai greičiausias kelias prarasti bankrollą.</li>
+            <li>
+              Pažiūrėk, kaip tūkstantis statymų atrodo{' '}
+              <Link href="/skaiciuokle" className={link}>
+                skaičiuoklėje
+              </Link>
+              : minusiniai tarpai ten normalūs.
+            </li>
+          </ul>
+          <p>
+            Tik nuo 18 metų. Jei lošimas nustoja būti kontroliuojamas, apriboti sau galimybę lošti gali per{' '}
+            <a href="https://lpt.lrv.lt" rel="noopener" className={link}>
+              Lošimų priežiūros tarnybą
+            </a>
+            .
+          </p>
+        </section>
+      </>
+    ),
+  },
+  {
+    slug: 'kaip-statyti-pagal-signala',
+    title: 'Kaip statyti pagal signalą: nuo pranešimo iki įrašo',
+    description:
+      'Ką daryti gavus signalą: patikrinti kainą kontoroje, pasirinkti sumą, pastatyti ir pažymėti statymą, kad vėliau matytum CLV ir rezultatą.',
+    updated: '2026 m. rugsėjo 25 d.',
+    updatedIso: '2026-09-25',
+    minutes: 3,
+    body: (
+      <>
+        <section>
+          <h2>1. Atidaryk signalą</h2>
+          <p>
+            Signale matysi rungtynes, statymą, kontorą, jos koeficientą ir tikrąją kainą be maržos. Vertė — kiek kontoros kaina geresnė
+            už tikrąją. Taip pat matysi, kada signalą radom: senesnė kaina dažniau jau pasikeitusi.
+          </p>
+        </section>
+        <section>
+          <h2>2. Patikrink kainą kontoroje</h2>
+          <p>
+            Kontoros taiso koeficientus kas kelias minutes. Nukopijuok rungtynių pavadinimą, surask jas kontoroje ir palygink
+            koeficientą. Jei jis nukrito ir vertės neliko, praleisk. Tai dažna ir normalu.
+          </p>
+        </section>
+        <section>
+          <h2>3. Statyk siūlomą sumą</h2>
+          <p>
+            Siūloma suma skaičiuojama nuo tavo bankrollo ir pasirinkto būdo (pagal vertę arba fiksuota), neviršija 5 % bankrollo ir
+            tavo įrašyto kontoros limito. Jei kontora leido pastatyti mažiau, įrašyk tiek, kiek pastatei.
+          </p>
+        </section>
+        <section>
+          <h2>4. Pažymėk statymą</h2>
+          <p>
+            Paspausk „Pastačiau“ ir, jei reikia, pataisyk koeficientą ar sumą. Pažymėtas statymas atsiskaito pats, kai rungtynės
+            baigiasi, o prieš pradžią užfiksuojam uždarymo kainą, kad matytum savo CLV.
+          </p>
+        </section>
+        <section>
+          <h2>5. Žiūrėk į CLV, ne į vieną dieną</h2>
+          <p>
+            Statymų puslapyje matysi rezultatą, CLV ir kiek statymų aplenkė uždarymo kainą. Visų mūsų signalų įrašas yra{' '}
+            <Link href="/rezultatai" className={link}>
+              rezultatų puslapyje
+            </Link>
+            . Kodėl CLV svarbesnis už pelną, paaiškinta{' '}
+            <Link href="/gidai/kas-yra-clv" className={link}>
+              CLV gide
+            </Link>
+            .
+          </p>
+        </section>
+      </>
+    ),
+  },
 ]
 
 export const guideBySlug = (slug: string) => GUIDES.find((guide) => guide.slug === slug)
