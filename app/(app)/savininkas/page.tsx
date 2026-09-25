@@ -4,6 +4,8 @@ import { FeedbackInbox } from '@/components/app/feedback-inbox'
 import { OwnerMemberActions } from '@/components/app/owner-member-actions'
 import { searchOwnerMembers } from '@/lib/admin-actions'
 import { brand } from '@/lib/brand'
+import { recentErrors } from '@/lib/error-store'
+import { kickoffLabel } from '@/lib/live-view'
 import { formatEuro, formatInteger } from '@/lib/format-lt'
 import { isOwner, ownerMetrics } from '@/lib/owner'
 import { getSessionUser } from '@/lib/session'
@@ -27,7 +29,7 @@ const share = (part: number, whole: number) => (whole ? `${Math.round((part / wh
 export default async function OwnerPage() {
   const user = await getSessionUser()
   if (!user || !isOwner(user.email)) notFound()
-  const [m, members] = await Promise.all([ownerMetrics(), searchOwnerMembers('')])
+  const [m, members, errors] = await Promise.all([ownerMetrics(), searchOwnerMembers(''), recentErrors(20)])
   const peak = Math.max(1, ...m.signupsByDay.map((d) => d.count))
   const paying = m.access.active + m.access.ending
 
@@ -142,6 +144,34 @@ export default async function OwnerPage() {
 
       <Section title="Žinutės iš pagalbos">
         <FeedbackInbox initial={m.feedback} />
+      </Section>
+
+      <Section title="Klaidos">
+        {errors.length ? (
+          <ul className="grid gap-3">
+            {errors.map((error) => (
+              <li key={error.fingerprint} className="rounded-xl bg-night/60 p-4">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <p className="min-w-0 font-medium break-words">{error.message}</p>
+                  <p className="shrink-0 text-[0.85rem] text-haze tnum">
+                    {error.count}× · paskutinė {kickoffLabel(error.lastAt)}
+                  </p>
+                </div>
+                <p className="mt-1 text-[0.85rem] text-haze-dim">
+                  {error.source === 'client' ? 'Naršyklė' : 'Serveris'} · {error.kind} · {error.where ?? '—'} · {error.release}
+                </p>
+                {error.stack && (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-[0.85rem] text-haze">Stack</summary>
+                    <pre className="mt-2 overflow-x-auto text-[0.75rem] text-haze">{error.stack}</pre>
+                  </details>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-haze">Per 30 dienų klaidų neužfiksuota.</p>
+        )}
       </Section>
     </main>
   )

@@ -9,6 +9,7 @@ export async function onRequestError(
   context: { routerKind: string; routePath: string; routeType: string },
 ) {
   const err = error as Error & { digest?: string }
+  const release = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'local'
   console.error(
     '[server-error]',
     JSON.stringify({
@@ -19,7 +20,20 @@ export async function onRequestError(
       method: request.method,
       // Without the query string: queries can carry tokens.
       path: request.path.split('?')[0].slice(0, 120),
-      release: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'local',
+      release,
     }),
   )
+  // Kept in the database as well: Hobby keeps function logs for an hour. The
+  // database client is Node-only, so the edge runtime logs and stops here.
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    const { recordError } = await import('@/lib/error-store')
+    await recordError({
+      source: 'server',
+      kind: context.routeType,
+      message: String(err?.message ?? error),
+      stack: err?.stack ?? null,
+      where: context.routePath,
+      release,
+    })
+  }
 }
