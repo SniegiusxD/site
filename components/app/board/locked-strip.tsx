@@ -71,14 +71,14 @@ export function LockedStrip({ locked, access, onUnlocked }: { locked: LockedSign
           type="button"
           onClick={startTrial}
           disabled={starting}
-          className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-xl bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
+          className="kr-press mt-4 inline-flex h-11 w-full items-center justify-center rounded-xl bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
         >
           {starting ? 'Atrakinam…' : `Atrakinti ${TRIAL_DAYS} dienoms nemokamai`}
         </button>
       ) : (
         <Link
           href="/atrakinti"
-          className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-xl bg-floodlight font-semibold text-night transition-colors hover:bg-pitch"
+          className="kr-press mt-4 inline-flex h-11 w-full items-center justify-center rounded-xl bg-floodlight font-semibold text-night transition-colors hover:bg-pitch"
         >
           Atrakinti už {PRICE_EUR_PER_MONTH} € per mėnesį
         </Link>

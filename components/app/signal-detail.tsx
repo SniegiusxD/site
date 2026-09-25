@@ -518,7 +518,7 @@ export function SignalDetail({
                       }
                       track({ odds, stake: amount, placement: amount < stake - 0.005 ? 'limited' : 'accepted' })
                     }}
-                    className="ml-auto h-11 rounded-xl bg-chalk px-4 font-semibold text-night disabled:opacity-70"
+                    className="kr-press ml-auto h-11 rounded-xl bg-chalk px-4 font-semibold text-night disabled:opacity-70"
                   >
                     Įrašyti
                   </button>

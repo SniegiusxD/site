@@ -535,3 +535,15 @@
   .kr-marquee:hover,
   .kr-marquee-slow:hover { animation-play-state: paused; }
 }
+
+/* Main buttons press in when tapped: the answer to a press is under the finger.
+   Unlayered, so it wins over a utility's transition-colors; `scale` is its own
+   property and composites like transform. Calm mode makes it instant. */
+.kr-press {
+  transition-property: color, background-color, border-color, box-shadow, opacity, scale, translate;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.kr-press:active:not(:disabled) {
+  scale: 0.97;
+}

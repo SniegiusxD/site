@@ -183,7 +183,7 @@ export function TelegramCard() {
         </p>
         <Link
           href="/atrakinti"
-          className="inline-flex h-11 items-center rounded-xl bg-floodlight px-5 font-semibold text-night transition-colors hover:bg-pitch"
+          className="kr-press inline-flex h-11 items-center rounded-xl bg-floodlight px-5 font-semibold text-night transition-colors hover:bg-pitch"
         >
           Atrakinti
         </Link>

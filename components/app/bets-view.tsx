@@ -238,7 +238,7 @@ export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
           <p className="mx-auto mt-3 max-w-[26rem] text-haze">
             Kai pastatysi pagal signalą, paspausk „Pastačiau“, ir statymas atsiras čia su rezultatu, verte ir uždarymo kaina.
           </p>
-          <Link href="/signalai" className="mt-6 inline-block rounded-xl bg-floodlight px-5 py-3 font-semibold text-night transition-transform hover:-translate-y-0.5">
+          <Link href="/signalai" className="kr-press mt-6 inline-block rounded-xl bg-floodlight px-5 py-3 font-semibold text-night transition-transform hover:-translate-y-0.5">
             Į signalus
           </Link>
         </div>
@@ -933,7 +933,7 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
               type="button"
               disabled={busy}
               onClick={() => send('PATCH')}
-              className="h-10 rounded-lg bg-chalk px-3.5 font-semibold text-night disabled:opacity-60"
+              className="kr-press h-10 rounded-lg bg-chalk px-3.5 font-semibold text-night disabled:opacity-60"
             >
               Išsaugoti
             </button>

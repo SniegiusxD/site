@@ -97,7 +97,7 @@ export function PauseCard({ pausedUntil }: { pausedUntil: string | null }) {
               type="button"
               onClick={confirm}
               disabled={pending}
-              className="inline-flex items-center gap-2 rounded-xl bg-floodlight px-4 py-2.5 font-semibold text-night disabled:opacity-60"
+              className="kr-press inline-flex items-center gap-2 rounded-xl bg-floodlight px-4 py-2.5 font-semibold text-night disabled:opacity-60"
             >
               {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
               Įjungti pertrauką

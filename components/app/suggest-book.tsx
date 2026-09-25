@@ -168,7 +168,7 @@ export function SuggestBook() {
           type="button"
           onClick={send}
           disabled={busy}
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-chalk px-4 font-semibold text-night disabled:opacity-60"
+          className="kr-press inline-flex min-h-11 items-center gap-2 rounded-xl bg-chalk px-4 font-semibold text-night disabled:opacity-60"
         >
           {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
           Siųsti pasiūlymą

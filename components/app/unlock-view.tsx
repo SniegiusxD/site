@@ -127,7 +127,7 @@ export function UnlockView({ access, billing }: { access: Access; billing: boole
                 type="button"
                 onClick={start}
                 disabled={starting}
-                className="mt-6 min-h-12 w-full rounded-xl px-4 py-2.5 bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
+                className="kr-press mt-6 min-h-12 w-full rounded-xl px-4 py-2.5 bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
               >
                 {starting ? 'Atrakinam…' : `Išbandyti ${TRIAL_DAYS} dienas nemokamai`}
               </button>
@@ -139,7 +139,7 @@ export function UnlockView({ access, billing }: { access: Access; billing: boole
                 type="button"
                 onClick={subscribe}
                 disabled={paying}
-                className="mt-6 min-h-12 w-full rounded-xl px-4 py-2.5 bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
+                className="kr-press mt-6 min-h-12 w-full rounded-xl px-4 py-2.5 bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
               >
                 {paying ? 'Atidarom apmokėjimą…' : `Prenumeruoti už ${PRICE_EUR_PER_MONTH} € per mėnesį`}
               </button>
