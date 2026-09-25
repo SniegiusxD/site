@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ClvDays } from '@/components/landing/clv-days'
 import { ClvTrust } from '@/components/landing/clv-trust'
+import { Roll } from '@/components/landing/motion-primitives'
 import { type ResultRow, ResultsList } from '@/components/landing/results-list'
 import { SiteFooter } from '@/components/landing/site-footer'
 import { SiteHeader } from '@/components/landing/site-header'
@@ -57,10 +58,13 @@ function toRow(signal: PastSignal): ResultRow {
   }
 }
 
-function Figure({ value, label }: { value: string; label: string }) {
+const FIGURE = 'font-display text-[clamp(2.6rem,7vw,4.2rem)] leading-none tabular-nums text-chalk'
+
+/** The one moment of motion on the page: the three numbers roll up once, when seen. */
+function Figure({ value, label }: { value: React.ReactNode; label: string }) {
   return (
     <div>
-      <p className="font-display text-[clamp(2.6rem,7vw,4.2rem)] leading-none tabular-nums text-chalk">{value}</p>
+      <p className={FIGURE}>{value}</p>
       <p className="mt-2 max-w-[14rem] text-[0.95rem] text-haze">{label}</p>
     </div>
   )
@@ -94,10 +98,16 @@ export default async function ResultsPage() {
         ) : (
           <>
             <section aria-label="Santrauka" className="mt-14 grid gap-10 sm:grid-cols-3">
-              <Figure value={formatPercent(total.beatClose ?? 0, 0)} label="signalų kaina buvo geresnė už uždarymo kainą" />
-              <Figure value={formatEdge(total.meanClv ?? 0)} label="vidutinis CLV: kiek kaina buvo geresnė už uždarymą" />
               <Figure
-                value={formatInteger(total.withClose)}
+                value={<Roll value={Math.round((total.beatClose ?? 0) * 100)} suffix={' %'} />}
+                label="signalų kaina buvo geresnė už uždarymo kainą"
+              />
+              <Figure
+                value={<Roll value={(total.meanClv ?? 0) * 100} decimals={1} signed suffix={' %'} />}
+                label="vidutinis CLV: kiek kaina buvo geresnė už uždarymą"
+              />
+              <Figure
+                value={<Roll value={total.withClose} />}
                 label={`signalų su užfiksuota uždarymo kaina iš ${formatInteger(total.signals)} prasidėjusių`}
               />
             </section>
