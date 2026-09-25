@@ -165,8 +165,12 @@ export default async function ResultsPage() {
                 <p className="mt-3 max-w-[40rem] text-haze">
                   Įvertinta {formatInteger(total.graded)}: laimėta {formatInteger(total.won)}, pralaimėta{' '}
                   {formatInteger(total.lost)}, grąžinta ar anuliuota {formatInteger(total.other)}. Statant po vienodą sumą, grąža
-                  būtų <span className="text-chalk">{formatEdge(total.roi ?? 0)}</span> nuo pastatytos sumos. Tai praeitis, ne
-                  pažadas: per kelis šimtus statymų rezultatas stipriai svyruoja.
+                  būtų <span className="text-chalk">{formatEdge(total.roi ?? 0)}</span> nuo pastatytos sumos
+                  {total.roiLow !== null && total.roiHigh !== null
+                    ? ` (95 % tikimybe tikroji reikšmė tarp ${formatEdge(total.roiLow)} ir ${formatEdge(total.roiHigh)})`
+                    : ''}
+                  . Tai praeitis, ne pažadas: per kelis šimtus statymų rezultatas stipriai svyruoja, todėl patikimesnis rodiklis yra
+                  CLV.
                 </p>
               ) : (
                 <p className="mt-3 max-w-[40rem] text-haze">

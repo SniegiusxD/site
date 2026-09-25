@@ -61,6 +61,9 @@ export type ResultSummary = {
   other: number
   /** Profit per unit staked across graded signals, flat stakes. */
   roi: number | null
+  /** Normal-approximation 95 % range of roi; null below 30 graded. */
+  roiLow: number | null
+  roiHigh: number | null
 }
 
 export function summarize(signals: PastSignal[]): ResultSummary {
@@ -68,7 +71,15 @@ export function summarize(signals: PastSignal[]): ResultSummary {
   const graded = signals.filter((signal): signal is PastSignal & { outcome: CanonicalOutcome } => signal.outcome !== null)
   const won = graded.filter((signal) => signal.outcome === 'won' || signal.outcome === 'half_won').length
   const lost = graded.filter((signal) => signal.outcome === 'lost' || signal.outcome === 'half_lost').length
-  const profit = graded.reduce((sum, signal) => sum + unitProfit(signal.outcome, signal.odds), 0)
+  const profits = graded.map((signal) => unitProfit(signal.outcome, signal.odds))
+  const profit = profits.reduce((sum, value) => sum + value, 0)
+  // Per-signal, not per-fixture, so the range is if anything too narrow; it is
+  // shown to stop a short lucky run from reading as a rate.
+  const mean = graded.length ? profit / graded.length : 0
+  const spread =
+    graded.length >= 30
+      ? 1.96 * Math.sqrt(profits.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (graded.length - 1) / graded.length)
+      : null
   return {
     signals: signals.length,
     withClose: clvs.length,
@@ -78,7 +89,9 @@ export function summarize(signals: PastSignal[]): ResultSummary {
     won,
     lost,
     other: graded.length - won - lost,
-    roi: graded.length ? profit / graded.length : null,
+    roi: graded.length ? mean : null,
+    roiLow: spread === null ? null : mean - spread,
+    roiHigh: spread === null ? null : mean + spread,
   }
 }
 

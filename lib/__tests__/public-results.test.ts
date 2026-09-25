@@ -46,6 +46,18 @@ describe('summarize', () => {
     expect(summary.roi).toBeCloseTo(0.5 / 4)
   })
 
+  it('gives a 95 % range around the return once 30 signals are graded', () => {
+    const few = summarize([{ ...base, outcome: 'won' }])
+    expect(few.roiLow).toBeNull()
+    const many = summarize(
+      Array.from({ length: 40 }, (_, index): PastSignal => ({ ...base, id: `s${index}`, outcome: index % 2 ? 'won' : 'lost' })),
+    )
+    // Odds 2.00, half won: return 0, and the range straddles it symmetrically.
+    expect(many.roi).toBeCloseTo(0)
+    expect(many.roiLow!).toBeLessThan(0)
+    expect(many.roiHigh!).toBeCloseTo(-many.roiLow!)
+  })
+
   it('has no rates at all when nothing is measurable', () => {
     expect(summarize([{ ...base, closingFairProb: null }])).toMatchObject({ beatClose: null, meanClv: null, roi: null, graded: 0 })
   })
