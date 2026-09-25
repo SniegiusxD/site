@@ -1,5 +1,6 @@
 import Stripe from 'stripe'
 import { PRICE_EUR_PER_MONTH } from '@/lib/subscription'
+import { brand } from '@/lib/brand'
 
 /**
  * The Stripe side of billing. Import it only from route handlers and server
@@ -55,7 +56,7 @@ export async function monthlyPriceId(api: Stripe): Promise<string> {
     return priceCache
   }
   const product = await api.products.create({
-    name: 'Statyk — visi signalai',
+    name: `${brand.name} — visi signalai`,
     description: 'Visi vertės signalai, Telegram pranešimai ir statymų sekimas.',
     tax_code: PRODUCT_TAX_CODE,
   })
@@ -87,7 +88,7 @@ export async function portalConfigurationId(api: Stripe): Promise<string> {
     return portalCache
   }
   const created = await api.billingPortal.configurations.create({
-    business_profile: { headline: 'Statyk prenumerata' },
+    business_profile: { headline: `${brand.name} prenumerata` },
     features: {
       invoice_history: { enabled: true },
       payment_method_update: { enabled: true },

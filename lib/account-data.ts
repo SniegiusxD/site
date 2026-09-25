@@ -1,6 +1,7 @@
 import type { PoolClient } from 'pg'
 import { pool } from '@/lib/db'
 import { ensureAppSchema } from '@/lib/db/ensure-app-schema'
+import { brand } from '@/lib/brand'
 
 /**
  * Everything the site stores about one member, for the two rights the privacy
@@ -69,7 +70,7 @@ export async function exportAccount(userId: string): Promise<AccountExport> {
   return {
     exportedAt: new Date().toISOString(),
     note:
-      'Visi duomenys, kuriuos Statyk saugo apie tavo paskyrą. Slaptažodžio maiša ir sesijų raktai neįtraukti — tai saugumo priemonės, ne tavo duomenys. Mokėjimų kortelių duomenų Statyk nesaugo: juos tvarko Stripe.',
+      `Visi duomenys, kuriuos ${brand.name} saugo apie tavo paskyrą. Slaptažodžio maiša ir sesijų raktai neįtraukti — tai saugumo priemonės, ne tavo duomenys. Mokėjimų kortelių duomenų ${brand.name} nesaugo: juos tvarko Stripe.`,
     user: users[0] ?? {},
     signIns: await rows(pool, 'session', userId),
     logins: await rows(pool, 'account', userId),

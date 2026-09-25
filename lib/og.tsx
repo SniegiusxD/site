@@ -3,6 +3,8 @@
  * tokens in app/globals.css; next/og cannot read CSS variables.
  */
 
+import { brand } from '@/lib/brand'
+
 export const OG_SIZE = { width: 1200, height: 630 }
 
 export const OG = {
@@ -57,7 +59,7 @@ export function OgFrame({ children, footer }: { children: React.ReactNode; foote
         fontFamily: 'Display',
       }}
     >
-      <div style={{ display: 'flex', fontSize: 40, fontWeight: 800, letterSpacing: '-0.03em' }}>Statyk</div>
+      <div style={{ display: 'flex', fontSize: 40, fontWeight: 800, letterSpacing: '-0.03em' }}>{brand.name}</div>
       {children}
       <div style={{ display: 'flex', fontSize: 26, fontWeight: 400, color: OG.haze }}>{footer}</div>
     </div>

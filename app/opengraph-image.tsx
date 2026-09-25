@@ -14,7 +14,7 @@ const FOOTER = 'Registracija nemokama'
 /** The default share card for every page that has no card of its own. */
 export default async function Image() {
   const [bold, regular] = await Promise.all([
-    displayFont(`Statyk${HEADLINE}${BOOKS.join('')}`, 800),
+    displayFont(`${brand.name}${HEADLINE}${BOOKS.join('')}`, 800),
     displayFont(`${LEAD}${FOOTER}`, 400),
   ])
   return new ImageResponse(

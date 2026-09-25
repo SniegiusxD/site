@@ -5,6 +5,8 @@
  * `emailConfigured()` and offer another way meanwhile.
  */
 
+import { brand } from '@/lib/brand'
+
 export const emailConfigured = () => Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM)
 
 /** Test and placeholder addresses: never sent, so CI and June accounts cause no bounces. */
@@ -27,17 +29,17 @@ export async function sendEmail(message: { to: string; subject: string; text: st
 /** The reset email, in the site's voice: what happened, the link, how long it works. */
 export function resetPasswordEmail(url: string): { subject: string; text: string } {
   return {
-    subject: 'Slaptažodžio keitimas – Statyk',
+    subject: `Slaptažodžio keitimas – ${brand.name}`,
     text: [
       'Sveiki,',
       '',
-      'Kažkas (tikėtina, jūs) paprašė pakeisti Statyk paskyros slaptažodį. Naują nustatysite čia:',
+      `Kažkas (tikėtina, jūs) paprašė pakeisti ${brand.name} paskyros slaptažodį. Naują nustatysite čia:`,
       '',
       url,
       '',
       'Nuoroda galioja 1 valandą ir veikia vieną kartą. Jei to neprašėte, šį laišką galite ignoruoti – slaptažodis nepasikeis.',
       '',
-      'Statyk',
+      brand.name,
     ].join('\n'),
   }
 }

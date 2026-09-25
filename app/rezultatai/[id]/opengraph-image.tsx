@@ -3,8 +3,9 @@ import { formatEdge, formatOdds } from '@/lib/format-lt'
 import { displayFont, OG, OG_SIZE, OgFrame, ogFonts } from '@/lib/og'
 import { clvOf, outcomeText, selectionText } from '@/lib/public-results'
 import { loadPastSignal } from '@/lib/public-results-store'
+import { brand } from '@/lib/brand'
 
-export const alt = 'Statyk signalas: kaina, uždarymas ir rezultatas'
+export const alt = `${brand.name} signalas: kaina, uždarymas ir rezultatas`
 export const size = OG_SIZE
 export const contentType = 'image/png'
 export const revalidate = 600
@@ -22,9 +23,9 @@ export default async function Image({ params }: { params: Promise<{ id: string }
         { value: outcomeText(signal.outcome) ?? 'Laukiama', label: 'rezultatas' },
       ]
     : []
-  const footer = 'Visi signalai ir jų CLV: statyk rezultatai'
+  const footer = `Visi signalai ir jų CLV: ${brand.name} rezultatai`
   const [bold, regular] = await Promise.all([
-    displayFont(`Statyk${event}${facts.map((fact) => fact.value).join('')}`, 800),
+    displayFont(`${brand.name}${event}${facts.map((fact) => fact.value).join('')}`, 800),
     displayFont(`${pick}${facts.map((fact) => fact.label).join('')}${footer}`, 400),
   ])
 

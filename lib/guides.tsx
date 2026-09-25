@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { brand } from '@/lib/brand'
 
 /**
  * Plain-language guides for the questions people actually search for in
@@ -75,7 +76,7 @@ export const GUIDES: Guide[] = [
           </ul>
         </section>
         <section>
-          <h2>Kaip tai daro Statyk</h2>
+          <h2>Kaip tai daro {brand.name}</h2>
           <p>
             Visą parą lyginam 7BET, TopSport ir Betsson kainas su Pinnacle kaina be maržos ir parodom, kur Lietuvos kontora moka
             daugiau. Kaip tai matuojam ir kokie mūsų rezultatai, aprašyta{' '}
@@ -133,7 +134,7 @@ export const GUIDES: Guide[] = [
           </p>
         </section>
         <section>
-          <h2>Kur tai matyti Statyk</h2>
+          <h2>Kur tai matyti {brand.name}</h2>
           <p>
             Kiekvienam pažymėtam statymui sekimo lentelėje rodom jo CLV, o{' '}
             <Link href="/metodika" className={link}>
@@ -188,7 +189,7 @@ export const GUIDES: Guide[] = [
           </p>
         </section>
         <section>
-          <h2>Kaip tai daro Statyk</h2>
+          <h2>Kaip tai daro {brand.name}</h2>
           <p>
             Kiekvienam signalui siūloma suma skaičiuojama iš tavo banko pagal pasirinktą Kelly dalį, su 5 % viršutine riba ir tavo
             įrašytais kontorų limitais. Kaip atrodo tūkstantis tokių statymų, rodo{' '}
@@ -286,7 +287,7 @@ export const GUIDES: Guide[] = [
             Paprasčiau skaičiuoti, šiek tiek lėčiau auga.
           </p>
           <p>
-            Kad ir kurį pasirinktum, viena taisyklė galioja visada: ne daugiau nei keli procentai bankrollo vienam statymui. Statyk
+            Kad ir kurį pasirinktum, viena taisyklė galioja visada: ne daugiau nei keli procentai bankrollo vienam statymui. {brand.name}
             niekada nesiūlo daugiau nei 5 %, o sumą gali pasirinkti profilyje. Plačiau apie Kelly —{' '}
             <Link href="/gidai/kelly-kriterijus" className={link}>
               atskirame gide
