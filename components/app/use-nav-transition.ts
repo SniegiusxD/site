@@ -14,7 +14,8 @@ type TransitionDocument = Document & {
  * API; browsers without it, and calm mode, just navigate.
  *
  * The browser snapshots the old page, waits for the promise, then snapshots the
- * new one. The promise resolves once the new pathname has been committed.
+ * new one. The promise resolves once the new page (not its loading skeleton)
+ * is on screen, or after 1.5 s at most.
  */
 export function useNavTransition(order: string[]) {
   const router = useRouter()
@@ -22,9 +23,23 @@ export function useNavTransition(order: string[]) {
   const reduced = useReducedMotion()
   const settle = useRef<(() => void) | null>(null)
 
+  // The new URL commits before the page does: Next first shows the route's
+  // loading skeleton (app/(app)/loading.tsx, aria-busy). Snapshotting then
+  // would slide in grey blocks, so wait until the real page has replaced it.
   useEffect(() => {
-    settle.current?.()
-    settle.current = null
+    const resolve = settle.current
+    if (!resolve) return
+    const main = document.querySelector('[data-app-main]')
+    const done = () => {
+      observer.disconnect()
+      settle.current = null
+      resolve()
+    }
+    const loaded = () => !main?.querySelector('[aria-busy="true"]')
+    const observer = new MutationObserver(() => loaded() && done())
+    if (loaded()) return done()
+    observer.observe(main!, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-busy'] })
+    return () => observer.disconnect()
   }, [pathname])
 
   return useCallback(

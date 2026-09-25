@@ -155,7 +155,7 @@ export function AppShell({ children, owner = false }: { children: React.ReactNod
       )}
 
       <ConnectionBanner />
-      <div className="min-w-0 pb-24 lg:pb-0" style={{ viewTransitionName: 'app-main' }}>
+      <div data-app-main className="min-w-0 pb-24 lg:pb-0" style={{ viewTransitionName: 'app-main' }}>
         {children}
       </div>
 
