@@ -6,7 +6,7 @@ const BASE = process.env.VERCEL_PROJECT_PRODUCTION_URL
   ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
   : 'http://localhost:3100'
 
-const PUBLIC_PAGES = ['', '/rezultatai', '/demo', '/metodika', '/skaiciuokle', '/gidai', ...GUIDES.map((guide) => `/gidai/${guide.slug}`), '/registracija', '/prisijungti', '/taisykles', '/privatumas']
+const PUBLIC_PAGES = ['', '/rezultatai', '/demo', '/metodika', '/skaiciuokle', '/gidai', ...GUIDES.map((guide) => `/gidai/${guide.slug}`), '/kontaktai', '/registracija', '/prisijungti', '/taisykles', '/privatumas']
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return PUBLIC_PAGES.map((path) => ({

@@ -218,6 +218,10 @@ export function ensureAppSchema(): Promise<void> {
       );
       CREATE INDEX IF NOT EXISTS feedback_created_idx ON feedback ("createdAt" DESC);
       CREATE INDEX IF NOT EXISTS feedback_user_idx ON feedback ("userId", "createdAt" DESC);
+      -- The public contact page: no account (a member locked out, or a visitor),
+      -- so no user and a reply address instead.
+      ALTER TABLE feedback ALTER COLUMN "userId" DROP NOT NULL;
+      ALTER TABLE feedback ADD COLUMN IF NOT EXISTS "contactEmail" TEXT;
 
       -- Owner mutations are audited separately from billing. targetUserId has
       -- deliberately no FK: the row survives account deletion after the id is

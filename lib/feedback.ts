@@ -33,3 +33,36 @@ export async function saveFeedback(userId: string, feedback: Feedback): Promise<
   )
   return (rowCount ?? 0) > 0
 }
+
+/** A message from the public contact page. */
+export type ContactMessage = { email: string; message: string }
+
+/** Messages without an account, all visitors together, per day: a flood stops here. */
+export const DAILY_CONTACT_LIMIT = 100
+
+const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,24}$/
+
+export function parseContact(input: unknown): { ok: true; value: ContactMessage } | { ok: false; error: string; spam?: true } {
+  if (!input || typeof input !== 'object') return { ok: false, error: 'Parašyk žinutę.' }
+  const raw = input as Record<string, unknown>
+  // A field people never see; bots fill every field they find.
+  if (typeof raw.website === 'string' && raw.website.trim()) return { ok: false, error: 'spam', spam: true }
+  const email = typeof raw.email === 'string' ? raw.email.trim().toLowerCase() : ''
+  if (!EMAIL.test(email)) return { ok: false, error: 'Įrašyk el. paštą, kuriuo galėtume atsakyti.' }
+  const message = typeof raw.message === 'string' ? raw.message.trim() : ''
+  if (message.length < 5) return { ok: false, error: 'Parašyk bent kelis žodžius.' }
+  if (message.length > 2000) return { ok: false, error: 'Žinutė per ilga: iki 2 000 ženklų.' }
+  return { ok: true, value: { email, message } }
+}
+
+/** Saves a contact message, or returns false once today's shared limit is reached. */
+export async function saveContact(contact: ContactMessage): Promise<boolean> {
+  await ensureAppSchema()
+  const { rowCount } = await pool.query(
+    `INSERT INTO feedback (id, "userId", kind, message, page, "contactOk", "contactEmail")
+     SELECT $1, NULL, 'other', $2, '/kontaktai', TRUE, $3
+     WHERE (SELECT count(*) FROM feedback WHERE "userId" IS NULL AND "createdAt" > NOW() - INTERVAL '1 day') < $4`,
+    [randomUUID(), contact.message, contact.email, DAILY_CONTACT_LIMIT],
+  )
+  return (rowCount ?? 0) > 0
+}

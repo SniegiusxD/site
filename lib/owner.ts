@@ -115,9 +115,10 @@ export async function ownerMetrics(now: Date = new Date()): Promise<OwnerMetrics
     executionSummary(30),
     bookRequestTally(),
     pool.query(
-      `SELECT f.id, f.kind, f.message, f.page, f."contactOk", f.status, f."createdAt", u.email
-         FROM feedback f JOIN "user" u ON u.id = f."userId"
-        WHERE ${REAL_USER}
+      `SELECT f.id, f.kind, f.message, f.page, f."contactOk", f.status, f."createdAt",
+              COALESCE(u.email, f."contactEmail") AS email
+         FROM feedback f LEFT JOIN "user" u ON u.id = f."userId"
+        WHERE (f."userId" IS NULL OR (${REAL_USER}))
         ORDER BY (f.status = 'new') DESC, f."createdAt" DESC
         LIMIT 60`,
     ),

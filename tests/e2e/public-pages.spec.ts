@@ -20,6 +20,7 @@ const PAGES = [
   { path: '/skaiciuokle', heading: /Pamatyk, kaip atrodo/i },
   { path: '/prisijungti', heading: /sveikas sugrįžęs/i },
   { path: '/slaptazodis', heading: /pamiršai slaptažodį/i },
+  { path: '/kontaktai', heading: /^kontaktai$/i },
   { path: '/registracija', heading: /sukurk nemokamą paskyrą/i },
   { path: '/taisykles', heading: /naudojimosi taisyklės/i },
   { path: '/privatumas', heading: /privatumo politika/i },

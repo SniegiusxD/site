@@ -23,12 +23,15 @@ export default function ForgotPasswordPage() {
         </>
       ) : (
         // Until the owner connects an email sender there is no link to send.
-        // The help form needs a session, so the way out is a contact the owner
-        // sets (SUPPORT_CONTACT, e.g. a Telegram handle), or an honest "not yet".
+        // The help form needs a session, so the way out is the public contact
+        // page, plus a direct contact when the owner sets SUPPORT_CONTACT.
         <p className="mt-3 text-haze">
-          {process.env.SUPPORT_CONTACT
-            ? `Slaptažodžio atkūrimas el. paštu dar neįjungtas. Parašyk ${process.env.SUPPORT_CONTACT} ir nurodyk registracijos el. paštą — padėsim atgauti prieigą.`
-            : 'Slaptažodžio atkūrimas el. paštu dar neįjungtas. Jis bus čia netrukus.'}
+          Slaptažodžio atkūrimas el. paštu dar neįjungtas.{' '}
+          <Link href="/kontaktai" className="font-medium text-chalk underline decoration-rail-strong underline-offset-4 hover:decoration-chalk">
+            Parašyk mums
+          </Link>{' '}
+          ir nurodyk registracijos el. paštą — padėsim atgauti prieigą.
+          {process.env.SUPPORT_CONTACT && ` Arba rašyk tiesiai: ${process.env.SUPPORT_CONTACT}.`}
         </p>
       )}
       <p className="mt-8 text-haze">
