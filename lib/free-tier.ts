@@ -29,7 +29,9 @@ export function freeBoard(board: LiveBoard): LiveBoard {
   const locked: LockedSignal[] = []
   for (const signal of board.signals) {
     if (isFreeSignal(signal)) signals.push(signal)
-    else locked.push(lockedFrom(signal))
+    // Only what a subscription would actually open: a closed or started signal
+    // cannot be bet any more, so it is neither listed nor counted.
+    else if (signal.status === 'open') locked.push(lockedFrom(signal))
   }
   // Locked rows lead with the biggest value: that is the part worth paying for.
   locked.sort((a, b) => b.bestEdge - a.bestEdge)

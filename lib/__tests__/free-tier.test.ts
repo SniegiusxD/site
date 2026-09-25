@@ -64,6 +64,16 @@ describe('freeBoard', () => {
     expect(limited.locked?.map((s) => s.id)).toEqual(['big', 'mid'])
   })
 
+  it('does not tease signals that have already closed or started', () => {
+    // Closed signals stay on the board for a few hours so an open detail can say so;
+    // a subscriber could not bet them, so they are not what a subscription unlocks.
+    const withClosed: LiveBoard = {
+      ...board,
+      signals: [...board.signals, { ...signal('gone', 0.4, 4.25), status: 'closed' }, { ...signal('live', 0.2, 3), status: 'started' }],
+    }
+    expect(freeBoard(withClosed).locked?.map((s) => s.id)).toEqual(['big', 'mid'])
+  })
+
   it('never sends the match, the market or the book of a locked signal', () => {
     const locked = freeBoard(board).locked![0]
     expect(Object.keys(locked).sort()).toEqual(['bestEdge', 'bestOdds', 'id', 'sport', 'startsAt'])
