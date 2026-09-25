@@ -1,6 +1,7 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
+import { FlipFrom } from './board/flip-from'
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { AlertTriangle, ArrowLeft, Clock, Loader2, Minus, Plus } from 'lucide-react'
@@ -39,6 +40,7 @@ export function SignalDetail({
   signalsById,
   onTracked,
   onClose,
+  flip = false,
 }: {
   signal: LiveSignal
   price: LivePrice
@@ -50,6 +52,8 @@ export function SignalDetail({
   /** `from` is where the bet was recorded on screen, for the board's "+1" flight. */
   onTracked?: (bet: BoardBet, from?: DOMRect) => void
   onClose?: () => void
+  /** Desktop: the odds and value grow out of the selected row (FlipFrom). */
+  flip?: boolean
 }) {
   const reduced = useReducedMotion()
   const { account } = useAccount()
@@ -202,7 +206,9 @@ export function SignalDetail({
                 !open ? 'text-haze-dim line-through' : valueGone ? 'text-haze-dim' : 'text-floodlight'
               }`}
             >
-              {formatEdge(price.edge)}
+              <FlipFrom source={`edge-${signal.id}-${price.book}`} enabled={flip}>
+                {formatEdge(price.edge)}
+              </FlipFrom>
             </p>
             <p className="mt-1 text-[0.85rem] text-haze">{open && valueGone ? 'Vertės neliko' : 'tavo vertė'}</p>
           </div>
@@ -226,7 +232,9 @@ export function SignalDetail({
             )}
             <p className="relative text-[0.85rem] text-floodlight">{price.book} siūlo</p>
             <p className="relative mt-1 font-display text-3xl font-bold text-floodlight tnum">
-              <NumberFlow value={price.odds} locales="lt-LT" format={ODDS_FLOW} animated={!reduced} />
+              <FlipFrom source={`odds-${signal.id}-${price.book}`} enabled={flip}>
+                <NumberFlow value={price.odds} locales="lt-LT" format={ODDS_FLOW} animated={!reduced} />
+              </FlipFrom>
             </p>
             {change && (
               <p className="relative mt-1 text-[0.85rem] text-haze" aria-live="polite">

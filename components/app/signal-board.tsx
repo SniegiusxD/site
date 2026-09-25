@@ -570,6 +570,7 @@ export function SignalBoard({
                 signalsById={signalsById}
                 movement={movementFor(selectedRow)}
                 onTracked={onTracked}
+                flip
               />
             </motion.div>
           </AnimatePresence>

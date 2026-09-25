@@ -94,10 +94,12 @@ export function SignalRow({
             {pulse === 'up' || pulse === 'down' ? (
               <span className="sr-only">{pulse === 'up' ? 'Koeficientas pakilo iki' : 'Koeficientas nukrito iki'}</span>
             ) : null}
-            <NumberFlow value={price.odds} locales="lt-LT" format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
+            <span data-flip={`odds-${signal.id}-${price.book}`}>
+              <NumberFlow value={price.odds} locales="lt-LT" format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
+            </span>
           </span>
           <span className={`mt-1 block text-[0.9rem] font-semibold ${open ? 'text-floodlight' : 'text-haze-dim line-through'}`}>
-            {formatEdge(price.edge)}
+            <span data-flip={`edge-${signal.id}-${price.book}`}>{formatEdge(price.edge)}</span>
           </span>
           {moved && (
             <span
@@ -270,13 +272,13 @@ export function CompactSignalRow({
         <span className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 lg:hidden">
           <BookMark book={price.book} size="sm" />
           <span className="truncate font-medium">{price.eventName}</span>
-          <span className={`font-display text-[1.05rem] font-bold tnum ${oddsTone}`}>{formatOdds(price.odds)}</span>
+          <span data-flip={`odds-${signal.id}-${price.book}`} className={`font-display text-[1.05rem] font-bold tnum ${oddsTone}`}>{formatOdds(price.odds)}</span>
           <span className="col-span-2 col-start-1 truncate text-[0.85rem] text-haze">
             {pulse === 'new' && <span className="mr-1.5 font-semibold text-pitch">Naujas</span>}
             {ltSelection(price.selectionLabel)} · {when}
           </span>
           <span className="flex items-center justify-end gap-2 text-[0.85rem] tnum">
-            <span className={`font-semibold ${edgeTone}`}>{formatEdge(price.edge)}</span>
+            <span data-flip={`edge-${signal.id}-${price.book}`} className={`font-semibold ${edgeTone}`}>{formatEdge(price.edge)}</span>
             {amount}
           </span>
         </span>
