@@ -566,10 +566,12 @@ export function SignalBoard({
         </div>
       </section>
 
-      {/* Desktop detail */}
-      <section aria-label="Signalo informacija" className="hidden min-h-0 overflow-y-auto lg:block">
+      {/* Desktop detail. popLayout: the new detail mounts at once while the old
+          one fades, so the odds and value fly from the row without waiting
+          (FlipFrom); the leaving one is positioned against this section. */}
+      <section aria-label="Signalo informacija" className="relative hidden min-h-0 overflow-y-auto lg:block">
         {selectedRow ? (
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={`${selectedRow.signal.id}-${selectedRow.price.book}`}
               initial={{ opacity: 0, y: 8 }}
