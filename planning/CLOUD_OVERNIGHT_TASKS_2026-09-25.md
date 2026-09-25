@@ -167,6 +167,8 @@ In the open signal detail, when a poll changes the price:
 
 ### Task 7: a bet settles, and the money flies to the bankroll (t163, t172)
 
+**Already done by Claude on 2026-09-26 (`cf26f1c`); skip this task.**
+
 In `/statymai`, when a bet is graded since the member's last visit (compare
 with the stored last visit):
 - the result appears one bet at a time;
@@ -180,6 +182,8 @@ Show each result only once. Store which result ids have already been
 celebrated.
 
 ### Task 8: "Aplenkei uždarymą" (t173)
+
+**Already done by Claude on 2026-09-26 (`cf26f1c`); skip this task.**
 
 - When a bet gets its closing price and beat it, a small badge pops once:
   "CLV +3,2 %" with a check.
