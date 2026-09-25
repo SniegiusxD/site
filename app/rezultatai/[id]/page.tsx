@@ -25,6 +25,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       clv === null ? '' : `, CLV ${formatEdge(clv)}`
     }. Vienas iš visų mūsų paskelbtų signalų, palygintas su uždarymo kaina.`,
     alternates: { canonical: `/rezultatai/${signal.id}` },
+    // Made for sharing, not search: hundreds of near-identical pages would
+    // dilute the site. /rezultatai itself is indexed.
+    robots: { index: false, follow: true },
   }
 }
 
