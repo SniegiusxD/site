@@ -16,6 +16,7 @@ import { SiteHeader } from '@/components/landing/site-header'
 import { trustLabel } from '@/lib/close-evidence'
 import { loadCloseEvidence } from '@/lib/close-evidence-store'
 import { summarize } from '@/lib/public-results'
+import { heroRecordSignals } from '@/lib/hero-record'
 import { loadPastSignals } from '@/lib/public-results-store'
 import { loadPublicStats } from '@/lib/public-stats'
 
@@ -28,7 +29,7 @@ export default async function LandingPage() {
     <>
       <SiteHeader />
       <main>
-        <Hero stats={stats} />
+        <Hero stats={stats} record={heroRecordSignals(past, new Date())} />
         <EvidenceStrip />
         <OddsTicker />
         <LiveStrip stats={stats} />
