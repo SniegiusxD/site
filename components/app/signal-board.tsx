@@ -1,5 +1,6 @@
 'use client'
 
+import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { Bell, RefreshCw, Search, Sparkles, Star } from 'lucide-react'
@@ -45,7 +46,7 @@ import { LockedStrip } from './board/locked-strip'
 import { PhoneSheet } from './board/phone-sheet'
 import { useLiveBoard } from './board/use-live-board'
 import { pinKeyOf, SEEN_KEY, type SortKey, useBoardView, useDensity, useHiddenSignals, usePinned } from './board/use-board-preferences'
-import { EASE } from '@/lib/motion'
+import { EASE, SPRING } from '@/lib/motion'
 
 const DENSITIES: Array<{ value: Density; label: string }> = [
   { value: 'normal', label: 'Įprastas' },
@@ -111,6 +112,13 @@ export function SignalBoard({
   const [unlockedAt, setUnlockedAt] = useState<number | null>(justUnlocked ? 1 : null)
   const [hidden, setHidden] = useHiddenSignals(board.signals)
   const [pinned, togglePinned] = usePinned()
+  // Counts pins made on this page, so the "Sekami" chip bumps on a pin, not on load.
+  const [pinBumps, setPinBumps] = useState(0)
+  const pinToggle = (signal: BoardRow['signal']) => {
+    const key = pinKeyOf(signal)
+    if (!pinned.has(key)) setPinBumps((value) => value + 1)
+    togglePinned(key)
+  }
   const [onlyPinned, setOnlyPinned] = useState(false)
 
   // On the free board every signal is below the member's usual value floor, so
@@ -293,7 +301,7 @@ export function SignalBoard({
           isHidden={options.isHidden}
           pulse={pulses.get(row.signal.id) ?? pulses.get(`${row.signal.id}:${row.price.book}`)}
           pinned={pinned.has(pinKeyOf(row.signal))}
-          onTogglePinned={() => togglePinned(pinKeyOf(row.signal))}
+          onTogglePinned={() => pinToggle(row.signal)}
           onSelect={() => setSelected(row)}
           onToggleHidden={row.signal.status === 'open' ? () => (options.isHidden ? unhide(row) : hide(row)) : undefined}
           onCopied={() => reportExecution('copy_event', row.signal, row.price)}
@@ -315,7 +323,7 @@ export function SignalBoard({
         pulse={pulses.get(row.signal.id) ?? pulses.get(`${row.signal.id}:${row.price.book}`)}
         movement={movementFor(row)}
         pinned={pinned.has(pinKeyOf(row.signal))}
-        onTogglePinned={() => togglePinned(pinKeyOf(row.signal))}
+        onTogglePinned={() => pinToggle(row.signal)}
         onSelect={() => setSelected(row)}
         onToggleHidden={row.signal.status === 'open' ? () => (options.isHidden ? unhide(row) : hide(row)) : undefined}
       />
@@ -414,8 +422,17 @@ export function SignalBoard({
                     onlyPinned ? 'bg-chalk text-night' : 'bg-stand text-chalk hairline hover:bg-stand-hover'
                   }`}
                 >
-                  <Star className="size-4" aria-hidden />
-                  Sekami {pinned.size}
+                  {/* Bumps each time a signal is pinned, so the member sees where it went. */}
+                  <motion.span
+                    key={pinBumps}
+                    className="inline-flex items-center gap-2"
+                    initial={pinBumps ? { scale: 1.15 } : false}
+                    animate={{ scale: 1 }}
+                    transition={SPRING.snappy}
+                  >
+                    <Star className="size-4 fill-current" aria-hidden />
+                    Sekami <NumberFlow value={pinned.size} locales="lt-LT" />
+                  </motion.span>
                 </button>
               )}
               {newCount > 0 && (

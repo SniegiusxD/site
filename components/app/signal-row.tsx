@@ -2,6 +2,7 @@
 
 import NumberFlow from '@number-flow/react'
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 import { AlertTriangle, ArrowDown, ArrowUp, Check, Eye, Star, X } from 'lucide-react'
 import { BookMark } from '@/components/landing/book-mark'
 import { CopyButton } from '@/components/landing/copy-button'
@@ -9,7 +10,7 @@ import { formatEdge, formatEuro, formatOdds } from '@/lib/format-lt'
 import { agoLabel, type BoardRow, compactUntilLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
 import { driftOf, DRIFT_FLOOR, type Movement, type Pulse } from '@/lib/price-movement'
 import { sportName } from '@/lib/sports-lt'
-import { EASE } from '@/lib/motion'
+import { EASE, SPRING } from '@/lib/motion'
 import { soonMinutes, StartingSoon } from './board/starting-soon'
 
 
@@ -52,6 +53,7 @@ export function SignalRow({
   /** Seconds to wait before this row's entrance (the unlock moment). */
   enterDelay?: number
 }) {
+  const [pops, setPops] = useState(0)
   const { signal, price } = row
   const open = signal.status === 'open'
   // Movement is only shown once it is real: two cycles and at least half a point.
@@ -163,14 +165,17 @@ export function SignalRow({
       </button>
       <button
         type="button"
-        onClick={onTogglePinned}
+        onClick={() => {
+          if (!pinned) setPops((value) => value + 1)
+          onTogglePinned()
+        }}
         aria-pressed={pinned}
         aria-label={pinned ? `Nebesekti: ${price.eventName}` : `Sekti rungtynes: ${price.eventName}`}
         className={`absolute right-2 bottom-11 grid size-8 place-items-center rounded-lg transition-colors sm:right-4 ${
           pinned ? 'text-chalk' : 'text-haze-dim hover:bg-rail hover:text-chalk'
         }`}
       >
-        <Star className={`size-4 ${pinned ? 'fill-current' : ''}`} aria-hidden />
+        <PinStar pinned={pinned} pops={pops} />
       </button>
       {onToggleHidden && (
         <button
@@ -221,6 +226,7 @@ export function CompactSignalRow({
   /** The event name went to the clipboard. */
   onCopied?: () => void
 }) {
+  const [pops, setPops] = useState(0)
   const { signal, price } = row
   const open = signal.status === 'open'
   const when = open ? compactUntilLabel(signal.startsAt, now) : signal.status === 'started' ? 'prasidėjo' : 'užsidarė'
@@ -323,12 +329,15 @@ export function CompactSignalRow({
         />
         <button
           type="button"
-          onClick={onTogglePinned}
+          onClick={() => {
+          if (!pinned) setPops((value) => value + 1)
+          onTogglePinned()
+        }}
           aria-pressed={pinned}
           aria-label={pinned ? `Nebesekti: ${price.eventName}` : `Sekti rungtynes: ${price.eventName}`}
           className={`grid size-8 place-items-center rounded-lg transition-colors ${pinned ? 'text-chalk' : 'text-haze-dim hover:bg-rail hover:text-chalk'}`}
         >
-          <Star className={`size-4 ${pinned ? 'fill-current' : ''}`} aria-hidden />
+          <PinStar pinned={pinned} pops={pops} />
         </button>
         {onToggleHidden ? (
           <button
@@ -368,5 +377,20 @@ export function CompactHeader() {
       <span className="text-right">Suma</span>
       <span className="text-right">Pradžia</span>
     </div>
+  )
+}
+
+/** The star pops as it fills, only right after the member pins (never on load). */
+function PinStar({ pinned, pops }: { pinned: boolean; pops: number }) {
+  return (
+    <motion.span
+      key={pops}
+      className="inline-flex"
+      initial={pops ? { scale: 0.4, rotate: -40 } : false}
+      animate={{ scale: 1, rotate: 0 }}
+      transition={SPRING.snappy}
+    >
+      <Star className={`size-4 ${pinned ? 'fill-current' : ''}`} aria-hidden />
+    </motion.span>
   )
 }
