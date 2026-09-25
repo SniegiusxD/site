@@ -383,6 +383,12 @@ function StatGrid({ stats, bets, closeTrust }: { stats: BetStats; bets: ActiveBe
       </Stat>
     </dl>
     {closeTrust && <ClvTrust label={closeTrust} className="mt-2.5" />}
+    {/* Your own CLV next to everyone's: the same measure over every signal. */}
+    <p className="mt-1.5 text-[0.85rem]">
+      <Link href="/rezultatai" className="text-haze underline decoration-rail-strong underline-offset-4 hover:text-chalk">
+        Visų signalų CLV ir rezultatai
+      </Link>
+    </p>
 
     {/* What the bookmaker actually gave, against what we showed. Only bets
         recorded since the site began storing the displayed price are counted. */}
