@@ -1,16 +1,18 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { ClvDays } from '@/components/landing/clv-days'
 import { ClvTrust } from '@/components/landing/clv-trust'
 import { type ResultRow, ResultsList } from '@/components/landing/results-list'
 import { SiteFooter } from '@/components/landing/site-footer'
 import { SiteHeader } from '@/components/landing/site-header'
+import { vilniusDay } from '@/lib/bets-calendar'
 import { brand } from '@/lib/brand'
 import { trustLabel } from '@/lib/close-evidence'
 import { loadCloseEvidence } from '@/lib/close-evidence-store'
 import { formatEdge, formatInteger, formatPercent } from '@/lib/format-lt'
 import { BOOKS } from '@/lib/landing-signals'
 import { kickoffLabel } from '@/lib/live-view'
-import { clvOf, outcomeText, type PastSignal, selectionText, summarize, summarizeByBook } from '@/lib/public-results'
+import { clvByDay, clvOf, outcomeText, type PastSignal, selectionText, summarize, summarizeByBook } from '@/lib/public-results'
 import { loadPastSignals, RESULTS_WINDOW_DAYS } from '@/lib/public-results-store'
 import { sportName } from '@/lib/sports-lt'
 
@@ -100,6 +102,16 @@ export default async function ResultsPage() {
               />
             </section>
             <ClvTrust label={trustLabel(closeEvidence)} className="mt-8" />
+
+            <section aria-labelledby="kas-diena" className="mt-16">
+              <h2 id="kas-diena" className="text-[1.9rem] leading-tight">
+                Kas dieną
+              </h2>
+              <p className="mt-2 mb-6 max-w-[40rem] text-haze">
+                Vienos geros dienos negana. Stulpelis — tos dienos rungtynių vidutinis CLV: žalias virš linijos, raudonas po ja.
+              </p>
+              <ClvDays days={clvByDay(signals, vilniusDay)} />
+            </section>
 
             <section aria-labelledby="pagal-kontora" className="mt-16">
               <h2 id="pagal-kontora" className="text-[1.9rem] leading-tight">

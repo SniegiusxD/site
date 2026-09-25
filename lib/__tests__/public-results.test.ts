@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clvOf, parsePastSignal, selectionText, summarize, summarizeByBook, type PastSignal } from '@/lib/public-results'
+import { clvByDay, clvOf, parsePastSignal, selectionText, summarize, summarizeByBook, type PastSignal } from '@/lib/public-results'
 
 const base: PastSignal = {
   id: 's1',
@@ -102,5 +102,21 @@ describe('parsePastSignal', () => {
   it('drops rows it cannot price and ignores unknown outcomes and impossible closes', () => {
     expect(parsePastSignal({ ...row, best_odds: null })).toBeNull()
     expect(parsePastSignal({ ...row, outcome: 'cancelled', closing_fair_prob: 1.4 })).toMatchObject({ outcome: null, closingFairProb: null })
+  })
+})
+
+describe('clvByDay', () => {
+  it('groups closes by day, oldest first, skipping signals without a close', () => {
+    const dayOf = (iso: string) => iso.slice(0, 10)
+    const rows: PastSignal[] = [
+      { ...base, id: 'a', startsAt: '2026-09-24T10:00:00.000Z', closingFairProb: 0.55 }, // +10 %
+      { ...base, id: 'b', startsAt: '2026-09-23T10:00:00.000Z', closingFairProb: 0.45 }, // -10 %
+      { ...base, id: 'c', startsAt: '2026-09-24T20:00:00.000Z', closingFairProb: 0.5 }, // 0
+      { ...base, id: 'd', startsAt: '2026-09-22T10:00:00.000Z', closingFairProb: null },
+    ]
+    const days = clvByDay(rows, dayOf)
+    expect(days.map((day) => day.day)).toEqual(['2026-09-23', '2026-09-24'])
+    expect(days[1]).toMatchObject({ withClose: 2, beatClose: 0.5 })
+    expect(days[1].meanClv).toBeCloseTo(0.05)
   })
 })

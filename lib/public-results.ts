@@ -165,3 +165,30 @@ export function parsePastSignal(row: Record<string, unknown>): PastSignal | null
     outcome: isCanonicalOutcome(row.outcome) ? row.outcome : null,
   }
 }
+
+export type ClvDay = {
+  /** YYYY-MM-DD in Vilnius. */
+  day: string
+  withClose: number
+  meanClv: number
+  beatClose: number
+}
+
+/** Mean CLV per Vilnius kickoff day, oldest first; days without a close are left out. */
+export function clvByDay(signals: PastSignal[], dayOf: (iso: string) => string): ClvDay[] {
+  const days = new Map<string, number[]>()
+  for (const signal of signals) {
+    const clv = clvOf(signal)
+    if (clv === null) continue
+    const day = dayOf(signal.startsAt)
+    days.set(day, [...(days.get(day) ?? []), clv])
+  }
+  return [...days.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([day, values]) => ({
+      day,
+      withClose: values.length,
+      meanClv: values.reduce((sum, value) => sum + value, 0) / values.length,
+      beatClose: values.filter((value) => value > 0).length / values.length,
+    }))
+}
