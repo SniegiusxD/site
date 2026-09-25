@@ -117,7 +117,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
               {showPassword ? <EyeOff className="size-5" aria-hidden /> : <Eye className="size-5" aria-hidden />}
             </button>
           </div>
-          {signUp && <p className="mt-2 text-[0.85rem] text-haze-dim">Bent 8 simboliai.</p>}
+          {signUp ? (
+            <p className="mt-2 text-[0.85rem] text-haze-dim">Bent 8 simboliai.</p>
+          ) : (
+            <p className="mt-2 text-[0.9rem]">
+              <Link href="/slaptazodis" className="text-haze underline decoration-rail-strong underline-offset-4 hover:text-chalk">
+                Pamiršai slaptažodį?
+              </Link>
+            </p>
+          )}
         </div>
 
         {signUp && (

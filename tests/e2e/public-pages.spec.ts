@@ -19,6 +19,7 @@ const PAGES = [
   { path: '/gidai/kas-yra-clv', heading: /CLV/ },
   { path: '/skaiciuokle', heading: /Pamatyk, kaip atrodo/i },
   { path: '/prisijungti', heading: /sveikas sugrįžęs/i },
+  { path: '/slaptazodis', heading: /pamiršai slaptažodį/i },
   { path: '/registracija', heading: /sukurk nemokamą paskyrą/i },
   { path: '/taisykles', heading: /naudojimosi taisyklės/i },
   { path: '/privatumas', heading: /privatumo politika/i },

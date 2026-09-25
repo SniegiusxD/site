@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { username } from 'better-auth/plugins'
 import { pool } from '@/lib/db'
+import { resetPasswordEmail, sendEmail } from '@/lib/email'
 import { ensureSubscription } from '@/lib/subscription-store'
 
 const productionUrl =
@@ -26,6 +27,13 @@ export const auth = betterAuth({
     autoSignIn: true,
     minPasswordLength: 8,
     maxPasswordLength: 128,
+    // Forgotten passwords: a one-hour, single-use link by email. Every other
+    // session ends when the password changes, so a stolen session does too.
+    resetPasswordTokenExpiresIn: 60 * 60,
+    revokeSessionsOnPasswordReset: true,
+    sendResetPassword: async ({ user, url }) => {
+      await sendEmail({ to: user.email, ...resetPasswordEmail(url) })
+    },
   },
   // June accounts signed up with a username and a placeholder email; they
   // still sign in by username.
