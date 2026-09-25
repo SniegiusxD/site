@@ -35,22 +35,22 @@ let tableReady: Promise<void> | null = null
 
 function ensureTable(): Promise<void> {
   tableReady ??= runLockedDdl(
-      `CREATE TABLE IF NOT EXISTS error_event (
-         fingerprint TEXT PRIMARY KEY,
-         source TEXT NOT NULL,
-         kind TEXT NOT NULL,
-         message TEXT NOT NULL,
-         stack TEXT,
-         "where" TEXT,
-         release TEXT NOT NULL,
-         count INTEGER NOT NULL DEFAULT 1,
-         "firstAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-         "lastAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
-       );
-       CREATE INDEX IF NOT EXISTS error_event_last_idx ON error_event ("lastAt" DESC);`,
-    ).catch((error) => {
-      tableReady = null
-      throw error
+    `CREATE TABLE IF NOT EXISTS error_event (
+       fingerprint TEXT PRIMARY KEY,
+       source TEXT NOT NULL,
+       kind TEXT NOT NULL,
+       message TEXT NOT NULL,
+       stack TEXT,
+       "where" TEXT,
+       release TEXT NOT NULL,
+       count INTEGER NOT NULL DEFAULT 1,
+       "firstAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "lastAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     );
+     CREATE INDEX IF NOT EXISTS error_event_last_idx ON error_event ("lastAt" DESC);`,
+  ).catch((error) => {
+    tableReady = null
+    throw error
     })
   return tableReady
 }
