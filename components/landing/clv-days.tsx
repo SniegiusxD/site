@@ -38,7 +38,10 @@ export function ClvDays({ days }: { days: ClvDay[] }) {
               y={up ? MIDDLE - size : MIDDLE}
               height={Math.max(size, 0.5)}
               rx={0.6}
-              className={up ? 'fill-pitch' : 'fill-brick'}
+              // Each bar grows out of the zero line, left to right: the one
+              // moment of motion in this chart.
+              className={`kr-bar-grow ${up ? 'fill-pitch' : 'fill-brick'}`}
+              style={{ transformOrigin: up ? 'bottom' : 'top', animationDelay: `${120 + index * 60}ms` }}
               opacity={day.withClose < THIN_DAY ? 0.35 : 1}
             >
               <title>
