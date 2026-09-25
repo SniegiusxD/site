@@ -221,6 +221,8 @@ One commit per component.
 
 ### Task 11: daily target reached, calmly (t179)
 
+**Already done by Claude on 2026-09-26 (`c59cb69`):** the daily target is now a daily *limit* everywhere (board card, month view, onboarding, profile). Skip this task.
+
 When `daily-target.tsx` reaches its target:
 - the ring completes and softly glows once;
 - the text reads "Šiandienos planas įvykdytas";
@@ -229,11 +231,15 @@ When `daily-target.tsx` reaches its target:
 
 ### Task 12: the month calendar fills (t180)
 
+**Already existed** (the calendar cells and month bars stagger in on open). Skip this task.
+
 - When `month-dialog.tsx` or `profit-calendar.tsx` opens, the days fill in
   order (stagger), and the month total rolls up.
 - It happens once per open.
 
 ### Task 13: Telegram connected (t181)
+
+**Already done by Claude on 2026-09-26 (`85d024a`); skip this task.**
 
 - When `telegram-card.tsx` sees the link succeed, a paper plane flies across
   the card, and the card switches to its connected state.
@@ -247,6 +253,8 @@ When `daily-target.tsx` reaches its target:
   numbers mean for them.
 
 ### Task 15: offline and back (t183)
+
+**Already done by Claude on 2026-09-26 (`ba79a94`); skip this task.**
 
 - When the browser goes offline, or two polls in a row fail, a thin banner
   slides down: "Nėra ryšio: kainos gali būti pasenusios".
