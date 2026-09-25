@@ -388,7 +388,8 @@ export function SignalBoard({
             />
 
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <label className="relative min-w-0 flex-1">
+              {/* A row of its own on phones: squeezed beside two chips it showed "Ieškoti k". */}
+              <label className="relative min-w-0 basis-full sm:basis-auto sm:flex-1">
                 <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-haze-dim" aria-hidden />
                 <span className="sr-only">Ieškoti komandos ar rungtynių</span>
                 <input
