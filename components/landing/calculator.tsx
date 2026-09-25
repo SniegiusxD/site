@@ -13,8 +13,8 @@ import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { PACE_CHOICES, TRACK_RECORD, daysTo, recordPeriodLabel, simulationStake, timeLabel } from '@/lib/pace'
 import type { SignalCounts } from '@/lib/signal-counts'
 import { simulate } from '@/lib/simulate'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 const PRESETS = [250, 500, 1000, 2500]
 const QUESTIONS = 3
 const BETS = 1000

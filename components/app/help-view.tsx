@@ -8,10 +8,10 @@ import { toast } from 'sonner'
 import { FaqList } from '@/components/landing/faq-list'
 import { FEEDBACK_KINDS, type FeedbackKind } from '@/lib/feedback-kinds'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { EASE } from '@/lib/motion'
 
 export type HelpItem = { q: string; a: React.ReactNode; search: string }
 
-const EASE = [0.22, 1, 0.36, 1] as const
 
 /** Lowercase and without Lithuanian diacritics, so "zinute" finds "žinutė". */
 const fold = (text: string) =>

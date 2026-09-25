@@ -6,8 +6,8 @@ import { useId, useState } from 'react'
 import { toast } from 'sonner'
 import { SPORTS } from '@/lib/signal-taxonomy'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 
 const COUNTRIES = [
   { value: 'LT', label: 'Lietuva' },

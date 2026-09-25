@@ -12,8 +12,8 @@ import type { BankrollEntry } from '@/lib/account-store'
 import { formatEuro } from '@/lib/format-lt'
 import { useAccount } from './account-provider'
 import { LoadError } from './load-error'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 type Mode = 'deposit' | 'withdrawal' | 'set'
 const MODES: Array<{ value: Mode; label: string }> = [
   { value: 'deposit', label: 'Įnešiau' },

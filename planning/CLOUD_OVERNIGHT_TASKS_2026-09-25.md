@@ -91,6 +91,8 @@ decoration on everything.
 
 ### Task 0: motion tokens and the audit (t159)
 
+**Already done by Claude on 2026-09-26:** `lib/motion.ts` exists and all components import it; the audit is `planning/MOTION_AUDIT_2026-09-26.md`. Use them and skip this task.
+
 - Create `lib/motion.ts` with:
   - `EASE`;
   - durations (`tap`, `quick`, `settle`, `celebrate`);

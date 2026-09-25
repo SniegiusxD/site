@@ -44,6 +44,7 @@ import { ChipGroup } from './chip-group'
 import { ProfitCalendar } from './profit-calendar'
 import { Segmented } from './segmented'
 import { ValueChart, signedEuro } from './value-chart'
+import { EASE } from '@/lib/motion'
 
 const STATUS: Record<BetStatus, { label: string; tone: string }> = {
   laukia: { label: 'Laukia', tone: 'bg-rail text-haze' },
@@ -301,7 +302,7 @@ function SinceLastVisit({ summary, onClose }: { summary: SettledSummary; onClose
       initial={reduced ? false : { opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={reduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.3, ease: EASE }}
       className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-stand p-4 hairline sm:px-6"
     >
       <div className="min-w-0">

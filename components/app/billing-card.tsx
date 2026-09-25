@@ -12,8 +12,8 @@ import { PRICE_EUR_PER_MONTH } from '@/lib/subscription'
 import { useApi } from '@/lib/use-api'
 import { LoadError } from './load-error'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 
 type Status = { enabled: boolean; testMode: boolean; billing: BillingState }
 

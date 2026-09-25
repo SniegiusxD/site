@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react'
 import { betsByDay, monthGrid, vilniusDay } from '@/lib/bets-calendar'
 import { formatEuro, ltPlural } from '@/lib/format-lt'
 import type { ActiveBet } from '@/lib/types'
+import { EASE_FILL } from '@/lib/motion'
 
 // Adapted from the 21st.dev component "Returns Calendar" by ssicevs (retrieved
 // 2026-09-14): cells tinted by the size of the gain or loss in one up and one
@@ -14,7 +15,6 @@ import type { ActiveBet } from '@/lib/types'
 // curve. Reworked from years × months into one month of days, in this site's
 // palette and Lithuanian.
 
-const EASE = [0.16, 1, 0.3, 1] as const
 const UP = 'var(--pitch)'
 const DOWN = 'var(--brick)'
 const WEEKDAYS = ['Pr', 'An', 'Tr', 'Kt', 'Pn', 'Št', 'Sk']
@@ -135,7 +135,7 @@ export function ProfitCalendar({ bets }: { bets: ActiveBet[] }) {
               }}
               initial={{ opacity: reduced ? 1 : 0, scale: reduced ? 1 : 0.7 }}
               animate={{ opacity: hot && !on ? 0.55 : 1, scale: 1 }}
-              transition={reduced ? { duration: 0 } : { duration: 0.3, ease: EASE, delay: 0.01 * cell }}
+              transition={reduced ? { duration: 0 } : { duration: 0.3, ease: EASE_FILL, delay: 0.01 * cell }}
             >
               {/* Text on a tinted cell sits on its own dark pill, so it reads at any tint. */}
               <span className={`self-start text-[0.7rem] sm:text-[0.8rem] ${settled ? 'rounded bg-night/80 px-1 text-chalk' : 'text-haze'}`}>
@@ -187,7 +187,7 @@ export function ProfitCalendar({ bets }: { bets: ActiveBet[] }) {
               vectorEffect="non-scaling-stroke"
               initial={{ pathLength: reduced ? 1 : 0 }}
               animate={{ pathLength: 1 }}
-              transition={{ duration: reduced ? 0 : 0.6, ease: EASE }}
+              transition={{ duration: reduced ? 0 : 0.6, ease: EASE_FILL }}
             />
           </svg>
         )}

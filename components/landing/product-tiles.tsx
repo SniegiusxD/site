@@ -9,8 +9,8 @@ import { BOOKS, type BookName, landingSignals } from '@/lib/landing-signals'
 import type { PublicStats } from '@/lib/public-stats'
 import { BookMark } from './book-mark'
 import { Reveal, useInViewOnce } from './motion-primitives'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 
 // Real captured signals: all three books priced, and a Betsson total for the stake demo.
 const threeBook = landingSignals.find((signal) => signal.id === 'breogan-rilski-hcp-home')!

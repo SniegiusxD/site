@@ -44,8 +44,8 @@ import { LockedStrip } from './board/locked-strip'
 import { PhoneSheet } from './board/phone-sheet'
 import { useLiveBoard } from './board/use-live-board'
 import { pinKeyOf, SEEN_KEY, type SortKey, useBoardView, useDensity, useHiddenSignals, usePinned } from './board/use-board-preferences'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 const DENSITIES: Array<{ value: Density; label: string }> = [
   { value: 'normal', label: 'Įprastas' },
   { value: 'compact', label: 'Kompaktiškas' },

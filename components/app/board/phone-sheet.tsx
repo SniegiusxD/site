@@ -4,8 +4,8 @@ import { AnimatePresence, motion, useDragControls } from 'framer-motion'
 import { useRef } from 'react'
 import { useFocusTrap } from '@/lib/use-focus-trap'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 
 /**
  * The signal detail on phones: a full-screen sheet that rises from the bottom.

@@ -9,8 +9,8 @@ import { useApi } from '@/lib/use-api'
 import { useFocusTrap } from '@/lib/use-focus-trap'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { LoadError } from './load-error'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 
 /**
  * The daily target over the whole month: bets so far against the month's goal,

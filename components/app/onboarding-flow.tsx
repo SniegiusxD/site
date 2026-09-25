@@ -20,8 +20,8 @@ import { Outlook } from './outlook'
 import { signedWhole } from './scenario-chart'
 import { SuggestBook } from './suggest-book'
 import { FINISHED_STEP, reportFunnelStep } from '@/lib/funnel-client'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 const STEPS = ['Prieš pradedant', 'Bankrollas', 'Kontoros', 'Signalai', 'Rizika', 'Tempas', 'Pranešimai'] as const
 
 const BANKROLL_PRESETS = [250, 500, 1000, 2500]

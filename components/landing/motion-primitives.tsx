@@ -3,8 +3,8 @@
 import NumberFlow from '@number-flow/react'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { EASE_CSS } from '@/lib/motion'
 
-const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)'
 
 const subscribeNever = () => () => {}
 
@@ -63,7 +63,7 @@ export function Reveal({
       style={{
         opacity: hidden ? 0 : 1,
         transform: hidden ? HIDDEN[variant] : 'none',
-        transition: `opacity 600ms ${EASE} ${delay}ms, transform 600ms ${EASE} ${delay}ms`,
+        transition: `opacity 600ms ${EASE_CSS} ${delay}ms, transform 600ms ${EASE_CSS} ${delay}ms`,
       }}
     >
       {children}

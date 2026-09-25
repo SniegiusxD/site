@@ -9,8 +9,8 @@ import { formatEdge, formatEuro, formatOdds } from '@/lib/format-lt'
 import { agoLabel, type BoardRow, compactUntilLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
 import { driftOf, DRIFT_FLOOR, type Movement, type Pulse } from '@/lib/price-movement'
 import { sportName } from '@/lib/sports-lt'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 
 /** One signal on the board: the row a member scans, plus its pin and hide buttons. */
 export function SignalRow({

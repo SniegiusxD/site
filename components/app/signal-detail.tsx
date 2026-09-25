@@ -22,8 +22,8 @@ import type { ResultSummary } from '@/lib/public-results'
 import { marketLabel } from '@/lib/signal-taxonomy'
 import { useApi } from '@/lib/use-api'
 import { reportExecution } from '@/lib/report-execution'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 
 /** "pagal ketvirtį Kelly": the member's own share, in words. */
 const KELLY_WORDS: Record<number, string> = { 0.125: 'aštuntadalį', 0.25: 'ketvirtį', 0.5: 'pusę' }

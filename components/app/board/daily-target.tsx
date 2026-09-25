@@ -10,8 +10,8 @@ import { DAILY_BET_CHOICES } from '@/lib/preferences'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { ChipGroup } from '../chip-group'
 import { MonthDialog } from '../month-dialog'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 
 /** Today's recorded bets against the member's daily target, and the way into the month view. */
 export function DailyTarget({
