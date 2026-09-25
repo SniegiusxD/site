@@ -133,6 +133,10 @@ export default function TermsPage() {
         <ul>
           <li>Statymams skirk tik tiek, kiek gali sau leisti prarasti. Profilyje gali nustatyti, kiek daugiausia statyti vienoje kontoroje.</li>
           <li>
+            Profilyje gali pasidaryti pertrauką (24 valandos, 7 ar 30 dienų): tuo metu signalų nerodom nei svetainėje, nei
+            Telegram, o pradėtos pertraukos sutrumpinti negalima.
+          </li>
+          <li>
             Apriboti sau galimybę lošti visose Lietuvos lošimų bendrovėse gali per Lošimų priežiūros
             tarnybą (<a href="https://lpt.lrv.lt">lpt.lrv.lt</a>).
           </li>

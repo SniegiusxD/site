@@ -24,6 +24,7 @@ import { ChangePassword } from './change-password'
 import { ChipGroup } from './chip-group'
 import { LimitHistory } from './limit-history'
 import { LoadError } from './load-error'
+import { PauseCard } from './pause-card'
 import { TelegramCard } from './telegram-card'
 
 const KELLY_LABEL: Record<(typeof KELLY_CHOICES)[number], string> = { 0.125: 'Atsargiai (⅛)', 0.25: 'Subalansuotai (¼)', 0.5: 'Drąsiai (½)' }
@@ -31,7 +32,7 @@ const KELLY_LABEL: Record<(typeof KELLY_CHOICES)[number], string> = { 0.125: 'At
 const dateFormat = new Intl.DateTimeFormat('lt-LT', { timeZone: 'Europe/Vilnius', month: 'long', day: 'numeric' })
 const sinceFormat = new Intl.DateTimeFormat('lt-LT', { timeZone: 'Europe/Vilnius', year: 'numeric', month: 'long', day: 'numeric' })
 
-export function ProfileView() {
+export function ProfileView({ pausedUntil = null }: { pausedUntil?: string | null }) {
   const router = useRouter()
   const { account, email, memberSince, updateSettings, saveError } = useAccount()
   const prefs = account.preferences
@@ -221,6 +222,10 @@ export function ProfileView() {
 
       <Section title="Telegram pranešimai" id="telegram">
         <TelegramCard />
+      </Section>
+
+      <Section title="Pertrauka" id="pertrauka">
+        <PauseCard pausedUntil={pausedUntil} />
       </Section>
 
       <Section title="Paskyra">

@@ -124,6 +124,16 @@ test('member can onboard, inspect a signal, record it, and open tracker and help
     await page.keyboard.press('Escape')
     await expect(sheet).toHaveCount(0)
     await page.setViewportSize(PERF_VIEWPORTS.desktop)
+
+    // Last, because it locks the board: a break the member sets for themselves.
+    await page.goto('/profilis#pertrauka')
+    await page.getByRole('radio', { name: '24 valandos' }).click()
+    await page.getByRole('button', { name: 'Įjungti pertrauką' }).click()
+    await expect(page.getByText(/Pertrauka iki/).first()).toBeVisible()
+    await page.goto('/signalai')
+    await expect(page.getByRole('heading', { name: /Pertrauka iki/ })).toBeVisible()
+    expect((await page.request.get('/api/live')).status()).toBe(423)
+    await axe('paused board')
   } finally {
     await page.request.post('/api/account/delete', { data: { confirm: email } }).catch(() => null)
   }

@@ -26,7 +26,10 @@ export function ensureAppSchema(): Promise<void> {
         ADD COLUMN IF NOT EXISTS "topOptIn" BOOLEAN NOT NULL DEFAULT FALSE,
         ADD COLUMN IF NOT EXISTS "topName" TEXT,
         -- A flat stake in euros instead of Kelly sizing; NULL = size by value.
-        ADD COLUMN IF NOT EXISTS "fixedStake" DOUBLE PRECISION;
+        ADD COLUMN IF NOT EXISTS "fixedStake" DOUBLE PRECISION,
+        -- A break the member set for themselves: no signals on the board or in
+        -- Telegram until then. NULL = no break (lib/self-pause.ts).
+        ADD COLUMN IF NOT EXISTS "pausedUntil" TIMESTAMPTZ;
 
       -- Topas: members shown by nickname only after they switch it on.
       -- Nicknames are unique regardless of case.
