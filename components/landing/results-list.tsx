@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { Segmented } from '@/components/app/segmented'
 import { formatEdge, formatOdds } from '@/lib/format-lt'
 
@@ -24,8 +24,16 @@ const PAGE = 40
 /** Every started signal, newest first; filter by book, then page through. */
 export function ResultsList({ rows, books }: { rows: ResultRow[]; books: string[] }) {
   const [book, setBook] = useState('all')
+  const [sport, setSport] = useState('all')
   const [shown, setShown] = useState(PAGE)
-  const filtered = book === 'all' ? rows : rows.filter((row) => row.book === book)
+  const sportId = useId()
+  // Most common first: that is the order people look for.
+  const sports = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const row of rows) counts.set(row.sport, (counts.get(row.sport) ?? 0) + 1)
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name)
+  }, [rows])
+  const filtered = rows.filter((row) => (book === 'all' || row.book === book) && (sport === 'all' || row.sport === sport))
   const visible = filtered.slice(0, shown)
 
   return (
@@ -40,7 +48,28 @@ export function ResultsList({ rows, books }: { rows: ResultRow[]; books: string[
             setShown(PAGE)
           }}
         />
-        <p className="text-[0.9rem] text-haze">{filtered.length} signalų</p>
+        <div className="flex items-center gap-3">
+          <label htmlFor={sportId} className="sr-only">
+            Sportas
+          </label>
+          <select
+            id={sportId}
+            value={sport}
+            onChange={(event) => {
+              setSport(event.target.value)
+              setShown(PAGE)
+            }}
+            className="h-10 rounded-xl bg-stand px-3 text-[0.95rem] text-chalk hairline"
+          >
+            <option value="all">Visos sporto šakos</option>
+            {sports.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+          <p className="text-[0.9rem] text-haze">{filtered.length} signalų</p>
+        </div>
       </div>
 
       <div className="mt-5 hidden grid-cols-[7.5rem_1fr_5.5rem_4.5rem_5.5rem_7rem] gap-4 px-4 text-[0.8rem] text-haze-dim md:grid">
@@ -90,7 +119,7 @@ export function ResultsList({ rows, books }: { rows: ResultRow[]; books: string[
             </span>
           </li>
         ))}
-        {visible.length === 0 && <li className="px-4 py-8 text-center text-haze">Šios kontoros signalų per šį laikotarpį nebuvo.</li>}
+        {visible.length === 0 && <li className="px-4 py-8 text-center text-haze">Pagal šiuos filtrus signalų per šį laikotarpį nebuvo.</li>}
       </ul>
       {shown < filtered.length && (
         <button
