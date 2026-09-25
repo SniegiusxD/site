@@ -27,7 +27,7 @@ const text = Schibsted_Grotesk({
 export const metadata: Metadata = {
   title: `${brand.name}: kur Lietuvos kontoros moka daugiau, nei verta`,
   description: brand.description,
-  icons: { icon: '/icon.svg' },
+  icons: { icon: '/icon.svg', apple: '/apple-icon.png' },
   // Absolute URLs for the share image. Replace with the real domain once registered.
   metadataBase: new URL(
     process.env.VERCEL_PROJECT_PRODUCTION_URL
