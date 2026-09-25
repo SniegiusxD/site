@@ -37,6 +37,7 @@ import { CompactHeader, CompactSignalRow, SignalRow } from './signal-row'
 import { Segmented } from './segmented'
 import { TrialRecap } from './trial-recap'
 import { DailyTarget } from './board/daily-target'
+import { NewSignalsPill } from './board/new-signals-pill'
 import { Collapsible, Notice } from './board/list-parts'
 import { FilterChips, SavedViewsChip, SortChip } from './board/filters'
 import { BetFlight, useBetFlight } from './board/bet-flight'
@@ -95,6 +96,7 @@ export function SignalBoard({
   // The moment this member last had the board open, on this device. Read once,
   // then frozen for the visit so rows do not stop being new while being read.
   const lastVisit = useLastVisit(SEEN_KEY)
+  const listTop = useRef<HTMLDivElement>(null)
 
   // The board a member left is the board they expect to come back to.
   const { sort, drift, sports: sportsPicked, markets, periods } = useBoardView()
@@ -505,6 +507,8 @@ export function SignalBoard({
             </div>
           ) : (
             <>
+              <div ref={listTop} className="scroll-mt-24" />
+              <NewSignalsPill pulses={pulses} listTop={listTop} />
               {compact && <CompactHeader />}
               <ul>
                 <AnimatePresence key={unlockedAt ?? 'board'} initial={unlockedAt !== null && !reduced}>
