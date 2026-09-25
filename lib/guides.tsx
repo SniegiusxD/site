@@ -381,6 +381,59 @@ export const GUIDES: Guide[] = [
       </>
     ),
   },
+  {
+    slug: 'kada-sustoti',
+    title: 'Kada sustoti: ženklai ir įrankiai pertraukai',
+    description:
+      'Kaip atpažinti, kad lošimas nustoja būti kontroliuojamas, kaip pasidaryti pertrauką ir kur kreiptis pagalbos Lietuvoje.',
+    updated: '2026 m. rugsėjo 26 d.',
+    updatedIso: '2026-09-26',
+    minutes: 3,
+    body: (
+      <>
+        <section>
+          <h2>Vertė neapsaugo nuo priklausomybės</h2>
+          <p>
+            Net statant tik su verte, daug statymų pralaimi, o blogos savaitės pasitaiko visiems. Matematika veikia per šimtus
+            statymų; žmogus pavargsta, pyksta ir nori atsiimti greičiau. Dalyvavimas azartiniuose lošimuose gali sukelti
+            priklausomybę.
+          </p>
+        </section>
+        <section>
+          <h2>Ženklai, kad laikas sustoti</h2>
+          <ul>
+            <li>Statai daugiau, nei buvai numatęs, arba didini sumas, kad atsiimtum pralaimėjimus.</li>
+            <li>Statai iš pinigų, skirtų kitiems dalykams, ar skolinantis.</li>
+            <li>Nuotaika priklauso nuo dienos rezultato, galvoji apie statymus darbe ar naktį.</li>
+            <li>Slepi nuo artimų, kiek laiko ar pinigų tam skiri.</li>
+          </ul>
+          <p>Jei atpažįsti bent vieną, sustok ir pasidaryk pertrauką. Tai ne silpnumas, o tas pats disciplinos įrankis.</p>
+        </section>
+        <section>
+          <h2>Pertrauka {brand.name}</h2>
+          <p>
+            Profilyje, skiltyje „Pertrauka“, gali užrakinti signalus sau 24 valandoms, 7 ar 30 dienų. Tuo metu jų nerodom nei
+            svetainėje, nei Telegram, o pradėtos pertraukos sutrumpinti negalima. Statymų žurnalas lieka pasiekiamas.
+          </p>
+        </section>
+        <section>
+          <h2>Ilgesniam laikui</h2>
+          <p>
+            Per Lošimų priežiūros tarnybą (lpt.lrv.lt) gali apriboti sau galimybę lošti visose Lietuvoje licencijuotose
+            bendrovėse. Apribojimas galioja iš karto ir visur.
+          </p>
+        </section>
+        <section>
+          <h2>Kur kreiptis</h2>
+          <ul>
+            <li>Emocinė parama „Vilties linija“: 116 123, visą parą, nemokamai.</li>
+            <li>Priklausomybės gydymo ir konsultacijų: Respublikinis priklausomybės ligų centras.</li>
+            <li>Jei nori, kad uždarytume tavo paskyrą, parašyk per <Link href="/kontaktai" className={link}>kontaktų formą</Link>.</li>
+          </ul>
+        </section>
+      </>
+    ),
+  },
 ]
 
 export const guideBySlug = (slug: string) => GUIDES.find((guide) => guide.slug === slug)
