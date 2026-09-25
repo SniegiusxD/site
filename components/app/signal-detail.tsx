@@ -1,5 +1,6 @@
 'use client'
 
+import NumberFlow from '@number-flow/react'
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { AlertTriangle, ArrowLeft, Clock, Loader2, Minus, Plus } from 'lucide-react'
@@ -24,9 +25,10 @@ import { useApi } from '@/lib/use-api'
 import { reportExecution } from '@/lib/report-execution'
 import { EASE } from '@/lib/motion'
 
-
 /** "pagal ketvirtį Kelly": the member's own share, in words. */
 const KELLY_WORDS: Record<number, string> = { 0.125: 'aštuntadalį', 0.25: 'ketvirtį', 0.5: 'pusę' }
+
+const ODDS_FLOW = { minimumFractionDigits: 2, maximumFractionDigits: 2 } as const
 
 export function SignalDetail({
   signal,
@@ -68,8 +70,12 @@ export function SignalDetail({
   const [basis, setBasis] = useState(price.odds)
   const [ownStake, setOwnStake] = useState(false)
   const [moved, setMoved] = useState<number | null>(null)
+  // What the price was before it moved under the open panel, shown struck
+  // through, and a counter so the box flashes once per change.
+  const [change, setChange] = useState<{ from: number; count: number } | null>(null)
   if (basis !== price.odds) {
     setBasis(price.odds)
+    setChange((current) => ({ from: basis, count: (current?.count ?? 0) + 1 }))
     if (ownStake) setMoved(basis)
     else {
       setStake(sizing.suggested)
@@ -81,6 +87,7 @@ export function SignalDetail({
   const [error, setError] = useState<string | null>(null)
 
   const open = signal.status === 'open'
+  const valueGone = price.edge <= 0
   const setStakeValue = (value: number, own = true) => {
     if (own) setOwnStake(true)
     const clamped = Math.max(0, Math.min(max, Math.round(value)))
@@ -190,10 +197,14 @@ export function SignalDetail({
             )}
           </div>
           <div className="sm:text-right">
-            <p className={`font-display text-5xl leading-none font-bold tnum ${open ? 'text-floodlight' : 'text-haze-dim line-through'}`}>
+            <p
+              className={`font-display text-5xl leading-none font-bold tnum transition-colors duration-500 ${
+                !open ? 'text-haze-dim line-through' : valueGone ? 'text-haze-dim' : 'text-floodlight'
+              }`}
+            >
               {formatEdge(price.edge)}
             </p>
-            <p className="mt-1 text-[0.85rem] text-haze">tavo vertė</p>
+            <p className="mt-1 text-[0.85rem] text-haze">{open && valueGone ? 'Vertės neliko' : 'tavo vertė'}</p>
           </div>
         </div>
         <div className="mt-5 grid grid-cols-2 gap-3">
@@ -201,9 +212,27 @@ export function SignalDetail({
             <p className="text-[0.85rem] text-haze">Tikroji kaina</p>
             <p className="mt-1 font-display text-3xl font-bold tnum">{formatOdds(signal.fairOdds)}</p>
           </div>
-          <div className="rounded-xl bg-floodlight-soft p-4">
-            <p className="text-[0.85rem] text-floodlight">{price.book} siūlo</p>
-            <p className="mt-1 font-display text-3xl font-bold text-floodlight tnum">{formatOdds(price.odds)}</p>
+          <div className="relative overflow-hidden rounded-xl bg-floodlight-soft p-4">
+            {/* One flash per move: green when the price got better, grey when worse. */}
+            {change && !reduced && (
+              <motion.span
+                key={change.count}
+                aria-hidden
+                className={`pointer-events-none absolute inset-0 rounded-xl ${price.odds > change.from ? 'bg-pitch/25' : 'bg-haze/20'}`}
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 0 }}
+                transition={{ duration: 1.2, ease: EASE }}
+              />
+            )}
+            <p className="relative text-[0.85rem] text-floodlight">{price.book} siūlo</p>
+            <p className="relative mt-1 font-display text-3xl font-bold text-floodlight tnum">
+              <NumberFlow value={price.odds} locales="lt-LT" format={ODDS_FLOW} animated={!reduced} />
+            </p>
+            {change && (
+              <p className="relative mt-1 text-[0.85rem] text-haze" aria-live="polite">
+                buvo <span className="line-through tnum">{formatOdds(change.from)}</span>
+              </p>
+            )}
           </div>
         </div>
       </div>
