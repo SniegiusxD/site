@@ -20,6 +20,7 @@ import { useAccount } from './account-provider'
 import { BankrollDialog } from './bankroll-dialog'
 import { AccountDataControls } from './account-data-controls'
 import { BillingCard } from './billing-card'
+import { ChangePassword } from './change-password'
 import { ChipGroup } from './chip-group'
 import { LimitHistory } from './limit-history'
 import { LoadError } from './load-error'
@@ -231,6 +232,7 @@ export function ProfileView() {
             Pereiti pradžią dar kartą
           </Link>
         </p>
+        <ChangePassword />
         <button
           type="button"
           onClick={signOut}
