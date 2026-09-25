@@ -387,9 +387,12 @@ export function SignalBoard({
               onChange={(dailyBets) => updateSettings({ dailyBets })}
             />
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              {/* A row of its own on phones: squeezed beside two chips it showed "Ieškoti k". */}
-              <label className="relative min-w-0 basis-full sm:basis-auto sm:flex-1">
+            {/* The board column's width decides, not the screen's: on phones and in
+                the narrow desktop column the search squeezed beside two chips showed
+                "Ieškoti k", so below 28rem of column it takes a row of its own. */}
+            <div className="@container mt-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="relative min-w-0 basis-full @md:flex-1 @md:basis-0">
                 <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-haze-dim" aria-hidden />
                 <span className="sr-only">Ieškoti komandos ar rungtynių</span>
                 <input
@@ -428,6 +431,7 @@ export function SignalBoard({
               )}
               <SavedViewsChip />
               <SortChip freeTier={freeTier} />
+            </div>
             </div>
             <FilterChips freeTier={freeTier} counts={counts} onBoard={onBoard} />
 
