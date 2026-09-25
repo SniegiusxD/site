@@ -57,3 +57,30 @@ export const lcpEntries = (page: Page) => page.evaluate(() => window.__lcp)
 
 /** The two widths the performance work was measured at. */
 export const PERF_VIEWPORTS = { phone: { width: 412, height: 823 }, desktop: { width: 1440, height: 900 } } as const
+
+/** Makes the page start in calm motion, as the footer "Animacijos" switch would. */
+export async function useCalmMotion(page: Page) {
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('kr-motion-v2', 'calm')
+    } catch {}
+  })
+}
+
+/**
+ * Animations still running on the page, as "tag.class: name". The live-status
+ * dot (marked data-live-dot) is the one thing allowed to loop.
+ */
+export const runningAnimations = (page: Page) =>
+  page.evaluate(() =>
+    document
+      .getAnimations()
+      .filter((animation) => animation.playState === 'running')
+      .map((animation) => {
+        const target = (animation.effect as KeyframeEffect | null)?.target as Element | null
+        if (target?.closest('[data-live-dot]')) return null
+        const name = (animation as CSSAnimation).animationName ?? animation.id ?? 'animation'
+        return `${target?.tagName.toLowerCase() ?? '?'}.${String(target?.className ?? '').slice(0, 40)}: ${name}`
+      })
+      .filter(Boolean),
+  )

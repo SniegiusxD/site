@@ -348,7 +348,7 @@ export function SignalBoard({
                 <p className="flex items-center gap-1.5 text-[0.95rem] text-pitch">
                   <span className="relative flex size-2">
                     {status?.sharpAvailable && !stale && (
-                      <span className="absolute inline-flex size-full animate-ping rounded-full bg-pitch opacity-60 motion-reduce:hidden" />
+                      <span data-live-dot className="absolute inline-flex size-full animate-ping rounded-full bg-pitch opacity-60 motion-reduce:hidden" />
                     )}
                     <span className="relative inline-flex size-2 rounded-full bg-pitch" />
                   </span>

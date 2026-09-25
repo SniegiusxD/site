@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, type Page, test } from '@playwright/test'
-import { layoutShift, lcpEntries, observeVitals, PERF_VIEWPORTS, scrollToBottom } from './perf'
+import { layoutShift, lcpEntries, observeVitals, PERF_VIEWPORTS, runningAnimations, scrollToBottom, useCalmMotion } from './perf'
 
 /**
  * Entrance animations fade text in from nothing, so a contrast check that runs
@@ -133,4 +133,14 @@ test('the landing does not shift while it is scrolled, and its LCP is the headli
 
   await scrollToBottom(page)
   expect(await layoutShift(page)).toBeLessThan(0.05)
+})
+
+test('calm mode leaves nothing moving on any public page', async ({ page }) => {
+  // The footer switch promises stillness; a new moment that forgets to check
+  // it shows up here as a still-running animation.
+  await useCalmMotion(page)
+  for (const { path } of PAGES) {
+    await page.goto(path)
+    await expect.poll(() => runningAnimations(page), { message: `${path} in calm mode`, timeout: 3000 }).toEqual([])
+  }
 })

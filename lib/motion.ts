@@ -29,3 +29,18 @@ export const SPRING = {
 
 /** Delay (seconds) for the n-th item of a list that appears together. */
 export const stagger = (index: number, step = 0.06, cap = 0.6) => Math.min(index * step, cap)
+
+/**
+ * Ready-made states for framer-motion. Each one moves only what the GPU
+ * composites (lib/__tests__/motion.test.ts holds that).
+ */
+export const PRESET = {
+  /** Something new arrives: rises a little and fades in. */
+  rise: { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -4 }, transition: { duration: DURATION.settle, ease: EASE } },
+  /** A mark appears in place (a check, a badge). */
+  pop: { initial: { opacity: 0, scale: 0.6 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 0.8 }, transition: SPRING.snappy },
+  /** Plain cross-fade. */
+  fade: { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: DURATION.quick, ease: EASE } },
+  /** A pressed button. */
+  press: { whileTap: { scale: 0.97 }, transition: { duration: DURATION.tap, ease: EASE } },
+} as const
