@@ -51,7 +51,7 @@ function ensureTable(): Promise<void> {
   ).catch((error) => {
     tableReady = null
     throw error
-    })
+  })
   return tableReady
 }
 
