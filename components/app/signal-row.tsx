@@ -10,7 +10,7 @@ import { formatEdge, formatEuro, formatOdds } from '@/lib/format-lt'
 import { agoLabel, type BoardRow, compactUntilLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
 import { driftOf, DRIFT_FLOOR, type Movement, type Pulse } from '@/lib/price-movement'
 import { sportName } from '@/lib/sports-lt'
-import { EASE, SPRING } from '@/lib/motion'
+import { DURATION, EASE, SPRING } from '@/lib/motion'
 import { soonMinutes, StartingSoon } from './board/starting-soon'
 
 
@@ -64,7 +64,7 @@ export function SignalRow({
       layout="position"
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0 }}
+      exit={{ opacity: 0, x: -16, transition: { duration: DURATION.settle, ease: EASE } }}
       transition={{ duration: enterDelay ? 0.45 : 0.3, ease: EASE, delay: enterDelay }}
       className={`relative border-b border-rail last:border-b-0 ${pulse === 'new' ? 'animate-[row-new_2.6s_ease-out]' : ''}`}
     >
@@ -86,7 +86,7 @@ export function SignalRow({
         <span className="text-right">
           <span
             className={`flex items-center justify-end gap-0.5 font-display text-[1.55rem] leading-none font-bold tnum transition-colors duration-700 ${
-              pulse === 'up' ? 'text-pitch' : pulse === 'down' ? 'text-brick' : ''
+              pulse === 'up' ? 'text-pitch' : pulse === 'down' ? 'text-haze' : ''
             }`}
           >
             {pulse === 'up' && <ArrowUp className="size-4" aria-hidden />}
@@ -232,7 +232,7 @@ export function CompactSignalRow({
   const { signal, price } = row
   const open = signal.status === 'open'
   const when = open ? compactUntilLabel(signal.startsAt, now) : signal.status === 'started' ? 'prasidėjo' : 'užsidarė'
-  const oddsTone = pulse === 'up' ? 'text-pitch' : pulse === 'down' ? 'text-brick' : ''
+  const oddsTone = pulse === 'up' ? 'text-pitch' : pulse === 'down' ? 'text-haze' : ''
   const edgeTone = open ? 'text-floodlight' : 'text-haze-dim line-through'
   const amount =
     tracked > 0 ? (
@@ -255,7 +255,7 @@ export function CompactSignalRow({
       layout="position"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      exit={{ opacity: 0, x: -16, transition: { duration: DURATION.settle, ease: EASE } }}
       transition={{ duration: 0.2, ease: EASE }}
       className={`relative flex items-stretch border-b border-rail last:border-b-0 ${pulse === 'new' ? 'animate-[row-new_2.6s_ease-out]' : ''} ${
         active ? 'bg-stand' : 'hover:bg-stand/60'
@@ -272,7 +272,9 @@ export function CompactSignalRow({
         <span className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 lg:hidden">
           <BookMark book={price.book} size="sm" />
           <span className="truncate font-medium">{price.eventName}</span>
-          <span data-flip={`odds-${signal.id}-${price.book}`} className={`font-display text-[1.05rem] font-bold tnum ${oddsTone}`}>{formatOdds(price.odds)}</span>
+          <span data-flip={`odds-${signal.id}-${price.book}`} className={`font-display text-[1.05rem] font-bold tnum transition-colors duration-700 ${oddsTone}`}>
+            <NumberFlow value={price.odds} locales="lt-LT" format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
+          </span>
           <span className="col-span-2 col-start-1 truncate text-[0.85rem] text-haze">
             {pulse === 'new' && <span className="mr-1.5 font-semibold text-pitch">Naujas</span>}
             {ltSelection(price.selectionLabel)} · {when}
@@ -304,7 +306,7 @@ export function CompactSignalRow({
           </span>
           <span className={`text-right font-display text-[1.05rem] font-bold tnum transition-colors duration-700 ${oddsTone}`}>
             <span className="sr-only">Koeficientas </span>
-            {formatOdds(price.odds)}
+            <NumberFlow value={price.odds} locales="lt-LT" format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
           </span>
           <span className="text-right text-haze tnum">
             <span className="sr-only">Tikroji kaina </span>
