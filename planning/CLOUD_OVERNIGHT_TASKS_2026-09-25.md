@@ -1,5 +1,17 @@
 # Overnight tasks for a cloud Claude session: site, night 2 (motion and appeal)
 
+> **Status on 2026-09-26:** Claude already did many of these tasks (each is
+> marked). Still open:
+> - Task 1 (motion CI tests);
+> - Task 3 (row grows into its detail);
+> - the rest of Tasks 4 and 6;
+> - Task 10 (buttons, toggles);
+> - Task 14 (progress spring);
+> - Task 17 (empty and loading states);
+> - Part 3 (Tasks 18, 20, 21), **under the legal rule below**.
+>
+> Start with those.
+
 Written for: a Claude Code cloud session with access to the GitHub repository
 `SniegiusxD/site` and nothing else. You work alone for hours, and nobody will
 answer questions. When something is ambiguous, choose the conservative
@@ -122,6 +134,8 @@ Find each place yourself (`components/app/**`). Each task is one moment. Test
 each one in the browser against the seeded database.
 
 ### Task 2: page transitions (t160)
+
+**Already done by Claude on 2026-09-26 (`3e26b73`); skip this task.**
 
 - Moving between Signalai, Statymai, Profilis and Pagalba cross-fades with a
   short slide in the direction of the nav.
