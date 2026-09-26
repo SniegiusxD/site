@@ -2,12 +2,11 @@
 
 > **Status on 2026-09-26:** Claude already did many of these tasks (each is
 > marked). Still open:
-> - Task 1 (motion CI tests);
+> - Task 1 (the calm-mode e2e check);
 > - Task 3 (row grows into its detail);
-> - the rest of Tasks 4 and 6;
+> - the rest of Task 6;
 > - Task 10 (buttons, toggles);
-> - Task 14 (progress spring);
-> - Task 17 (empty and loading states);
+> - Task 17 (empty states, other loading states);
 > - Part 3 (Tasks 18, 20, 21), **under the legal rule below**.
 >
 > Start with those.
@@ -290,6 +289,8 @@ When `daily-target.tsx` reaches its target:
 
 ### Task 17: empty and loading states (t167)
 
+**Partly done by Claude on 2026-09-26 (`b508384`):** the shared `components/app/skeleton.tsx` (kr-shimmer) exists, and Statymai uses it. Still to do: the other screens' loading states and the empty states.
+
 - Every skeleton uses one shimmer (`kr-shimmer`).
 - Every empty state gets a small, still icon that moves once on entry, one
   sentence that says what to do, and a button that does it.
@@ -334,6 +335,8 @@ Therefore:
   above the fair price, the cell flashes green once with "+3,1 %".
 
 ### Task 20: reveals on the results page (t169)
+
+**Mostly existed:** the summary figures roll (`Roll`) and the per-day bars grow. Still to do: stagger the group-table rows, and a `layout` reorder on filter.
 
 - On `/rezultatai`, the summary figures roll up once.
 - The group tables' rows stagger in.
