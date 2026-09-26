@@ -1,6 +1,7 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
+import { motion } from 'framer-motion'
 import { Activity, Gauge, LifeBuoy, LogOut, ReceiptText, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -8,6 +9,7 @@ import { useCallback, useState } from 'react'
 import { authClient } from '@/lib/auth-client'
 import { brand } from '@/lib/brand'
 import { formatEuro, ltPlural } from '@/lib/format-lt'
+import { SPRING } from '@/lib/motion'
 import { useAccount } from './account-provider'
 import { BankrollDialog } from './bankroll-dialog'
 import { ConnectionBanner } from './connection-banner'
@@ -65,12 +67,14 @@ export function AppShell({ children, owner = false }: { children: React.ReactNod
                 key={href}
                 href={hrefFrom(href, pathname)}
                 aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 font-medium transition-colors ${
-                  active ? 'bg-stand text-chalk' : 'text-haze hover:bg-stand/60 hover:text-chalk'
+                className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 font-medium transition-colors ${
+                  active ? 'text-chalk' : 'text-haze hover:bg-stand/60 hover:text-chalk'
                 }`}
               >
-                <Icon className="size-5" aria-hidden />
-                {label}
+                {/* The highlight slides to the new page instead of blinking there. */}
+                {active && <motion.span layoutId="nav-desktop" aria-hidden className="absolute inset-0 rounded-xl bg-stand" transition={SPRING.snappy} />}
+                <Icon className="relative size-5" aria-hidden />
+                <span className="relative">{label}</span>
               </Link>
             )
           })}
@@ -164,8 +168,11 @@ export function AppShell({ children, owner = false }: { children: React.ReactNod
               key={href}
               href={hrefFrom(href, pathname)}
               aria-current={active ? 'page' : undefined}
-              className={`flex flex-col items-center gap-1 py-2.5 text-[0.75rem] font-medium ${active ? 'text-chalk' : 'text-haze-dim'}`}
+              className={`relative flex flex-col items-center gap-1 py-2.5 text-[0.75rem] font-medium transition-colors ${active ? 'text-chalk' : 'text-haze-dim'}`}
             >
+              {active && (
+                <motion.span layoutId="nav-phone" aria-hidden className="absolute top-0 h-0.5 w-8 rounded-full bg-floodlight" transition={SPRING.snappy} />
+              )}
               <Icon className="size-5" aria-hidden />
               {label}
             </Link>

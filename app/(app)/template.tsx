@@ -1,7 +1,17 @@
+'use client'
+
+import { motion } from 'framer-motion'
+import { DURATION, EASE } from '@/lib/motion'
+
 /**
- * Re-mounts on every navigation inside the app, so each page arrives with a
- * short fade. CSS only: visible at once without JavaScript and no hydration risk.
+ * Re-mounted on every navigation inside the app, so each page arrives with a
+ * short fade and rise while the nav highlight slides across. Transform and
+ * opacity only; calm mode makes it instant through MotionConfig.
  */
 export default function AppTemplate({ children }: { children: React.ReactNode }) {
-  return <div className="animate-[page-in_220ms_ease-out] motion-reduce:animate-none">{children}</div>
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: DURATION.settle, ease: EASE }}>
+      {children}
+    </motion.div>
+  )
 }
