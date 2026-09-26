@@ -82,9 +82,10 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
                   {/* The bar is the month's limit; no tick for where one "should" be: a pace to keep up with pushes betting. */}
                   <div className="relative mt-5 h-2.5 rounded-full bg-rail">
                     <motion.div
-                      className="h-full rounded-full bg-floodlight"
-                      initial={reduced ? false : { width: 0 }}
-                      animate={{ width: `${Math.min(100, (m.total / Math.max(1, m.monthTarget)) * 100)}%` }}
+                      className="h-full origin-left rounded-full bg-floodlight"
+                      style={{ width: `${Math.min(100, (m.total / Math.max(1, m.monthTarget)) * 100)}%` }}
+                      initial={reduced ? false : { scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
                       transition={{ duration: 0.7, ease: EASE }}
                     />
                   </div>
@@ -112,11 +113,12 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
                         return (
                           <div key={day} className="group relative flex h-full flex-1 items-end" title={`${day} d.: ${count}`}>
                             <motion.div
-                              className={`w-full rounded-t-[3px] ${
+                              className={`w-full origin-bottom rounded-t-[3px] ${
                                 future ? 'bg-rail/40' : reached ? 'bg-floodlight' : 'bg-steel'
                               } ${day === m.today ? 'outline outline-1 outline-offset-1 outline-chalk' : ''}`}
-                              initial={reduced ? false : { height: 0 }}
-                              animate={{ height: future ? '2px' : `${Math.max(count ? 4 : 2, (count / peak) * 100)}%` }}
+                              style={{ height: future ? '2px' : `${Math.max(count ? 4 : 2, (count / peak) * 100)}%` }}
+                              initial={reduced ? false : { scaleY: 0 }}
+                              animate={{ scaleY: 1 }}
                               transition={{ duration: 0.5, delay: reduced ? 0 : Math.min(index, 30) * 0.015, ease: EASE }}
                             />
                           </div>
