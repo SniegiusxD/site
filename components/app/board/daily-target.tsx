@@ -77,9 +77,9 @@ export function DailyTarget({
         className="mt-3 h-2 overflow-hidden rounded-full bg-rail"
       >
         <motion.div
-          className={`h-full rounded-full transition-colors duration-500 ${reached ? 'bg-haze' : 'bg-pitch'}`}
+          className={`h-full w-full origin-left rounded-full transition-colors duration-500 ${reached ? 'bg-haze' : 'bg-pitch'}`}
           initial={false}
-          animate={{ width: `${Math.min(1, progress.count / Math.max(1, target)) * 100}%` }}
+          animate={{ scaleX: Math.min(1, progress.count / Math.max(1, target)) }}
           transition={{ duration: reduced ? 0 : 0.6, ease: EASE }}
         />
       </div>
