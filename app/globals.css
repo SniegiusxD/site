@@ -471,6 +471,8 @@
   .kr-row-in { animation: kr-row-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both; }
   .kr-row-drop { animation: kr-row-drop 540ms cubic-bezier(0.22, 1, 0.36, 1) both; }
   .kr-expand { animation: kr-expand 400ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  /* Loading skeletons: one soft light passes across, the same everywhere. */
+  .kr-shimmer { animation: kr-shimmer 1.8s cubic-bezier(0.45, 0, 0.2, 1) infinite; }
   .kr-cta-glow { position: relative; box-shadow: 0 10px 34px -14px rgb(91 229 132 / 0.25); }
   .kr-cta-glow::after {
     content: '';

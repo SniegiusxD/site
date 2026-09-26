@@ -2,7 +2,7 @@
 
 import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, Check, ChevronDown, Download, Loader2, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
+import { AlertTriangle, Check, ChevronDown, Download, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
@@ -47,6 +47,7 @@ import { ValueChart, signedEuro } from './value-chart'
 import { EASE, SPRING } from '@/lib/motion'
 import { centerOf, MoneyFlight, type MoneyFlightPath, onScreen } from './money-flight'
 import { PullToRefresh } from './pull-to-refresh'
+import { Skeleton } from './skeleton'
 
 const STATUS: Record<BetStatus, { label: string; tone: string }> = {
   laukia: { label: 'Laukia', tone: 'bg-rail text-haze' },
@@ -227,9 +228,13 @@ export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
       {bets === null ? (
         // Until the first list arrives; after a failure the message above replaces it.
         !loadError || loading ? (
-          <div role="status" className="grid place-items-center py-24 text-haze">
-            <Loader2 className="size-6 animate-spin" aria-hidden />
+          // The page's own shape while the list loads, so nothing jumps when it arrives.
+          <div role="status" className="mt-6 space-y-4">
             <span className="sr-only">Įkeliam statymus…</span>
+            <Skeleton className="h-11 w-64" />
+            <Skeleton className="h-40" />
+            <Skeleton className="h-24" />
+            <Skeleton className="h-64" />
           </div>
         ) : null
       ) : bets.length === 0 ? (
