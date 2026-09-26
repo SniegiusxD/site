@@ -21,7 +21,7 @@ import { Outlook } from './outlook'
 import { signedWhole } from './scenario-chart'
 import { SuggestBook } from './suggest-book'
 import { FINISHED_STEP, reportFunnelStep } from '@/lib/funnel-client'
-import { EASE } from '@/lib/motion'
+import { EASE, SPRING } from '@/lib/motion'
 
 const STEPS = ['Prieš pradedant', 'Bankrollas', 'Kontoros', 'Signalai', 'Rizika', 'Tempas', 'Pranešimai'] as const
 
@@ -150,11 +150,12 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
       <div className="mx-auto mt-5 flex w-full max-w-[44rem] gap-1.5 px-5 sm:px-8" aria-hidden>
         {STEPS.map((name, index) => (
           <span key={name} className="h-1 flex-1 overflow-hidden rounded-full bg-rail">
+            {/* scaleX, not width: the GPU moves it, and the spring lands with a little give. */}
             <motion.span
-              className="block h-full bg-chalk"
+              className="block h-full origin-left bg-chalk"
               initial={false}
-              animate={{ width: index <= step ? '100%' : '0%' }}
-              transition={{ duration: reduced ? 0 : 0.5, ease: EASE }}
+              animate={{ scaleX: index <= step ? 1 : 0 }}
+              transition={reduced ? { duration: 0 } : SPRING.soft}
             />
           </span>
         ))}
