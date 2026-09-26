@@ -1,5 +1,6 @@
 'use client'
 
+import { motion } from 'framer-motion'
 import { Bell, Check, Loader2, Lock, Send, X } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -21,6 +22,8 @@ import { ApiError, fetchJson, useApi } from '@/lib/use-api'
 import { useAccount } from './account-provider'
 import { FilterChip, FilterOption } from './filter-chip'
 import { LoadError } from './load-error'
+import { SPRING } from '@/lib/motion'
+import { useReducedMotion } from '@/lib/use-reduced-motion'
 
 const SAVE_DELAY_MS = 600
 const LINK_POLL_MS = 3000
@@ -49,6 +52,9 @@ export function TelegramCard() {
   const [testing, setTesting] = useState(false)
   const [presetName, setPresetName] = useState('')
   const saveTimer = useRef<number | null>(null)
+  const reduced = useReducedMotion()
+  // Set when the link succeeds on this page: a paper plane crosses the card once.
+  const [justLinked, setJustLinked] = useState(0)
 
   // While linking: ask again until Telegram reports the chat connected.
   const load = useCallback(async () => {
@@ -65,6 +71,27 @@ export function TelegramCard() {
   useEffect(() => () => {
     if (saveTimer.current) window.clearTimeout(saveTimer.current)
   }, [])
+
+  async function setNotifySettled(on: boolean) {
+    if (!state) return
+    const before = state
+    setState({ ...state, notifySettled: on })
+    try {
+      const response = await fetch('/api/telegram/settled', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ on }),
+      })
+      const body = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(body?.error ?? 'Nepavyko išsaugoti.')
+      setState(body)
+      setError(null)
+    } catch (caught) {
+      setState(before)
+      // fetch() throws TypeError when offline; its English text is not for members.
+      setError(caught instanceof TypeError ? 'Nepavyko susisiekti su serveriu.' : caught instanceof Error ? caught.message : 'Nepavyko išsaugoti.')
+    }
+  }
 
   function update(patch: Partial<TelegramSettings>) {
     if (!state) return
@@ -117,6 +144,7 @@ export function TelegramCard() {
         await new Promise((resolve) => window.setTimeout(resolve, LINK_POLL_MS))
         const next = await load()
         if (next?.connected) {
+          setJustLinked((value) => value + 1)
           setNotice('Telegram prijungtas.')
           break
         }
@@ -155,7 +183,7 @@ export function TelegramCard() {
         </p>
         <Link
           href="/atrakinti"
-          className="inline-flex h-11 items-center rounded-xl bg-floodlight px-5 font-semibold text-night transition-colors hover:bg-pitch"
+          className="kr-press inline-flex h-11 items-center rounded-xl bg-floodlight px-5 font-semibold text-night transition-colors hover:bg-pitch"
         >
           Atrakinti
         </Link>
@@ -226,11 +254,29 @@ export function TelegramCard() {
           </button>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-night/60 p-4">
-          <p className="flex items-center gap-2">
-            <span className="grid size-6 place-items-center rounded-full bg-pitch-soft text-pitch">
+        <div className="relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-xl bg-night/60 p-4">
+          {justLinked > 0 && !reduced && (
+            <motion.span
+              key={justLinked}
+              aria-hidden
+              className="pointer-events-none absolute bottom-2 left-2 text-floodlight"
+              initial={{ x: 0, y: 0, rotate: -8, opacity: 0 }}
+              animate={{ x: ['0%', '500%', '1800%'], y: [0, -14, -48], rotate: [-8, 4, 12], opacity: [0, 1, 0] }}
+              transition={{ duration: 1.1, ease: [0.45, 0, 0.2, 1], times: [0, 0.35, 1] }}
+            >
+              <Send className="size-6" aria-hidden />
+            </motion.span>
+          )}
+          <p className="relative flex items-center gap-2">
+            <motion.span
+              key={justLinked}
+              initial={justLinked && !reduced ? { scale: 0.3 } : false}
+              animate={{ scale: 1 }}
+              transition={{ ...SPRING.snappy, delay: 0.5 }}
+              className="grid size-6 place-items-center rounded-full bg-pitch-soft text-pitch"
+            >
               <Check className="size-3.5" aria-hidden />
-            </span>
+            </motion.span>
             Prijungta{state.username ? <span className="font-medium"> @{state.username}</span> : null}
           </p>
           <div className="flex gap-2">
@@ -255,6 +301,19 @@ export function TelegramCard() {
             checked={s.enabled}
             onChange={(event) => update({ enabled: event.target.checked })}
             className="size-5 accent-[var(--pitch)]"
+          />
+        </label>
+
+        <label className="flex items-center justify-between gap-4">
+          <span>
+            <span className="block font-medium">Pranešti, kai statymas atsiskaito</span>
+            <span className="mt-0.5 block text-[0.9rem] text-haze">Rezultatas ir CLV, o pirmadieniais savaitės suvestinė.</span>
+          </span>
+          <input
+            type="checkbox"
+            checked={state.notifySettled}
+            onChange={(event) => setNotifySettled(event.target.checked)}
+            className="size-5 shrink-0 accent-[var(--pitch)]"
           />
         </label>
 

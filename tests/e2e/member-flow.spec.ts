@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
-import { layoutShift, observeVitals, PERF_VIEWPORTS, scrollToBottom } from './perf'
+import { layoutShift, observeVitals, PERF_VIEWPORTS, runningAnimations, scrollToBottom } from './perf'
 
 test.beforeEach(async ({}, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'one isolated member journey')
@@ -99,6 +99,14 @@ test('member can onboard, inspect a signal, record it, and open tracker and help
       }
     }
 
+    // Calm mode: every member page comes to rest, apart from the live dot.
+    await page.evaluate(() => localStorage.setItem('kr-motion-v2', 'calm'))
+    for (const path of ['/signalai', '/signalai?signal=ci-signal-1&book=TopSport', '/statymai', '/profilis', '/pagalba']) {
+      await page.goto(path)
+      await expect.poll(() => runningAnimations(page), { message: `${path} in calm mode`, timeout: 3000 }).toEqual([])
+    }
+    await page.evaluate(() => localStorage.removeItem('kr-motion-v2'))
+
     // Dialogs: focus moves in, Escape closes, focus comes back to the opener.
     await page.goto('/signalai')
     const month = page.getByRole('button', { name: 'Mėnuo' })
@@ -124,6 +132,16 @@ test('member can onboard, inspect a signal, record it, and open tracker and help
     await page.keyboard.press('Escape')
     await expect(sheet).toHaveCount(0)
     await page.setViewportSize(PERF_VIEWPORTS.desktop)
+
+    // Last, because it locks the board: a break the member sets for themselves.
+    await page.goto('/profilis#pertrauka')
+    await page.getByRole('radio', { name: '24 valandos' }).click()
+    await page.getByRole('button', { name: 'Įjungti pertrauką' }).click()
+    await expect(page.getByText(/Pertrauka iki/).first()).toBeVisible()
+    await page.goto('/signalai')
+    await expect(page.getByRole('heading', { name: /Pertrauka iki/ })).toBeVisible()
+    expect((await page.request.get('/api/live')).status()).toBe(423)
+    await axe('paused board')
   } finally {
     await page.request.post('/api/account/delete', { data: { confirm: email } }).catch(() => null)
   }

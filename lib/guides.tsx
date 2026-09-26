@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { brand } from '@/lib/brand'
 
 /**
  * Plain-language guides for the questions people actually search for in
@@ -43,8 +44,8 @@ export const GUIDES: Guide[] = [
         <section>
           <h2>Iš kur žinoti tikrąją tikimybę</h2>
           <p>
-            Tiksliai jos nežino niekas, bet yra geras įvertis: didžiųjų, laimėtojų neribojančių kontorų kaina. Labiausiai žinoma yra
-            Pinnacle. Ji priima didelius statymus iš stipriausių lošėjų, todėl jos kaina greitai prisitaiko prie visko, ką rinka
+            Tiksliai jos nežino niekas, bet yra geras įvertis: tarptautinės lažybų rinkos kaina su maža marža (dažniausiai naudojama
+            Pinnacle kaina). Ją formuoja dideli rinkos dalyviai, todėl ji greitai prisitaiko prie visko, ką rinka
             sužino. Nuėmus maržą, gaunama „tikroji kaina“.
           </p>
           <p>
@@ -75,7 +76,7 @@ export const GUIDES: Guide[] = [
           </ul>
         </section>
         <section>
-          <h2>Kaip tai daro Statyk</h2>
+          <h2>Kaip tai daro {brand.name}</h2>
           <p>
             Visą parą lyginam 7BET, TopSport ir Betsson kainas su Pinnacle kaina be maržos ir parodom, kur Lietuvos kontora moka
             daugiau. Kaip tai matuojam ir kokie mūsų rezultatai, aprašyta{' '}
@@ -133,7 +134,7 @@ export const GUIDES: Guide[] = [
           </p>
         </section>
         <section>
-          <h2>Kur tai matyti Statyk</h2>
+          <h2>Kur tai matyti {brand.name}</h2>
           <p>
             Kiekvienam pažymėtam statymui sekimo lentelėje rodom jo CLV, o{' '}
             <Link href="/metodika" className={link}>
@@ -188,7 +189,7 @@ export const GUIDES: Guide[] = [
           </p>
         </section>
         <section>
-          <h2>Kaip tai daro Statyk</h2>
+          <h2>Kaip tai daro {brand.name}</h2>
           <p>
             Kiekvienam signalui siūloma suma skaičiuojama iš tavo banko pagal pasirinktą Kelly dalį, su 5 % viršutine riba ir tavo
             įrašytais kontorų limitais. Kaip atrodo tūkstantis tokių statymų, rodo{' '}
@@ -231,18 +232,18 @@ export const GUIDES: Guide[] = [
           <ul>
             <li>Raštu paprašyk kontoros nurodyti taisyklių punktą, pagal kurį sumažintas limitas.</li>
             <li>Jei aiškaus pagrindo nėra, gali kreiptis į Lošimų priežiūros tarnybą.</li>
-            <li>Tuo metu statyk kitose kontorose. Kuo daugiau licencijuotų kontorų paskyrų turi, tuo mažiau priklausai nuo vienos.</li>
+            <li>Kitose licencijuotose kontorose tavo paskyros lieka, kokios buvo. Kuo daugiau jų turi, tuo mažiau priklausai nuo vienos.</li>
           </ul>
         </section>
         <section>
           <h2>Kaip gyventi su limitais</h2>
           <p>
             Įrašyk tikrą kiekvienos kontoros limitą. Tada siūloma suma jo niekada neviršys, o signalus, kurių kontora nebeleidžia
-            pastatyti verta suma, galėsi atsijoti. Statyk profilyje limitų istorija lieka tavo įrodymu, jei kreipsiesi į
+            pastatyti verta suma, galėsi atsijoti. Profilyje saugoma limitų istorija lieka tavo įrodymu, jei kreipsiesi į
             tarnybą.
           </p>
           <p>
-            Tik nuo 18 metų. Lošimas gali sukelti priklausomybę. Apriboti sau galimybę lošti gali per{' '}
+            Tik nuo 21 metų. Dalyvavimas azartiniuose lošimuose gali sukelti priklausomybę. Apriboti sau galimybę lošti gali per{' '}
             <a href="https://lpt.lrv.lt" rel="noopener" className={link}>
               Lošimų priežiūros tarnybą
             </a>
@@ -286,7 +287,7 @@ export const GUIDES: Guide[] = [
             Paprasčiau skaičiuoti, šiek tiek lėčiau auga.
           </p>
           <p>
-            Kad ir kurį pasirinktum, viena taisyklė galioja visada: ne daugiau nei keli procentai bankrollo vienam statymui. Statyk
+            Kad ir kurį pasirinktum, viena taisyklė galioja visada: ne daugiau nei keli procentai bankrollo vienam statymui. {brand.name}
             niekada nesiūlo daugiau nei 5 %, o sumą gali pasirinkti profilyje. Plačiau apie Kelly —{' '}
             <Link href="/gidai/kelly-kriterijus" className={link}>
               atskirame gide
@@ -315,7 +316,7 @@ export const GUIDES: Guide[] = [
             </li>
           </ul>
           <p>
-            Tik nuo 18 metų. Jei lošimas nustoja būti kontroliuojamas, apriboti sau galimybę lošti gali per{' '}
+            Tik nuo 21 metų. Jei lošimas nustoja būti kontroliuojamas, apriboti sau galimybę lošti gali per{' '}
             <a href="https://lpt.lrv.lt" rel="noopener" className={link}>
               Lošimų priežiūros tarnybą
             </a>
@@ -350,7 +351,7 @@ export const GUIDES: Guide[] = [
           </p>
         </section>
         <section>
-          <h2>3. Statyk siūlomą sumą</h2>
+          <h2>3. Siūloma suma</h2>
           <p>
             Siūloma suma skaičiuojama nuo tavo bankrollo ir pasirinkto būdo (pagal vertę arba fiksuota), neviršija 5 % bankrollo ir
             tavo įrašyto kontoros limito. Jei kontora leido pastatyti mažiau, įrašyk tiek, kiek pastatei.
@@ -376,6 +377,59 @@ export const GUIDES: Guide[] = [
             </Link>
             .
           </p>
+        </section>
+      </>
+    ),
+  },
+  {
+    slug: 'kada-sustoti',
+    title: 'Kada sustoti: ženklai ir įrankiai pertraukai',
+    description:
+      'Kaip atpažinti, kad lošimas nustoja būti kontroliuojamas, kaip pasidaryti pertrauką ir kur kreiptis pagalbos Lietuvoje.',
+    updated: '2026 m. rugsėjo 26 d.',
+    updatedIso: '2026-09-26',
+    minutes: 3,
+    body: (
+      <>
+        <section>
+          <h2>Vertė neapsaugo nuo priklausomybės</h2>
+          <p>
+            Net statant tik su verte, daug statymų pralaimi, o blogos savaitės pasitaiko visiems. Matematika veikia per šimtus
+            statymų; žmogus pavargsta, pyksta ir nori atsiimti greičiau. Dalyvavimas azartiniuose lošimuose gali sukelti
+            priklausomybę.
+          </p>
+        </section>
+        <section>
+          <h2>Ženklai, kad laikas sustoti</h2>
+          <ul>
+            <li>Statai daugiau, nei buvai numatęs, arba didini sumas, kad atsiimtum pralaimėjimus.</li>
+            <li>Statai iš pinigų, skirtų kitiems dalykams, ar skolinantis.</li>
+            <li>Nuotaika priklauso nuo dienos rezultato, galvoji apie statymus darbe ar naktį.</li>
+            <li>Slepi nuo artimų, kiek laiko ar pinigų tam skiri.</li>
+          </ul>
+          <p>Jei atpažįsti bent vieną, sustok ir pasidaryk pertrauką. Tai ne silpnumas, o tas pats disciplinos įrankis.</p>
+        </section>
+        <section>
+          <h2>Pertrauka {brand.name}</h2>
+          <p>
+            Profilyje, skiltyje „Pertrauka“, gali užrakinti signalus sau 24 valandoms, 7 ar 30 dienų. Tuo metu jų nerodom nei
+            svetainėje, nei Telegram, o pradėtos pertraukos sutrumpinti negalima. Statymų žurnalas lieka pasiekiamas.
+          </p>
+        </section>
+        <section>
+          <h2>Ilgesniam laikui</h2>
+          <p>
+            Per Lošimų priežiūros tarnybą (lpt.lrv.lt) gali apriboti sau galimybę lošti visose Lietuvoje licencijuotose
+            bendrovėse. Apribojimas galioja iš karto ir visur.
+          </p>
+        </section>
+        <section>
+          <h2>Kur kreiptis</h2>
+          <ul>
+            <li>Emocinė parama „Vilties linija“: 116 123, visą parą, nemokamai.</li>
+            <li>Priklausomybės gydymo ir konsultacijų: Respublikinis priklausomybės ligų centras.</li>
+            <li>Jei nori, kad uždarytume tavo paskyrą, parašyk per <Link href="/kontaktai" className={link}>kontaktų formą</Link>.</li>
+          </ul>
         </section>
       </>
     ),

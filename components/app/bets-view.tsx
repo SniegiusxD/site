@@ -2,9 +2,10 @@
 
 import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, Check, ChevronDown, Download, Loader2, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
+import { AlertTriangle, Check, ChevronDown, Download, ReceiptText, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
+import { EmptyState } from './empty-state'
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
 import {
   type BetStats,
@@ -44,6 +45,9 @@ import { ChipGroup } from './chip-group'
 import { ProfitCalendar } from './profit-calendar'
 import { Segmented } from './segmented'
 import { ValueChart, signedEuro } from './value-chart'
+import { EASE, SPRING } from '@/lib/motion'
+import { centerOf, MoneyFlight, type MoneyFlightPath, onScreen } from './money-flight'
+import { PullToRefresh } from './pull-to-refresh'
 
 const STATUS: Record<BetStatus, { label: string; tone: string }> = {
   laukia: { label: 'Laukia', tone: 'bg-rail text-haze' },
@@ -172,6 +176,37 @@ export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
   const settled = useMemo(() => inRange.filter((bet) => bet.status !== 'laukia').sort((a, b) => timeOf(b) - timeOf(a)), [inRange])
   const activeFilters = (book ? 1 : 0) + (sport ? 1 : 0) + (tag ? 1 : 0) + (clv !== 'all' ? 1 : 0)
 
+  // The moment results land: a win flies from the card into the result, which
+  // rolls up from what it was before; a loss just rolls down. Once per view,
+  // only on the unfiltered view (a filter may leave the new results out), and
+  // never in calm mode, where the result simply shows its current value.
+  const reduced = useReducedMotion()
+  const sinceProfitRef = useRef<HTMLParagraphElement>(null)
+  const resultRef = useRef<HTMLParagraphElement>(null)
+  const [played, setPlayed] = useState(false)
+  const [flight, setFlight] = useState<MoneyFlightPath | null>(null)
+  const [landed, setLanded] = useState(0)
+  const staging = Boolean(since && since.profit !== 0 && !reduced && !played && activeFilters === 0)
+  useEffect(() => {
+    if (!staging || !since) return
+    const id = window.setTimeout(() => {
+      const from = sinceProfitRef.current?.getBoundingClientRect()
+      const to = resultRef.current?.getBoundingClientRect()
+      if (since.profit > 0 && onScreen(from) && onScreen(to)) {
+        setFlight({ label: signedEuro(since.profit), from: centerOf(from), to: centerOf(to) })
+      } else {
+        setPlayed(true)
+      }
+    }, 600)
+    return () => window.clearTimeout(id)
+  }, [staging, since])
+  const land = useCallback(() => {
+    setFlight(null)
+    setPlayed(true)
+    setLanded((value) => value + 1)
+  }, [])
+  const shownProfit = staging && since ? stats.profit - since.profit : stats.profit
+
   return (
     <main className="mx-auto max-w-[60rem] px-4 pt-6 pb-16 sm:px-8 lg:pt-10">
       <div className="flex items-center justify-between gap-4">
@@ -186,27 +221,33 @@ export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
         </button>
       </div>
       <p className="mt-2 text-haze">Rezultatai suvedami automatiškai, kai rungtynės baigiasi.</p>
+      <PullToRefresh onRefresh={load} />
 
       {loadError && <LoadError error={loadError} what="statymų" onRetry={load} retrying={loading} className="mt-6" />}
 
       {bets === null ? (
         // Until the first list arrives; after a failure the message above replaces it.
         !loadError || loading ? (
-          <div role="status" className="grid place-items-center py-24 text-haze">
-            <Loader2 className="size-6 animate-spin" aria-hidden />
+          <div role="status" className="mt-6 space-y-3">
             <span className="sr-only">Įkeliam statymus…</span>
+            <div aria-hidden className="kr-skeleton h-11 w-72 max-w-full rounded-xl" />
+            {[0, 1, 2, 3].map((row) => (
+              <div key={row} aria-hidden className="kr-skeleton h-20 rounded-2xl" />
+            ))}
           </div>
         ) : null
       ) : bets.length === 0 ? (
-        <div className="mt-10 rounded-2xl bg-stand p-8 text-center hairline">
-          <p className="font-display text-3xl font-bold">Dar nepažymėjai nė vieno statymo</p>
-          <p className="mx-auto mt-3 max-w-[26rem] text-haze">
-            Kai pastatysi pagal signalą, paspausk „Pastačiau“, ir statymas atsiras čia su rezultatu, verte ir uždarymo kaina.
-          </p>
-          <Link href="/signalai" className="mt-6 inline-block rounded-xl bg-floodlight px-5 py-3 font-semibold text-night transition-transform hover:-translate-y-0.5">
-            Į signalus
-          </Link>
-        </div>
+        <EmptyState
+          icon={ReceiptText}
+          title="Dar nepažymėjai nė vieno statymo"
+          text="Kai pastatysi pagal signalą, paspausk „Pastačiau“, ir statymas atsiras čia su rezultatu, verte ir uždarymo kaina."
+          action={
+            <Link href="/signalai" className="kr-press inline-block rounded-xl bg-floodlight px-5 py-3 font-semibold text-night transition-transform hover:-translate-y-0.5">
+              Į signalus
+            </Link>
+          }
+          className="mt-10 rounded-2xl bg-stand p-8 hairline"
+        />
       ) : (
         <div className={loading ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
           <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -270,8 +311,11 @@ export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
             </div>
           )}
 
-          <AnimatePresence>{since && <SinceLastVisit summary={since} onClose={() => setSinceClosed(true)} />}</AnimatePresence>
-          <ThreeNumbers stats={stats} bets={scoped} />
+          <AnimatePresence>
+            {since && <SinceLastVisit summary={since} profitRef={sinceProfitRef} onClose={() => setSinceClosed(true)} />}
+          </AnimatePresence>
+          <ThreeNumbers stats={stats} bets={scoped} profit={shownProfit} resultRef={resultRef} landed={landed} />
+          <MoneyFlight path={flight} onLanded={land} />
           <Glossary />
           <StatGrid stats={stats} bets={scoped} closeTrust={closeTrust} />
           <ValueCard series={series} stats={stats} />
@@ -286,8 +330,23 @@ export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
   )
 }
 
-function SinceLastVisit({ summary, onClose }: { summary: SettledSummary; onClose: () => void }) {
+const CLV_EXPLAINED_KEY = 'clv-badge-explained'
+
+function SinceLastVisit({
+  summary,
+  profitRef,
+  onClose,
+}: {
+  summary: SettledSummary
+  profitRef: React.Ref<HTMLParagraphElement>
+  onClose: () => void
+}) {
   const reduced = useReducedMotion()
+  // The first time a member sees the badge, one line says why it matters.
+  const explained = useStoredOnce(CLV_EXPLAINED_KEY)
+  useEffect(() => {
+    if (summary.withClose > 0) writeStored(CLV_EXPLAINED_KEY, '1')
+  }, [summary.withClose])
   const parts = [
     summary.won > 0 ? `${summary.won} ${ltPlural(summary.won, 'laimėtas', 'laimėti', 'laimėtų')}` : null,
     summary.lost > 0 ? `${summary.lost} ${ltPlural(summary.lost, 'pralaimėtas', 'pralaimėti', 'pralaimėtų')}` : null,
@@ -301,7 +360,7 @@ function SinceLastVisit({ summary, onClose }: { summary: SettledSummary; onClose
       initial={reduced ? false : { opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={reduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.3, ease: EASE }}
       className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-stand p-4 hairline sm:px-6"
     >
       <div className="min-w-0">
@@ -309,9 +368,30 @@ function SinceLastVisit({ summary, onClose }: { summary: SettledSummary; onClose
           Nuo paskutinio apsilankymo užsibaigė {summary.count} {ltPlural(summary.count, 'statymas', 'statymai', 'statymų')}
         </p>
         <p className="mt-0.5 text-[0.9rem] text-haze">{parts}</p>
+        {summary.withClose > 0 && (
+          <>
+            {/* Quality, not luck: the one result worth celebrating. */}
+            <motion.p
+              initial={reduced ? false : { opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={reduced ? undefined : { ...SPRING.snappy, delay: 0.35 }}
+              className={`mt-2 inline-flex origin-left items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.85rem] font-semibold ${
+                summary.beatClose > 0 ? 'bg-pitch-soft text-pitch' : 'bg-night/60 text-haze'
+              }`}
+            >
+              {summary.beatClose > 0 && <Check className="size-3.5" strokeWidth={3} aria-hidden />}
+              {summary.beatClose} iš {summary.withClose} aplenkė uždarymą
+            </motion.p>
+            {explained === null && summary.beatClose > 0 && (
+              <p className="mt-1.5 text-[0.85rem] text-haze">Tai svarbiausias rodiklis: ilgainiui jis lemia rezultatą.</p>
+            )}
+          </>
+        )}
       </div>
       <div className="flex items-center gap-4">
-        <p className={`font-display text-[1.8rem] leading-none font-bold tnum ${tone(summary.profit)}`}>{signedEuro(summary.profit)}</p>
+        <p ref={profitRef} className={`font-display text-[1.8rem] leading-none font-bold tnum ${tone(summary.profit)}`}>
+          {signedEuro(summary.profit)}
+        </p>
         <button
           type="button"
           onClick={onClose}
@@ -324,7 +404,21 @@ function SinceLastVisit({ summary, onClose }: { summary: SettledSummary; onClose
   )
 }
 
-function ThreeNumbers({ stats, bets }: { stats: BetStats; bets: ActiveBet[] }) {
+function ThreeNumbers({
+  stats,
+  bets,
+  profit,
+  resultRef,
+  landed,
+}: {
+  stats: BetStats
+  bets: ActiveBet[]
+  /** The result to show: before a win lands, what it was; then the current value. */
+  profit: number
+  resultRef: React.Ref<HTMLParagraphElement>
+  /** Counts landings, so the number bumps once as each win arrives. */
+  landed: number
+}) {
   // Lines of the same match are one opinion; saying so keeps the sample honest.
   const fixtures = fixtureCount(bets)
   return (
@@ -332,8 +426,16 @@ function ThreeNumbers({ stats, bets }: { stats: BetStats; bets: ActiveBet[] }) {
       <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-[minmax(0,1.5fr)_auto_minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-end">
         <div className="col-span-2 sm:col-span-1">
           <p className="text-[0.9rem] text-haze">Rezultatas</p>
-          <p className={`mt-1 font-display text-[3.4rem] leading-none font-bold ${tone(stats.profit)}`}>
-            <NumberFlow value={stats.profit} locales="lt-LT" format={EURO_FLOW} suffix=" €" />
+          <p ref={resultRef} className={`mt-1 font-display text-[3.4rem] leading-none font-bold ${tone(profit)}`}>
+            <motion.span
+              key={landed}
+              className="inline-block origin-left"
+              initial={landed ? { scale: 1.08 } : false}
+              animate={{ scale: 1 }}
+              transition={SPRING.snappy}
+            >
+              <NumberFlow value={profit} locales="lt-LT" format={EURO_FLOW} suffix=" €" />
+            </motion.span>
           </p>
           <p className="mt-2 text-[0.85rem] text-haze">
             {stats.settled} {ltPlural(stats.settled, 'užbaigtas statymas', 'užbaigti statymai', 'užbaigtų statymų')}
@@ -837,7 +939,7 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
               type="button"
               disabled={busy}
               onClick={() => send('PATCH')}
-              className="h-10 rounded-lg bg-chalk px-3.5 font-semibold text-night disabled:opacity-60"
+              className="kr-press h-10 rounded-lg bg-chalk px-3.5 font-semibold text-night disabled:opacity-60"
             >
               Išsaugoti
             </button>

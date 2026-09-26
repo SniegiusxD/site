@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react'
 import { useId, useState } from 'react'
 
 const field =
-  'mt-2 w-full rounded-xl bg-stand px-4 text-chalk outline-none hairline transition-shadow placeholder:text-haze-dim focus:shadow-[inset_0_0_0_1.5px_var(--chalk)]'
+  'mt-2 w-full rounded-xl bg-night/60 px-4 text-chalk outline-none hairline transition-shadow placeholder:text-haze-dim focus:shadow-[inset_0_0_0_1.5px_var(--chalk)]'
 
 /** A message and an address to answer to. Nothing else is asked or kept. */
 export function ContactForm() {
@@ -47,14 +47,14 @@ export function ContactForm() {
 
   if (sent) {
     return (
-      <p role="status" className="mt-9 rounded-xl bg-stand p-5 text-haze hairline">
+      <p role="status" className="rounded-xl bg-night/60 p-5 text-haze hairline">
         Gavom. Atsakysim į <span className="text-chalk">{email.trim()}</span>, dažniausiai per parą.
       </p>
     )
   }
 
   return (
-    <form onSubmit={submit} noValidate className="mt-9 space-y-5" aria-describedby={error ? errorId : undefined}>
+    <form onSubmit={submit} noValidate className="space-y-5" aria-describedby={error ? errorId : undefined}>
       <div>
         <label htmlFor={emailId} className="text-[0.95rem] font-medium">
           Tavo el. paštas

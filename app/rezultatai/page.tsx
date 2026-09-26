@@ -86,8 +86,9 @@ function GroupTable({ caption, rows }: { caption: string; rows: Array<ResultSumm
         </tr>
       </thead>
       <tbody className="tabular-nums">
-        {rows.map((row) => (
-          <tr key={row.label} className="border-t border-rail">
+        {rows.map((row, index) => (
+          // The rows arrive one after another (stagger capped so the last is in by ~1 s).
+          <tr key={row.label} className="kr-row-in border-t border-rail" style={{ animationDelay: `${Math.min(index * 50, 450)}ms` }}>
             <th scope="row" className="py-2 text-left font-normal text-chalk">
               {row.label}
             </th>

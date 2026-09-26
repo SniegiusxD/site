@@ -1,15 +1,19 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
+import { motion } from 'framer-motion'
 import { Activity, Gauge, LifeBuoy, LogOut, ReceiptText, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { authClient } from '@/lib/auth-client'
 import { brand } from '@/lib/brand'
 import { formatEuro, ltPlural } from '@/lib/format-lt'
+import { SPRING } from '@/lib/motion'
 import { useAccount } from './account-provider'
 import { BankrollDialog } from './bankroll-dialog'
+import { ConnectionBanner } from './connection-banner'
+import { useNavTransition } from './use-nav-transition'
 
 const NAV = [
   { href: '/signalai', label: 'Signalai', icon: Activity },
@@ -28,11 +32,13 @@ const KELLY_NAME: Record<number, string> = { 0.125: '⅛ Kelly', 0.25: '¼ Kelly
 const OWNER_LINK = { href: '/savininkas', label: 'Savininkas', icon: Gauge }
 
 export function AppShell({ children, owner = false }: { children: React.ReactNode; owner?: boolean }) {
-  const nav = owner ? [...NAV, OWNER_LINK] : NAV
+  const nav = useMemo(() => (owner ? [...NAV, OWNER_LINK] : NAV), [owner])
   const pathname = usePathname()
   const router = useRouter()
   const { account, email } = useAccount()
   const [bankrollOpen, setBankrollOpen] = useState(false)
+  const order = useMemo(() => nav.map((item) => item.href), [nav])
+  const navigate = useNavTransition(order)
   const closeBankroll = useCallback(() => setBankrollOpen(false), [])
 
   const access = account.access
@@ -63,13 +69,16 @@ export function AppShell({ children, owner = false }: { children: React.ReactNod
               <Link
                 key={href}
                 href={hrefFrom(href, pathname)}
+                onClick={(event) => navigate(event, hrefFrom(href, pathname))}
                 aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 font-medium transition-colors ${
-                  active ? 'bg-stand text-chalk' : 'text-haze hover:bg-stand/60 hover:text-chalk'
+                className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 font-medium transition-colors ${
+                  active ? 'text-chalk' : 'text-haze hover:bg-stand/60 hover:text-chalk'
                 }`}
               >
-                <Icon className="size-5" aria-hidden />
-                {label}
+                {/* The highlight slides to the new page instead of blinking there. */}
+                {active && <motion.span layoutId="nav-desktop" aria-hidden className="absolute inset-0 rounded-xl bg-stand" transition={SPRING.snappy} />}
+                <Icon className="relative size-5" aria-hidden />
+                <span className="relative">{label}</span>
               </Link>
             )
           })}
@@ -147,7 +156,10 @@ export function AppShell({ children, owner = false }: { children: React.ReactNod
         </Link>
       )}
 
-      <div className="min-w-0 pb-24 lg:pb-0">{children}</div>
+      <ConnectionBanner />
+      <div data-app-main className="min-w-0 pb-24 lg:pb-0" style={{ viewTransitionName: 'app-main' }}>
+        {children}
+      </div>
 
       {/* Phone bottom navigation */}
       <nav
@@ -161,9 +173,18 @@ export function AppShell({ children, owner = false }: { children: React.ReactNod
             <Link
               key={href}
               href={hrefFrom(href, pathname)}
+              onClick={(event) => navigate(event, hrefFrom(href, pathname))}
               aria-current={active ? 'page' : undefined}
-              className={`flex flex-col items-center gap-1 py-2.5 text-[0.75rem] font-medium ${active ? 'text-chalk' : 'text-haze-dim'}`}
+              className={`relative flex flex-col items-center gap-1 py-2.5 text-[0.75rem] font-medium transition-colors ${active ? 'text-chalk' : 'text-haze-dim'}`}
             >
+              {active && (
+                <motion.span
+                  layoutId="app-nav-indicator"
+                  transition={SPRING.snappy}
+                  aria-hidden
+                  className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-pitch"
+                />
+              )}
               <Icon className="size-5" aria-hidden />
               {label}
             </Link>

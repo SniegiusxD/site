@@ -3,6 +3,7 @@
 import NumberFlow from '@number-flow/react'
 import { Check } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { brand } from '@/lib/brand'
 import { edgeOf, formatEdge, formatEuro, formatOdds } from '@/lib/format-lt'
 import { landingSignals } from '@/lib/landing-signals'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
@@ -75,8 +76,8 @@ export function Journey() {
         </Reveal>
         <Reveal delay={80}>
           <p className="mt-5 max-w-[62ch] text-[clamp(1.05rem,1.4vw,1.25rem)] text-haze">
-            Pinnacle yra tiksliausia kontora pasaulyje. Kai lietuviška kontora už tą patį statymą siūlo daugiau nei ji, tą kainą kontora
-            pastatė per aukštai — ir būtent tokias tau siunčiam.
+            Tarptautinės rinkos kaina be maržos yra geriausias turimas tikimybės įvertis. Kai lietuviškos kontoros kaina už tą pačią baigtį
+            aukštesnė, kontora ją įkainojo per aukštai — ir būtent tokias kainas tau parodom.
           </p>
         </Reveal>
 
@@ -84,7 +85,7 @@ export function Journey() {
           <Step
             index={0}
             title="Randam, kur kontora permoka"
-            blurb="Lyginam 7BET, TopSport ir Betsson koeficientus su Pinnacle. Kur lietuviška kontora moka daugiau, ten ir verta statyti."
+            blurb="Lyginam 7BET, TopSport ir Betsson koeficientus su tarptautinės rinkos kaina ir pažymim tas, kurios aukštesnės už rinkos įvertinimą."
             active={step === 0}
             beat={beat}
           >
@@ -175,7 +176,7 @@ export function Journey() {
                       <BookMark book={item.book} size="sm" />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[0.8125rem] text-haze">
-                          Statyk · naujas signalas <span className={newest ? 'text-floodlight' : ''}>dabar</span>
+                          {brand.name} · naujas signalas <span className={newest ? 'text-floodlight' : ''}>dabar</span>
                         </span>
                         <span className="block truncate text-[0.875rem]">
                           {item.event} · {item.book} {formatOdds(item.odds)}

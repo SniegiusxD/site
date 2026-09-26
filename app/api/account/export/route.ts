@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { rateLimitResponse } from '@/lib/rate-limit'
 import { exportAccount } from '@/lib/account-data'
 import { getSessionUser } from '@/lib/session'
+import { brand } from '@/lib/brand'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
     return new NextResponse(JSON.stringify(data, null, 2), {
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'Content-Disposition': `attachment; filename="statyk-duomenys-${day}.json"`,
+        'Content-Disposition': `attachment; filename="${brand.slug}-duomenys-${day}.json"`,
         'Cache-Control': 'no-store',
       },
     })

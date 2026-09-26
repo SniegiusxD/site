@@ -6,6 +6,7 @@ import { formatEdge, formatInteger, formatOdds } from '@/lib/format-lt'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { BookMark } from './book-mark'
 import { Reveal, useInViewOnce } from './motion-primitives'
+import { EASE } from '@/lib/motion'
 
 // Four real surfaced bets with a captured close, from the aggregator's CLV
 // database (data/clv.db, surfaced_bets), read 2026-09-19. `close` is the
@@ -53,7 +54,6 @@ const SAMPLE = { bets: 5887, beat: 0.595, mean: 0.0148, median: 0.011 }
 
 /** How far from the closing line a full half-bar reaches. */
 const SPAN = 0.35
-const EASE = [0.22, 1, 0.36, 1] as const
 
 /**
  * The closing price is the market's last and most accurate word on a fixture.

@@ -1,8 +1,9 @@
 import { ImageResponse } from 'next/og'
 import { GUIDES, guideBySlug } from '@/lib/guides'
 import { displayFont, OG, OG_SIZE, OgFrame, ogFonts } from '@/lib/og'
+import { brand } from '@/lib/brand'
 
-export const alt = 'Statyk gidas'
+export const alt = `${brand.name} gidas`
 export const size = OG_SIZE
 export const contentType = 'image/png'
 
@@ -16,7 +17,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const title = guide?.title ?? 'Gidai'
   const kicker = 'Gidas'
   const footer = guide ? `${guide.minutes} min. skaitymo · paprastai ir be pažadų` : 'Paprastai ir be pažadų'
-  const [bold, regular] = await Promise.all([displayFont(`Statyk${title}`, 800), displayFont(`${kicker}${footer}`, 400)])
+  const [bold, regular] = await Promise.all([displayFont(`${brand.name}${title}`, 800), displayFont(`${kicker}${footer}`, 400)])
 
   return new ImageResponse(
     (

@@ -13,8 +13,8 @@ import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { PACE_CHOICES, TRACK_RECORD, daysTo, recordPeriodLabel, simulationStake, timeLabel } from '@/lib/pace'
 import type { SignalCounts } from '@/lib/signal-counts'
 import { simulate } from '@/lib/simulate'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 const PRESETS = [250, 500, 1000, 2500]
 const QUESTIONS = 3
 const BETS = 1000
@@ -192,7 +192,7 @@ export function Calculator({ counts }: { counts: SignalCounts | null }) {
                 <label htmlFor={bankrollId} className="block font-display text-[2rem] leading-none font-bold">
                   Su kokiu bankrollu pradėtum?
                 </label>
-                <p className="mt-2 text-[0.95rem] text-haze">Tik tiek, kiek gali sau leisti prarasti. 18+.</p>
+                <p className="mt-2 text-[0.95rem] text-haze">Tik tiek, kiek gali sau leisti prarasti. 21+.</p>
                 <div className="mt-5 flex items-baseline gap-2 border-b-2 border-rail pb-2 focus-within:border-chalk">
                   <input
                     id={bankrollId}

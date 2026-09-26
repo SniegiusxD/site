@@ -2,10 +2,11 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import NumberFlow from '@number-flow/react'
 import { ArrowLeft, Check, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
 import { brand } from '@/lib/brand'
 import { edgeOf, formatEdge, formatEuro, formatInteger, formatOdds, ltPlural } from '@/lib/format-lt'
@@ -19,8 +20,9 @@ import { HardTimes } from './hard-times'
 import { Outlook } from './outlook'
 import { signedWhole } from './scenario-chart'
 import { SuggestBook } from './suggest-book'
+import { FINISHED_STEP, reportFunnelStep } from '@/lib/funnel-client'
+import { EASE, SPRING } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 const STEPS = ['Prieš pradedant', 'Bankrollas', 'Kontoros', 'Signalai', 'Rizika', 'Tempas', 'Pranešimai'] as const
 
 const BANKROLL_PRESETS = [250, 500, 1000, 2500]
@@ -59,6 +61,9 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
   const [error, setError] = useState<string | null>(null)
   // Asked last, once the member has seen what a signal contains.
   const [notify, setNotify] = useState<NotifyChoice>({ channel: 'site', minEdge: 0.03, quiet: true })
+
+  // Anonymous: which step this browser reached, for the owner's funnel.
+  useEffect(() => reportFunnelStep(step), [step])
 
   const update = (patch: Partial<Preferences>) => setPrefs((current) => ({ ...current, ...patch }))
   const last = step === STEPS.length - 1
@@ -103,6 +108,7 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
       // A short beat of "done" before leaving: the last click should feel like
       // finishing something, not like a page swap. Skipped in calm mode.
       setDone(true)
+      reportFunnelStep(FINISHED_STEP)
       if (!reduced) await new Promise((resolve) => window.setTimeout(resolve, 450))
       if (notify.channel === 'telegram') {
         // The rules are saved now and apply the moment a chat is connected. A
@@ -144,11 +150,12 @@ export function OnboardingFlow({ initial, counts }: { initial: Preferences; coun
       <div className="mx-auto mt-5 flex w-full max-w-[44rem] gap-1.5 px-5 sm:px-8" aria-hidden>
         {STEPS.map((name, index) => (
           <span key={name} className="h-1 flex-1 overflow-hidden rounded-full bg-rail">
+            {/* scaleX, not width: the GPU moves it, and the spring lands with a little give. */}
             <motion.span
-              className="block h-full bg-chalk"
+              className="block h-full origin-left bg-chalk"
               initial={false}
-              animate={{ width: index <= step ? '100%' : '0%' }}
-              transition={{ duration: reduced ? 0 : 0.5, ease: EASE }}
+              animate={{ scaleX: index <= step ? 1 : 0 }}
+              transition={reduced ? { duration: 0 } : SPRING.soft}
             />
           </span>
         ))}
@@ -450,17 +457,20 @@ function BankrollStep({ prefs, text, onText }: { prefs: Preferences; text: strin
       <div className="mt-8 rounded-xl bg-stand p-4 text-haze hairline">
         <p>
           Signalui su +3 % verte (koef. {formatOdds(EXAMPLE.odds)}) siūlytume{' '}
-          <span className="font-semibold text-chalk">{stake > 0 ? formatEuro(stake) : 'mažiau nei 1 €'}</span>.
+          <span className="font-semibold text-chalk">{stake > 0 ? <Euros value={stake} /> : 'mažiau nei 1 €'}</span>.
         </p>
         {/* The second half of the rule: one selection gets one position, so a
             bet already placed on it comes out of the same amount. */}
         <p className="mt-2">
           Jei tą pačią baigtį jau būsi pastatęs{' '}
-          <span className="font-semibold text-chalk">{formatEuro(Math.max(1, Math.floor(stake / 2)))}</span> kitoje kontoroje, tam
+          <span className="font-semibold text-chalk">
+            <Euros value={Math.max(1, Math.floor(stake / 2))} />
+          </span>{' '}
+          kitoje kontoroje, tam
           pačiam signalui liktų{' '}
           <span className="font-semibold text-chalk">
             {stake - Math.max(1, Math.floor(stake / 2)) > 0
-              ? formatEuro(stake - Math.max(1, Math.floor(stake / 2)))
+              ? <Euros value={stake - Math.max(1, Math.floor(stake / 2))} />
               : 'nieko — riba jau išnaudota'}
           </span>
           . Suma skaičiuojama vienai baigčiai, o ne vienam statymui.
@@ -795,8 +805,8 @@ function PaceStep({ prefs, update }: StepProps) {
   return (
     <div>
       <StepTitle
-        title="Kiek statymų per dieną?"
-        body="Tai bus tavo dienos tikslas. Raudonų dienų bus visada, bet kuo daugiau statymų, tuo mažiau lemia atsitiktinumas."
+        title="Kiek daugiausia statymų per dieną?"
+        body="Tai bus tavo dienos riba: ją pasiekęs, tą dieną sustok. Raudonų dienų bus visada; vertė atsiskleidžia per mėnesius, todėl skubėti nereikia."
       />
       <div role="radiogroup" aria-label="Statymų per dieną" className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {PACE_CHOICES.map(({ bets, minutes }) => {
@@ -862,4 +872,9 @@ function Squares({ label, values, note }: { label: string; values: number[]; not
       <p className="mt-2 text-[0.9rem] font-medium">{note}</p>
     </div>
   )
+}
+
+/** Whole euros that roll as the bankroll is typed, so the member sees what their number means. */
+function Euros({ value }: { value: number }) {
+  return <NumberFlow value={value} locales="lt-LT" format={{ maximumFractionDigits: 0 }} suffix={' €'} />
 }

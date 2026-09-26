@@ -18,7 +18,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
         {error.digest && <span className="mt-2 block text-[0.85rem] text-haze-dim">Klaidos kodas: {error.digest}</span>}
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
-        <button type="button" onClick={reset} className="rounded-xl bg-chalk px-5 py-3 font-semibold text-night hover:bg-white">
+        <button type="button" onClick={reset} className="kr-press rounded-xl bg-chalk px-5 py-3 font-semibold text-night hover:bg-white">
           Bandyti dar kartą
         </button>
         <Link href="/" className="rounded-xl bg-stand px-5 py-3 font-semibold hairline hover:bg-stand-hover">

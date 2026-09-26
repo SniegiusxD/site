@@ -6,6 +6,7 @@ import { searchOwnerMembers } from '@/lib/admin-actions'
 import { brand } from '@/lib/brand'
 import { recentErrors } from '@/lib/error-store'
 import { loadHealth } from '@/lib/health'
+import { loadFunnel } from '@/lib/onboarding-funnel'
 import { kickoffLabel } from '@/lib/live-view'
 import { formatEuro, formatInteger } from '@/lib/format-lt'
 import { isOwner, ownerMetrics } from '@/lib/owner'
@@ -30,7 +31,14 @@ const share = (part: number, whole: number) => (whole ? `${Math.round((part / wh
 export default async function OwnerPage() {
   const user = await getSessionUser()
   if (!user || !isOwner(user.email)) notFound()
-  const [m, members, errors, health] = await Promise.all([ownerMetrics(), searchOwnerMembers(''), recentErrors(20), loadHealth()])
+  const [m, members, errors, health, funnel7, funnel30] = await Promise.all([
+    ownerMetrics(),
+    searchOwnerMembers(''),
+    recentErrors(20),
+    loadHealth(),
+    loadFunnel(7).catch(() => null),
+    loadFunnel(30).catch(() => null),
+  ])
   const peak = Math.max(1, ...m.signupsByDay.map((d) => d.count))
   const paying = m.access.active + m.access.ending
 
@@ -125,6 +133,47 @@ export default async function OwnerPage() {
             note={`${m.execution.betAfterAction} pastatyta; koef. pokytis ${m.execution.medianOddsSlip === null ? '—' : m.execution.medianOddsSlip.toLocaleString('lt-LT')}`}
           />
         </dl>
+      </Section>
+
+      <Section title="CLV ataskaita">
+        <p className="text-haze">
+          Sportas × kontora × rinka per 30 dienų, iš to paties įrašo kaip /rezultatai. Langeliai, kuriuose mažiau nei 30
+          uždarymų, pažymėti kaip maži: tik užuomina, ne priežastis keisti.
+        </p>
+        <a
+          href="/api/owner/clv-report"
+          className="mt-4 inline-flex rounded-xl bg-rail px-4 py-2.5 font-medium transition-colors hover:bg-rail-strong"
+        >
+          Atsisiųsti ataskaitą (.md)
+        </a>
+      </Section>
+
+      <Section title="Kur nubyra pradžioje">
+        {funnel30 && funnel7 && funnel30[0].reached > 0 ? (
+          <table className="w-full text-left text-[0.95rem]">
+            <thead className="text-[0.85rem] text-haze">
+              <tr>
+                <th className="py-2 font-medium">Žingsnis</th>
+                <th className="py-2 text-right font-medium">7 d.</th>
+                <th className="py-2 text-right font-medium">30 d.</th>
+                <th className="py-2 text-right font-medium">Nuo pradžios</th>
+              </tr>
+            </thead>
+            <tbody>
+              {funnel30.map((row, index) => (
+                <tr key={row.step} className="border-t border-rail">
+                  <td className="py-2.5 font-medium">{row.name}</td>
+                  <td className="py-2.5 text-right tnum">{funnel7[index].reached}</td>
+                  <td className="py-2.5 text-right tnum">{row.reached}</td>
+                  <td className="py-2.5 text-right text-haze tnum">{share(row.reached, funnel30[0].reached)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="text-haze">Dar niekas nepradėjo pradžios žingsnių (skaičiuojama nuo 2026-09-26).</p>
+        )}
+        <p className="mt-3 text-[0.85rem] text-haze-dim">Naršyklės, pasiekusios žingsnį. Anonimiškai, be paskyros; saugoma 90 dienų.</p>
       </Section>
 
       <Section title="Prašomos kontoros">

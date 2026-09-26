@@ -21,8 +21,8 @@ export function HowItWorks() {
         </Reveal>
         <Reveal delay={80}>
           <p className="mt-5 max-w-[64ch] text-[clamp(1.05rem,1.4vw,1.25rem)] leading-normal text-moss">
-            Pinnacle yra tiksliausia kontora pasaulyje, todėl jos kaina rodo tikrą baigties tikimybę. Ieškom, kur Lietuvos kontora
-            siūlo daugiau nei ji, ir tikrinam, ką tai reiškia po tūkstančio statymų.
+            Tarptautinės rinkos kaina be maržos yra geriausias turimas baigties tikimybės įvertis. Ieškom, kur Lietuvos kontoros
+            kaina aukštesnė už jį, ir tikrinam, ką tai reiškia po tūkstančio statymų.
           </p>
         </Reveal>
         <GapChapter />

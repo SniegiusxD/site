@@ -45,9 +45,9 @@ export function SiteFooter() {
             </nav>
           </div>
           <div className="max-w-[26rem] sm:text-right">
-            <p className="font-medium text-chalk">Tik nuo 18 metų</p>
+            <p className="font-medium text-chalk">Tik nuo 21 metų</p>
             <p className="mt-2">
-              Lošimas gali sukelti priklausomybę. Apriboti sau galimybę lošti gali per{' '}
+              Dalyvavimas azartiniuose lošimuose gali sukelti priklausomybę. Apriboti sau galimybę lošti gali per{' '}
               <a href="https://lpt.lrv.lt" rel="noopener" className="text-chalk underline decoration-rail-strong underline-offset-4 hover:decoration-chalk">
                 Lošimų priežiūros tarnybą
               </a>

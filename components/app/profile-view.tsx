@@ -24,6 +24,7 @@ import { ChangePassword } from './change-password'
 import { ChipGroup } from './chip-group'
 import { LimitHistory } from './limit-history'
 import { LoadError } from './load-error'
+import { PauseCard } from './pause-card'
 import { TelegramCard } from './telegram-card'
 
 const KELLY_LABEL: Record<(typeof KELLY_CHOICES)[number], string> = { 0.125: 'Atsargiai (⅛)', 0.25: 'Subalansuotai (¼)', 0.5: 'Drąsiai (½)' }
@@ -31,7 +32,7 @@ const KELLY_LABEL: Record<(typeof KELLY_CHOICES)[number], string> = { 0.125: 'At
 const dateFormat = new Intl.DateTimeFormat('lt-LT', { timeZone: 'Europe/Vilnius', month: 'long', day: 'numeric' })
 const sinceFormat = new Intl.DateTimeFormat('lt-LT', { timeZone: 'Europe/Vilnius', year: 'numeric', month: 'long', day: 'numeric' })
 
-export function ProfileView() {
+export function ProfileView({ pausedUntil = null }: { pausedUntil?: string | null }) {
   const router = useRouter()
   const { account, email, memberSince, updateSettings, saveError } = useAccount()
   const prefs = account.preferences
@@ -158,7 +159,7 @@ export function ProfileView() {
       <Section title="Sumos ir limitai">
         <ChipGroup
           size="md"
-          label="Dienos tikslas: statymų per dieną"
+          label="Dienos riba: daugiausia statymų per dieną"
           options={DAILY_BET_CHOICES.map((value): { value: number; label: string } => ({ value, label: String(value) }))}
           value={prefs.dailyBets}
           onChange={(dailyBets) => updateSettings({ dailyBets })}
@@ -223,6 +224,10 @@ export function ProfileView() {
         <TelegramCard />
       </Section>
 
+      <Section title="Pertrauka" id="pertrauka">
+        <PauseCard pausedUntil={pausedUntil} />
+      </Section>
+
       <Section title="Paskyra">
         <p>{email}</p>
         <p className="mt-1 text-haze">{plan}</p>
@@ -262,7 +267,7 @@ function ProfileSummary({ email, plan, memberSince }: { email: string; plan: str
   const tone = (value: number) => (value > 0.004 ? 'text-pitch' : value < -0.004 ? 'text-brick' : '')
 
   return (
-    <section aria-label="Tavo suvestinė" className="mt-8 overflow-hidden rounded-2xl bg-stand hairline">
+    <section aria-label="Tavo suvestinė" className="mt-8 overflow-hidden rounded-[22px] bg-stand surface">
       <div className="flex items-center gap-4 p-5 sm:p-7">
         <span
           aria-hidden
@@ -298,7 +303,7 @@ function SummaryStat({ label, className = '', children }: { label: string; class
       <dd className={`mt-1.5 font-display text-[1.8rem] leading-none font-bold tnum ${className}`}>
         {children ?? (
           <>
-            <span aria-hidden className="inline-block h-7 w-16 animate-pulse rounded-md bg-rail align-middle" />
+            <span aria-hidden className="inline-block h-7 w-16 kr-skeleton rounded-md align-middle" />
             <span className="sr-only">Įkeliama</span>
           </>
         )}
@@ -395,7 +400,7 @@ function FixedStakeField({ prefs, onChange }: { prefs: Preferences; onChange: (v
 
 function Section({ title, id, children }: { title: string; id?: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="mt-6 scroll-mt-20 rounded-2xl bg-stand p-5 hairline sm:p-7">
+    <section id={id} className="mt-6 scroll-mt-20 rounded-[22px] bg-stand p-5 surface sm:p-7">
       <h2 className="mb-5 text-[1.6rem]">{title}</h2>
       {children}
     </section>

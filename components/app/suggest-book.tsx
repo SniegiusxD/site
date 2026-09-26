@@ -6,8 +6,8 @@ import { useId, useState } from 'react'
 import { toast } from 'sonner'
 import { SPORTS } from '@/lib/signal-taxonomy'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 
 const COUNTRIES = [
   { value: 'LT', label: 'Lietuva' },
@@ -168,7 +168,7 @@ export function SuggestBook() {
           type="button"
           onClick={send}
           disabled={busy}
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-chalk px-4 font-semibold text-night disabled:opacity-60"
+          className="kr-press inline-flex min-h-11 items-center gap-2 rounded-xl bg-chalk px-4 font-semibold text-night disabled:opacity-60"
         >
           {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
           Siųsti pasiūlymą

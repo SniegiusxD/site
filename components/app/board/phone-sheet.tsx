@@ -4,12 +4,12 @@ import { AnimatePresence, motion, useDragControls } from 'framer-motion'
 import { useRef } from 'react'
 import { useFocusTrap } from '@/lib/use-focus-trap'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
-
-const EASE = [0.22, 1, 0.36, 1] as const
+import { DURATION, EASE, SPRING } from '@/lib/motion'
 
 /**
  * The signal detail on phones: a full-screen sheet that rises from the bottom.
- * Pull the handle down to close; only the handle starts a drag, so the content
+ * Opens on a spring. Pull the handle down past the threshold to close, or it
+ * snaps back; only the handle starts a drag, so the content
  * still scrolls. Escape closes it too.
  */
 export function PhoneSheet({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
@@ -30,7 +30,7 @@ export function PhoneSheet({ open, onClose, children }: { open: boolean; onClose
           initial={reduced ? { opacity: 0 } : { y: '100%' }}
           animate={reduced ? { opacity: 1 } : { y: 0 }}
           exit={reduced ? { opacity: 0 } : { y: '100%' }}
-          transition={{ duration: 0.4, ease: EASE }}
+          transition={reduced ? { duration: DURATION.quick, ease: EASE } : SPRING.soft}
           drag={reduced ? false : 'y'}
           dragControls={drag}
           dragListener={false}

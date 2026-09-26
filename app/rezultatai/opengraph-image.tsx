@@ -3,8 +3,9 @@ import { formatEdge, formatInteger, formatPercent } from '@/lib/format-lt'
 import { displayFont, OG, OG_SIZE, OgFrame, ogFonts } from '@/lib/og'
 import { summarize } from '@/lib/public-results'
 import { loadPastSignals, RESULTS_WINDOW_DAYS } from '@/lib/public-results-store'
+import { brand } from '@/lib/brand'
 
-export const alt = 'Statyk rezultatai: kiekvienas signalas prieš uždarymo kainą'
+export const alt = `${brand.name} rezultatai: kiekvienas signalas prieš uždarymo kainą`
 export const size = OG_SIZE
 export const contentType = 'image/png'
 // Same cadence as the page: the numbers on the card match what the link opens.
@@ -27,7 +28,7 @@ export default async function Image() {
   const footer = `Paskutinės ${RESULTS_WINDOW_DAYS} dienų · nieko nerenkame ir netriname`
 
   const [bold, regular] = await Promise.all([
-    displayFont(`Statyk${title}${figures.map((figure) => figure.value).join('')}`, 800),
+    displayFont(`${brand.name}${title}${figures.map((figure) => figure.value).join('')}`, 800),
     displayFont(`${figures.map((figure) => figure.label).join('')}${footer}`, 400),
   ])
 

@@ -20,9 +20,9 @@ function ResponsibleUse() {
       <p className="font-medium text-chalk">Prieš mokant, verta žinoti</p>
       <ul className="mt-2.5 grid gap-1.5">
         <li>Prenumerata perka kainų informaciją, o ne pelną. Vertė atsiperka per šimtus statymų ir gali neatsipirkti.</li>
-        <li>Statyk tik tiek, kiek gali prarasti. Siūloma suma skaičiuojama nuo tavo banko ir niekada neviršija tavo kontoros limito.</li>
+        <li>Statymams skirk tik tiek, kiek gali prarasti. Siūloma suma skaičiuojama nuo tavo banko ir niekada neviršija tavo kontoros limito.</li>
         <li>Lietuvos kontoros karpo laiminčias paskyras: gali gauti mažesnį limitą arba prastesnį koeficientą.</li>
-        <li>Tik nuo 18 metų. Lošimas gali sukelti priklausomybę.</li>
+        <li>Tik nuo 21 metų. Dalyvavimas azartiniuose lošimuose gali sukelti priklausomybę.</li>
       </ul>
       <p className="mt-3">
         Apriboti sau galimybę lošti gali per{' '}
@@ -127,7 +127,7 @@ export function UnlockView({ access, billing }: { access: Access; billing: boole
                 type="button"
                 onClick={start}
                 disabled={starting}
-                className="mt-6 min-h-12 w-full rounded-xl px-4 py-2.5 bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
+                className="kr-press mt-6 min-h-12 w-full rounded-xl px-4 py-2.5 bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
               >
                 {starting ? 'Atrakinam…' : `Išbandyti ${TRIAL_DAYS} dienas nemokamai`}
               </button>
@@ -139,7 +139,7 @@ export function UnlockView({ access, billing }: { access: Access; billing: boole
                 type="button"
                 onClick={subscribe}
                 disabled={paying}
-                className="mt-6 min-h-12 w-full rounded-xl px-4 py-2.5 bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
+                className="kr-press mt-6 min-h-12 w-full rounded-xl px-4 py-2.5 bg-floodlight font-semibold text-night transition-colors hover:bg-pitch disabled:opacity-70"
               >
                 {paying ? 'Atidarom apmokėjimą…' : `Prenumeruoti už ${PRICE_EUR_PER_MONTH} € per mėnesį`}
               </button>

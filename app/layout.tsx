@@ -25,7 +25,7 @@ const text = Schibsted_Grotesk({
 })
 
 export const metadata: Metadata = {
-  title: `${brand.name}: kur Lietuvos kontoros moka daugiau, nei verta`,
+  title: `${brand.name}: koeficientai, aukštesni už rinkos kainą`,
   description: brand.description,
   icons: { icon: '/icon.svg', apple: '/apple-icon.png' },
   // Absolute URLs for the share image. Replace with the real domain once registered.
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'lt_LT',
     siteName: brand.name,
-    title: `${brand.name}: kur Lietuvos kontoros moka daugiau, nei verta`,
+    title: `${brand.name}: koeficientai, aukštesni už rinkos kainą`,
     description: brand.description,
     // Images come from app/opengraph-image.tsx (and per-page ones such as
     // app/rezultatai/opengraph-image.tsx). The old /og.png still said "Kraštas".

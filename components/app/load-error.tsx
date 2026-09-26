@@ -33,7 +33,7 @@ export function LoadError({
         <span>{advice.message}</span>
       </p>
       {advice.signIn ? (
-        <Link href="/prisijungti" className="inline-flex min-h-10 items-center rounded-lg bg-chalk px-3 font-semibold text-night">
+        <Link href="/prisijungti" className="kr-press inline-flex min-h-10 items-center rounded-lg bg-chalk px-3 font-semibold text-night">
           Prisijungti
         </Link>
       ) : (
@@ -43,7 +43,7 @@ export function LoadError({
             type="button"
             onClick={onRetry}
             disabled={retrying}
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-chalk px-3 font-semibold text-night disabled:opacity-60"
+            className="kr-press inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-chalk px-3 font-semibold text-night disabled:opacity-60"
           >
             <RotateCcw className={`size-4 ${retrying ? 'animate-spin' : ''}`} aria-hidden />
             {retrying ? 'Bandom…' : 'Bandyti dar kartą'}

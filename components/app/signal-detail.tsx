@@ -1,8 +1,10 @@
 'use client'
 
+import NumberFlow from '@number-flow/react'
+import { FlipFrom } from './board/flip-from'
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
-import { AlertTriangle, ArrowLeft, Clock, ExternalLink, Loader2, Minus, Plus } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Clock, Loader2, Minus, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -18,16 +20,16 @@ import { agoLabel, clockLabel, eventLabel, isInterpolatedLabel, kickoffLabel, lt
 import { sportName } from '@/lib/sports-lt'
 import { trackBet } from '@/lib/track-bet'
 import { useAccount } from './account-provider'
-import { safeBookEventUrl } from '@/lib/book-event-link'
 import type { ResultSummary } from '@/lib/public-results'
 import { marketLabel } from '@/lib/signal-taxonomy'
 import { useApi } from '@/lib/use-api'
 import { reportExecution } from '@/lib/report-execution'
-
-const EASE = [0.22, 1, 0.36, 1] as const
+import { EASE } from '@/lib/motion'
 
 /** "pagal ketvirtį Kelly": the member's own share, in words. */
 const KELLY_WORDS: Record<number, string> = { 0.125: 'aštuntadalį', 0.25: 'ketvirtį', 0.5: 'pusę' }
+
+const ODDS_FLOW = { minimumFractionDigits: 2, maximumFractionDigits: 2 } as const
 
 export function SignalDetail({
   signal,
@@ -38,6 +40,7 @@ export function SignalDetail({
   signalsById,
   onTracked,
   onClose,
+  flip = false,
 }: {
   signal: LiveSignal
   price: LivePrice
@@ -49,6 +52,8 @@ export function SignalDetail({
   /** `from` is where the bet was recorded on screen, for the board's "+1" flight. */
   onTracked?: (bet: BoardBet, from?: DOMRect) => void
   onClose?: () => void
+  /** Desktop: the odds and value grow out of the selected row (FlipFrom). */
+  flip?: boolean
 }) {
   const reduced = useReducedMotion()
   const { account } = useAccount()
@@ -69,8 +74,12 @@ export function SignalDetail({
   const [basis, setBasis] = useState(price.odds)
   const [ownStake, setOwnStake] = useState(false)
   const [moved, setMoved] = useState<number | null>(null)
+  // What the price was before it moved under the open panel, shown struck
+  // through, and a counter so the box flashes once per change.
+  const [change, setChange] = useState<{ from: number; count: number } | null>(null)
   if (basis !== price.odds) {
     setBasis(price.odds)
+    setChange((current) => ({ from: basis, count: (current?.count ?? 0) + 1 }))
     if (ownStake) setMoved(basis)
     else {
       setStake(sizing.suggested)
@@ -82,6 +91,7 @@ export function SignalDetail({
   const [error, setError] = useState<string | null>(null)
 
   const open = signal.status === 'open'
+  const valueGone = price.edge <= 0
   const setStakeValue = (value: number, own = true) => {
     if (own) setOwnStake(true)
     const clamped = Math.max(0, Math.min(max, Math.round(value)))
@@ -98,7 +108,6 @@ export function SignalDetail({
   const high = Math.max(signal.fairOdds, ...prices.map((p) => p.odds)) * 1.02
   const at = (odds: number) => ((odds - low) / (high - low)) * 100
   const fairAt = at(signal.fairOdds)
-  const bookEventUrl = safeBookEventUrl(price.book, price.eventUrl)
 
   async function track(actual?: { odds?: number; stake?: number; placement?: 'accepted' | 'limited' | 'rejected' }) {
     if (stake <= 0) {
@@ -192,10 +201,16 @@ export function SignalDetail({
             )}
           </div>
           <div className="sm:text-right">
-            <p className={`font-display text-5xl leading-none font-bold tnum ${open ? 'text-floodlight' : 'text-haze-dim line-through'}`}>
-              {formatEdge(price.edge)}
+            <p
+              className={`font-display text-5xl leading-none font-bold tnum transition-colors duration-500 ${
+                !open ? 'text-haze-dim line-through' : valueGone ? 'text-haze-dim' : 'text-floodlight'
+              }`}
+            >
+              <FlipFrom source={`edge-${signal.id}-${price.book}`} enabled={flip}>
+                {formatEdge(price.edge)}
+              </FlipFrom>
             </p>
-            <p className="mt-1 text-[0.85rem] text-haze">tavo vertė</p>
+            <p className="mt-1 text-[0.85rem] text-haze">{open && valueGone ? 'Vertės neliko' : 'tavo vertė'}</p>
           </div>
         </div>
         <div className="mt-5 grid grid-cols-2 gap-3">
@@ -203,23 +218,31 @@ export function SignalDetail({
             <p className="text-[0.85rem] text-haze">Tikroji kaina</p>
             <p className="mt-1 font-display text-3xl font-bold tnum">{formatOdds(signal.fairOdds)}</p>
           </div>
-          <div className="rounded-xl bg-floodlight-soft p-4">
-            <p className="text-[0.85rem] text-floodlight">{price.book} siūlo</p>
-            <p className="mt-1 font-display text-3xl font-bold text-floodlight tnum">{formatOdds(price.odds)}</p>
+          <div className="relative overflow-hidden rounded-xl bg-floodlight-soft p-4">
+            {/* One flash per move: green when the price got better, grey when worse. */}
+            {change && !reduced && (
+              <motion.span
+                key={change.count}
+                aria-hidden
+                className={`pointer-events-none absolute inset-0 rounded-xl ${price.odds > change.from ? 'bg-pitch/25' : 'bg-haze/20'}`}
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 0 }}
+                transition={{ duration: 1.2, ease: EASE }}
+              />
+            )}
+            <p className="relative text-[0.85rem] text-floodlight">{price.book} siūlo</p>
+            <p className="relative mt-1 font-display text-3xl font-bold text-floodlight tnum">
+              <FlipFrom source={`odds-${signal.id}-${price.book}`} enabled={flip}>
+                <NumberFlow value={price.odds} locales="lt-LT" format={ODDS_FLOW} animated={!reduced} />
+              </FlipFrom>
+            </p>
+            {change && (
+              <p className="relative mt-1 text-[0.85rem] text-haze" aria-live="polite">
+                buvo <span className="line-through tnum">{formatOdds(change.from)}</span>
+              </p>
+            )}
           </div>
         </div>
-        {open && bookEventUrl && (
-          <a
-            href={bookEventUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => reportExecution('open_book', signal, price)}
-            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-night/60 font-semibold text-chalk transition-colors hairline hover:bg-rail"
-          >
-            Atidaryti {price.book}
-            <ExternalLink className="size-4" aria-hidden />
-          </a>
-        )}
       </div>
 
       {movement && Math.abs(edgeOf(movement.first, signal.fairOdds) - price.edge) >= 0.005 && (
@@ -495,7 +518,7 @@ export function SignalDetail({
                       }
                       track({ odds, stake: amount, placement: amount < stake - 0.005 ? 'limited' : 'accepted' })
                     }}
-                    className="ml-auto h-11 rounded-xl bg-chalk px-4 font-semibold text-night disabled:opacity-70"
+                    className="kr-press ml-auto h-11 rounded-xl bg-chalk px-4 font-semibold text-night disabled:opacity-70"
                   >
                     Įrašyti
                   </button>

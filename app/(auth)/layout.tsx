@@ -17,9 +17,9 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
           </Link>
         </header>
         <main className="flex flex-1 items-center justify-center py-12">
-          <div className="w-full max-w-[25rem]">{children}</div>
+          <div className="w-full max-w-[27rem] rounded-[22px] bg-stand/50 p-5 surface sm:p-8">{children}</div>
         </main>
-        <footer className="text-[0.85rem] text-haze-dim">Tik nuo 18 metų. Lošimas gali sukelti priklausomybę.</footer>
+        <footer className="text-[0.85rem] text-haze-dim">Tik nuo 21 metų. Dalyvavimas azartiniuose lošimuose gali sukelti priklausomybę.</footer>
       </div>
       <aside className="relative hidden overflow-hidden border-l border-rail bg-night-deep lg:flex lg:items-center lg:justify-center lg:p-12">
         <div

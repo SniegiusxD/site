@@ -23,6 +23,8 @@ export type TelegramState = {
   /** When a timed pause ends, while one is running. */
   pausedUntil: string | null
   presets: TelegramPreset[]
+  /** A message when a tracked bet settles, and a Monday summary (user_settings). */
+  notifySettled: boolean
 }
 
 export type TelegramPreset = { id: string; name: string; settings: TelegramSettings }
@@ -126,7 +128,11 @@ export async function loadTelegramState(userId: string): Promise<TelegramState> 
     [userId],
   )
   const row = rows[0]
-  const [botUsername, presets] = await Promise.all([getBotUsername(), listTelegramPresets(userId)])
+  const [botUsername, presets, notifySettled] = await Promise.all([
+    getBotUsername(),
+    listTelegramPresets(userId),
+    loadNotifySettled(userId),
+  ])
   return {
     configured: Boolean(botToken()),
     connected: Boolean(row?.chatId),
@@ -150,7 +156,26 @@ export async function loadTelegramState(userId: string): Promise<TelegramState> 
       : DEFAULT_TELEGRAM_SETTINGS,
     pausedUntil: row?.pausedUntil ? row.pausedUntil.toISOString() : null,
     presets,
+    notifySettled,
   }
+}
+
+async function loadNotifySettled(userId: string): Promise<boolean> {
+  const { rows } = await pool.query<{ notifySettled: boolean | null }>(
+    `SELECT "notifySettled" FROM user_settings WHERE "userId" = $1`,
+    [userId],
+  )
+  return rows[0]?.notifySettled ?? true
+}
+
+/** Settlement messages on or off. Stored on user_settings, where the bot reads it. */
+export async function saveNotifySettled(userId: string, on: boolean): Promise<void> {
+  await ensureAppSchema()
+  await pool.query(
+    `INSERT INTO user_settings ("userId", "notifySettled", "updatedAt") VALUES ($1, $2, NOW())
+     ON CONFLICT ("userId") DO UPDATE SET "notifySettled" = EXCLUDED."notifySettled", "updatedAt" = NOW()`,
+    [userId, on],
+  )
 }
 
 /** The member's saved alert rules, oldest first so the list does not reshuffle. */

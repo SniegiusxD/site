@@ -20,7 +20,9 @@ export default function ContactPage() {
           Klausimas, problema ar negali prisijungti? Parašyk — atsakysim el. paštu. Jei turi paskyrą ir esi prisijungęs, tą patį
           gali padaryti pagalbos puslapyje.
         </p>
-        <ContactForm />
+        <div className="mt-9 rounded-[22px] bg-stand p-5 surface sm:p-7">
+          <ContactForm />
+        </div>
       </main>
       <SiteFooter />
     </>

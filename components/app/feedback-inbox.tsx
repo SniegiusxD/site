@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { FEEDBACK_KINDS } from '@/lib/feedback-kinds'
 import type { FeedbackRow } from '@/lib/owner'
+import { brand } from '@/lib/brand'
 
 const kindLabel = (kind: string) => FEEDBACK_KINDS.find((entry) => entry.key === kind)?.label ?? kind
 
@@ -51,7 +52,7 @@ export function FeedbackInbox({ initial }: { initial: FeedbackRow[] }) {
             <div className="mt-3 flex gap-2">
               {row.contactOk && (
                 <a
-                  href={`mailto:${row.email}?subject=${encodeURIComponent('Dėl tavo žinutės Statyk')}`}
+                  href={`mailto:${row.email}?subject=${encodeURIComponent(`Dėl tavo žinutės ${brand.name}`)}`}
                   className="inline-flex min-h-10 items-center rounded-lg bg-rail px-3 text-[0.9rem] font-medium hover:bg-rail-strong"
                 >
                   Atsakyti el. paštu

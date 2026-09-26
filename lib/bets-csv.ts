@@ -1,4 +1,5 @@
 import type { ActiveBet } from '@/lib/types'
+import { brand } from '@/lib/brand'
 
 /**
  * The bet history as a spreadsheet. Semicolons and a UTF-8 BOM, because Excel
@@ -50,5 +51,5 @@ export function betsToCsv(bets: ActiveBet[]): string {
 }
 
 export function csvFileName(now: Date = new Date()): string {
-  return `statyk-statymai-${now.toISOString().slice(0, 10)}.csv`
+  return `${brand.slug}-statymai-${now.toISOString().slice(0, 10)}.csv`
 }

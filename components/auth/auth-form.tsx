@@ -42,7 +42,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       return
     }
     if (signUp && !accepted) {
-      setError('Patvirtink, kad tau yra 18 metų ir sutinki su taisyklėmis.')
+      setError('Patvirtink, kad tau yra 21 metai ir sutinki su taisyklėmis.')
       return
     }
 
@@ -90,7 +90,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
             spellCheck={false}
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value)}
-            className="mt-2 h-12 w-full rounded-xl bg-stand px-4 text-chalk outline-none hairline transition-shadow placeholder:text-haze-dim focus:shadow-[inset_0_0_0_1.5px_var(--chalk)]"
+            className="mt-2 h-12 w-full rounded-xl bg-night/60 px-4 text-chalk outline-none hairline transition-shadow placeholder:text-haze-dim focus:shadow-[inset_0_0_0_1.5px_var(--chalk)]"
             placeholder={signUp ? 'vardas@gmail.com' : ''}
           />
         </div>
@@ -106,7 +106,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
               autoComplete={signUp ? 'new-password' : 'current-password'}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="h-12 w-full rounded-xl bg-stand pr-12 pl-4 text-chalk outline-none hairline transition-shadow focus:shadow-[inset_0_0_0_1.5px_var(--chalk)]"
+              className="h-12 w-full rounded-xl bg-night/60 pr-12 pl-4 text-chalk outline-none hairline transition-shadow focus:shadow-[inset_0_0_0_1.5px_var(--chalk)]"
             />
             <button
               type="button"
@@ -141,7 +141,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
               <Check className="pointer-events-none relative size-3.5 text-night opacity-0 peer-checked:opacity-100" aria-hidden />
             </span>
             <span>
-              Man yra 18 metų ir sutinku su{' '}
+              Man yra 21 metai ir sutinku su{' '}
               <Link href="/taisykles" className="text-chalk underline decoration-rail-strong underline-offset-4">
                 taisyklėmis
               </Link>{' '}

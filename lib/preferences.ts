@@ -104,7 +104,7 @@ export function parseSettings(input: unknown): SettingsResult {
   // Older clients and onboarding do not send a target yet: keep the default.
   const dailyBets = raw.dailyBets ?? DEFAULT_PREFERENCES.dailyBets
   if (!isNumber(dailyBets) || dailyBets < 1 || dailyBets > 200) {
-    return { ok: false, error: 'Dienos tikslas turi būti nuo 1 iki 200 statymų.' }
+    return { ok: false, error: 'Dienos riba turi būti nuo 1 iki 200 statymų.' }
   }
 
   // Not sent (older clients, onboarding) or null: size by value.

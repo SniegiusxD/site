@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { brand } from '@/lib/brand'
 import { displayFont, OG, OG_SIZE, OgFrame, ogFonts } from '@/lib/og'
 
-export const alt = `${brand.name}: kur Lietuvos kontoros moka daugiau, nei verta`
+export const alt = `${brand.name}: koeficientai, aukštesni už rinkos kainą`
 export const size = OG_SIZE
 export const contentType = 'image/png'
 
@@ -14,7 +14,7 @@ const FOOTER = 'Registracija nemokama'
 /** The default share card for every page that has no card of its own. */
 export default async function Image() {
   const [bold, regular] = await Promise.all([
-    displayFont(`Statyk${HEADLINE}${BOOKS.join('')}`, 800),
+    displayFont(`${brand.name}${HEADLINE}${BOOKS.join('')}`, 800),
     displayFont(`${LEAD}${FOOTER}`, 400),
   ])
   return new ImageResponse(

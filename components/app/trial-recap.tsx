@@ -9,8 +9,8 @@ import type { TrialRecap as Recap } from '@/lib/trial-recap'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
 import { useApi } from '@/lib/use-api'
 import { useStoredState } from '@/lib/use-stored-state'
+import { EASE } from '@/lib/motion'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 
 /** Older visits stored '1'; new ones store true. */
 const dismissedFlag = (value: unknown) => (value === 1 || value === true ? true : undefined)

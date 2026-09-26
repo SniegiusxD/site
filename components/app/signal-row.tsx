@@ -1,7 +1,8 @@
 'use client'
 
 import NumberFlow from '@number-flow/react'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
+import { useState } from 'react'
 import { AlertTriangle, ArrowDown, ArrowUp, Check, Eye, Star, X } from 'lucide-react'
 import { BookMark } from '@/components/landing/book-mark'
 import { CopyButton } from '@/components/landing/copy-button'
@@ -9,10 +10,25 @@ import { formatEdge, formatEuro, formatOdds } from '@/lib/format-lt'
 import { agoLabel, type BoardRow, compactUntilLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
 import { driftOf, DRIFT_FLOOR, type Movement, type Pulse } from '@/lib/price-movement'
 import { sportName } from '@/lib/sports-lt'
+import { DURATION, EASE, SPRING } from '@/lib/motion'
+import { soonMinutes, StartingSoon } from './board/starting-soon'
 
-const EASE = [0.22, 1, 0.36, 1] as const
 
 /** One signal on the board: the row a member scans, plus its pin and hide buttons. */
+
+/**
+ * How a row leaves the open list. The board passes the current time as
+ * AnimatePresence `custom`: a signal whose match has just started slides down,
+ * toward "Užsidarę" where it now lives; anything else (closed, filtered,
+ * hidden) fades out to the side. The rows below close the gap by transform.
+ */
+const leaveVariants = (startsAt: string): Variants => ({
+  leave: (nowMs?: number) =>
+    nowMs !== undefined && Date.parse(startsAt) <= nowMs
+      ? { opacity: 0, y: 18, transition: { duration: DURATION.settle, ease: EASE } }
+      : { opacity: 0, x: -16, transition: { duration: DURATION.settle, ease: EASE } },
+})
+
 export function SignalRow({
   row,
   now,
@@ -51,6 +67,7 @@ export function SignalRow({
   /** Seconds to wait before this row's entrance (the unlock moment). */
   enterDelay?: number
 }) {
+  const [pops, setPops] = useState(0)
   const { signal, price } = row
   const open = signal.status === 'open'
   // Movement is only shown once it is real: two cycles and at least half a point.
@@ -61,7 +78,8 @@ export function SignalRow({
       layout="position"
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0 }}
+      exit="leave"
+      variants={leaveVariants(signal.startsAt)}
       transition={{ duration: enterDelay ? 0.45 : 0.3, ease: EASE, delay: enterDelay }}
       className={`relative border-b border-rail last:border-b-0 ${pulse === 'new' ? 'animate-[row-new_2.6s_ease-out]' : ''}`}
     >
@@ -83,7 +101,7 @@ export function SignalRow({
         <span className="text-right">
           <span
             className={`flex items-center justify-end gap-0.5 font-display text-[1.55rem] leading-none font-bold tnum transition-colors duration-700 ${
-              pulse === 'up' ? 'text-pitch' : pulse === 'down' ? 'text-brick' : ''
+              pulse === 'up' ? 'text-pitch' : pulse === 'down' ? 'text-haze' : ''
             }`}
           >
             {pulse === 'up' && <ArrowUp className="size-4" aria-hidden />}
@@ -91,10 +109,12 @@ export function SignalRow({
             {pulse === 'up' || pulse === 'down' ? (
               <span className="sr-only">{pulse === 'up' ? 'Koeficientas pakilo iki' : 'Koeficientas nukrito iki'}</span>
             ) : null}
-            <NumberFlow value={price.odds} locales="lt-LT" format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
+            <span data-flip={`odds-${signal.id}-${price.book}`}>
+              <NumberFlow value={price.odds} locales="lt-LT" format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
+            </span>
           </span>
           <span className={`mt-1 block text-[0.9rem] font-semibold ${open ? 'text-floodlight' : 'text-haze-dim line-through'}`}>
-            {formatEdge(price.edge)}
+            <span data-flip={`edge-${signal.id}-${price.book}`}>{formatEdge(price.edge)}</span>
           </span>
           {moved && (
             <span
@@ -112,7 +132,17 @@ export function SignalRow({
         <span className="col-span-2 col-start-2 mt-2 flex min-w-0 items-center gap-2 pr-8 text-[0.85rem]">
           {pulse === 'new' && <span className="shrink-0 rounded-full bg-pitch-soft px-1.5 py-0.5 text-[0.75rem] font-semibold text-pitch">Naujas</span>}
           <span className="min-w-0 truncate text-haze">
-            {sportName(signal.sport)}, {open ? timeUntilLabel(signal.startsAt, now) : signal.status === 'started' ? 'prasidėjo' : 'užsidarė'}
+            {sportName(signal.sport)},{' '}
+            {open ? (
+              <span className={soonMinutes(signal.startsAt, now) !== null ? 'text-warning' : undefined}>
+                <StartingSoon startsAt={signal.startsAt} now={now} />
+                {timeUntilLabel(signal.startsAt, now)}
+              </span>
+            ) : signal.status === 'started' ? (
+              'prasidėjo'
+            ) : (
+              'užsidarė'
+            )}
             {/* How long the price has stood: an old signal is more likely gone at the book. */}
             {open && <> · rastas {agoLabel(signal.firstSeenAt, now)}</>}
           </span>
@@ -152,14 +182,17 @@ export function SignalRow({
       </button>
       <button
         type="button"
-        onClick={onTogglePinned}
+        onClick={() => {
+          if (!pinned) setPops((value) => value + 1)
+          onTogglePinned()
+        }}
         aria-pressed={pinned}
         aria-label={pinned ? `Nebesekti: ${price.eventName}` : `Sekti rungtynes: ${price.eventName}`}
         className={`absolute right-2 bottom-11 grid size-8 place-items-center rounded-lg transition-colors sm:right-4 ${
           pinned ? 'text-chalk' : 'text-haze-dim hover:bg-rail hover:text-chalk'
         }`}
       >
-        <Star className={`size-4 ${pinned ? 'fill-current' : ''}`} aria-hidden />
+        <PinStar pinned={pinned} pops={pops} />
       </button>
       {onToggleHidden && (
         <button
@@ -210,10 +243,11 @@ export function CompactSignalRow({
   /** The event name went to the clipboard. */
   onCopied?: () => void
 }) {
+  const [pops, setPops] = useState(0)
   const { signal, price } = row
   const open = signal.status === 'open'
   const when = open ? compactUntilLabel(signal.startsAt, now) : signal.status === 'started' ? 'prasidėjo' : 'užsidarė'
-  const oddsTone = pulse === 'up' ? 'text-pitch' : pulse === 'down' ? 'text-brick' : ''
+  const oddsTone = pulse === 'up' ? 'text-pitch' : pulse === 'down' ? 'text-haze' : ''
   const edgeTone = open ? 'text-floodlight' : 'text-haze-dim line-through'
   const amount =
     tracked > 0 ? (
@@ -236,7 +270,8 @@ export function CompactSignalRow({
       layout="position"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      exit="leave"
+      variants={leaveVariants(signal.startsAt)}
       transition={{ duration: 0.2, ease: EASE }}
       className={`relative flex items-stretch border-b border-rail last:border-b-0 ${pulse === 'new' ? 'animate-[row-new_2.6s_ease-out]' : ''} ${
         active ? 'bg-stand' : 'hover:bg-stand/60'
@@ -253,13 +288,15 @@ export function CompactSignalRow({
         <span className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 lg:hidden">
           <BookMark book={price.book} size="sm" />
           <span className="truncate font-medium">{price.eventName}</span>
-          <span className={`font-display text-[1.05rem] font-bold tnum ${oddsTone}`}>{formatOdds(price.odds)}</span>
+          <span data-flip={`odds-${signal.id}-${price.book}`} className={`font-display text-[1.05rem] font-bold tnum transition-colors duration-700 ${oddsTone}`}>
+            <NumberFlow value={price.odds} locales="lt-LT" format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
+          </span>
           <span className="col-span-2 col-start-1 truncate text-[0.85rem] text-haze">
             {pulse === 'new' && <span className="mr-1.5 font-semibold text-pitch">Naujas</span>}
             {ltSelection(price.selectionLabel)} · {when}
           </span>
           <span className="flex items-center justify-end gap-2 text-[0.85rem] tnum">
-            <span className={`font-semibold ${edgeTone}`}>{formatEdge(price.edge)}</span>
+            <span data-flip={`edge-${signal.id}-${price.book}`} className={`font-semibold ${edgeTone}`}>{formatEdge(price.edge)}</span>
             {amount}
           </span>
         </span>
@@ -285,7 +322,7 @@ export function CompactSignalRow({
           </span>
           <span className={`text-right font-display text-[1.05rem] font-bold tnum transition-colors duration-700 ${oddsTone}`}>
             <span className="sr-only">Koeficientas </span>
-            {formatOdds(price.odds)}
+            <NumberFlow value={price.odds} locales="lt-LT" format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
           </span>
           <span className="text-right text-haze tnum">
             <span className="sr-only">Tikroji kaina </span>
@@ -296,7 +333,10 @@ export function CompactSignalRow({
             {formatEdge(price.edge)}
           </span>
           <span className="text-right tnum">{amount}</span>
-          <span className="truncate text-right text-haze tnum">{when}</span>
+          <span className={`truncate text-right tnum ${open && soonMinutes(signal.startsAt, now) !== null ? 'text-warning' : 'text-haze'}`}>
+            {open && <StartingSoon startsAt={signal.startsAt} now={now} />}
+            {when}
+          </span>
         </span>
       </button>
       <span className="hidden shrink-0 items-center pr-3 lg:flex">
@@ -309,12 +349,15 @@ export function CompactSignalRow({
         />
         <button
           type="button"
-          onClick={onTogglePinned}
+          onClick={() => {
+          if (!pinned) setPops((value) => value + 1)
+          onTogglePinned()
+        }}
           aria-pressed={pinned}
           aria-label={pinned ? `Nebesekti: ${price.eventName}` : `Sekti rungtynes: ${price.eventName}`}
           className={`grid size-8 place-items-center rounded-lg transition-colors ${pinned ? 'text-chalk' : 'text-haze-dim hover:bg-rail hover:text-chalk'}`}
         >
-          <Star className={`size-4 ${pinned ? 'fill-current' : ''}`} aria-hidden />
+          <PinStar pinned={pinned} pops={pops} />
         </button>
         {onToggleHidden ? (
           <button
@@ -354,5 +397,20 @@ export function CompactHeader() {
       <span className="text-right">Suma</span>
       <span className="text-right">Pradžia</span>
     </div>
+  )
+}
+
+/** The star pops as it fills, only right after the member pins (never on load). */
+function PinStar({ pinned, pops }: { pinned: boolean; pops: number }) {
+  return (
+    <motion.span
+      key={pops}
+      className="inline-flex"
+      initial={pops ? { scale: 0.4, rotate: -40 } : false}
+      animate={{ scale: 1, rotate: 0 }}
+      transition={SPRING.snappy}
+    >
+      <Star className={`size-4 ${pinned ? 'fill-current' : ''}`} aria-hidden />
+    </motion.span>
   )
 }

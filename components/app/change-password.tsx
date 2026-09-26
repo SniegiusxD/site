@@ -81,7 +81,7 @@ export function ChangePassword() {
         </p>
       )}
       <div className="flex flex-wrap gap-2">
-        <button type="submit" disabled={pending} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-chalk px-4 font-semibold text-night disabled:opacity-70">
+        <button type="submit" disabled={pending} className="kr-press inline-flex min-h-11 items-center gap-2 rounded-xl bg-chalk px-4 font-semibold text-night disabled:opacity-70">
           {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
           Išsaugoti
         </button>

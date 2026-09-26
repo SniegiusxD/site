@@ -30,7 +30,7 @@ export function HardTimes({ returns, stake, dailyBets }: { returns: number[]; st
       answer: `Per mėnesį (${formatInteger(month)} statymų) tokia serija pasitaiko ${formatPercent(facts.streak.share, 0)} scenarijų.${
         facts.streak.medianWithStreak !== null ? ` Jų vidurys mėnesio gale: ${signedWhole(facts.streak.medianWithStreak)}.` : ''
       }`,
-      advice: 'Serija nekeičia kainų vertės. Statyk toliau tomis pačiomis sumomis.',
+      advice: 'Serija nekeičia kainų vertės. Sumų didinti, kad atsiimtum, nereikia; jei reikia pertraukos, pasidaryk ją.',
     },
     {
       title: 'Savaitė minuse',

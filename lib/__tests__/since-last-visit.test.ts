@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { latestSettlement, settledSince } from '@/lib/since-last-visit'
 
 const bets = [
-  { status: 'laimeta' as const, profit: 12.5, settledAtIso: '2026-09-14T20:00:00.000Z' },
-  { status: 'pralaimeta' as const, profit: -10, settledAtIso: '2026-09-15T08:00:00.000Z' },
+  { status: 'laimeta' as const, profit: 12.5, settledAtIso: '2026-09-14T20:00:00.000Z', odds: 2.1, closingFairProb: 0.5 },
+  { status: 'pralaimeta' as const, profit: -10, settledAtIso: '2026-09-15T08:00:00.000Z', odds: 1.9, closingFairProb: 0.55 },
   { status: 'grazinta' as const, profit: 0, settledAtIso: '2026-09-15T09:00:00.000Z' },
-  { status: 'laimeta' as const, profit: 7.25, settledAtIso: '2026-09-15T10:00:00.000Z' },
+  { status: 'laimeta' as const, profit: 7.25, settledAtIso: '2026-09-15T10:00:00.000Z', odds: 1.8, closingFairProb: 0.5 },
   { status: 'laukia' as const, profit: null, settledAtIso: null },
 ]
 
@@ -15,7 +15,7 @@ describe('settledSince', () => {
   })
 
   it('sums what settled after the marker', () => {
-    expect(settledSince(bets, '2026-09-15T00:00:00.000Z')).toEqual({ count: 3, won: 1, lost: 1, pushed: 1, profit: -2.75 })
+    expect(settledSince(bets, '2026-09-15T00:00:00.000Z')).toEqual({ count: 3, won: 1, lost: 1, pushed: 1, profit: -2.75, withClose: 2, beatClose: 1 })
   })
 
   it('counts every settled bet for a member who had none when they last looked', () => {

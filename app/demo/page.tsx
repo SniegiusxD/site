@@ -23,7 +23,7 @@ export default function DemoPage() {
           </p>
           <Link
             href="/registracija"
-            className="mt-6 inline-flex min-h-11 items-center rounded-[14px] bg-floodlight px-5 font-semibold text-night transition-transform duration-150 hover:-translate-y-0.5"
+            className="kr-press mt-6 inline-flex min-h-11 items-center rounded-[14px] bg-floodlight px-5 font-semibold text-night transition-transform duration-150 hover:-translate-y-0.5"
           >
             Sukurti nemokamą paskyrą
           </Link>

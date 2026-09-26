@@ -53,8 +53,8 @@ export const FAQ_QUESTIONS: Array<{ q: string; a: React.ReactNode }> = [
     a: 'Paprašyk kontoros raštu nurodyti taisyklių punktą, pagal kurį tave apribojo. Jei tokio punkto nėra, gali kreiptis į Lošimų priežiūros tarnybą: teismas 2025 ir 2026 m. patvirtino baudas kontoroms už savavališką ribojimą. Kol kas statyk kitose kontorose, o profilyje įrašyk tikrą limitą, kad siūloma suma jo neviršytų.',
   },
   {
-    q: 'Kodėl lyginat būtent su Pinnacle?',
-    a: 'Pinnacle priima didelius statymus ir neriboja laimėtojų, todėl jo kainas formuoja stipriausi rinkos dalyviai. Nuėmę maržą gaunam tikimybę, su kuria lyginam Lietuvos kontoras.',
+    q: 'Su kuo lyginat kainas?',
+    a: 'Su tarptautinės rinkos kaina (Pinnacle). Tokią kainą formuoja dideli rinkos dalyviai, o marža maža, todėl nuėmę maržą gaunam geriausią turimą tikimybės įvertį ir su juo lyginam Lietuvos kontoras. Ta rinka Lietuvoje neturi licencijos: ją naudojam tik kaip atskaitos tašką.',
   },
   {
     q: 'Kiek turėčiau statyti?',
