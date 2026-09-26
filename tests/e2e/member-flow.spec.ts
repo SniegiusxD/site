@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
-import { layoutShift, observeVitals, PERF_VIEWPORTS, scrollToBottom } from './perf'
+import { layoutShift, observeVitals, PERF_VIEWPORTS, runningAnimations, scrollToBottom } from './perf'
 
 test.beforeEach(async ({}, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'one isolated member journey')
@@ -98,6 +98,14 @@ test('member can onboard, inspect a signal, record it, and open tracker and help
         await axe(`${path} at ${size.width}px`)
       }
     }
+
+    // Calm mode: every member page comes to rest, apart from the live dot.
+    await page.evaluate(() => localStorage.setItem('kr-motion-v2', 'calm'))
+    for (const path of ['/signalai', '/signalai?signal=ci-signal-1&book=TopSport', '/statymai', '/profilis', '/pagalba']) {
+      await page.goto(path)
+      await expect.poll(() => runningAnimations(page), { message: `${path} in calm mode`, timeout: 3000 }).toEqual([])
+    }
+    await page.evaluate(() => localStorage.removeItem('kr-motion-v2'))
 
     // Dialogs: focus moves in, Escape closes, focus comes back to the opener.
     await page.goto('/signalai')

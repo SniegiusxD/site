@@ -221,9 +221,12 @@ function OpenBankrollDialog({ onClose }: { onClose: () => void }) {
                 // A failure is not an empty history: say so, and let the member ask again.
                 <LoadError error={history.error} what="bankrollo istorijos" onRetry={history.reload} className="mt-3" />
               ) : entries === null ? (
-                <p role="status" className="mt-3 text-[0.95rem] text-haze-dim">
-                  Įkeliama…
-                </p>
+                <div role="status" className="mt-3 space-y-2">
+                  <span className="sr-only">Įkeliama…</span>
+                  {[0, 1, 2].map((row) => (
+                    <div key={row} aria-hidden className="kr-skeleton h-9 rounded-lg" />
+                  ))}
+                </div>
               ) : entries.length === 0 ? (
                 <p className="mt-3 text-[0.95rem] text-haze-dim">Įrašų dar nėra.</p>
               ) : (

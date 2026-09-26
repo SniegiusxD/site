@@ -3,7 +3,7 @@
 import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
-import { Bell, RefreshCw, Search, Sparkles, Star } from 'lucide-react'
+import { Bell, Radar, RefreshCw, Search, SearchX, Sparkles, Star } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -45,6 +45,7 @@ import { FilterChips, SavedViewsChip, SortChip } from './board/filters'
 import { BetFlight, useBetFlight } from './board/bet-flight'
 import { LockedStrip } from './board/locked-strip'
 import { PhoneSheet } from './board/phone-sheet'
+import { EmptyState } from './empty-state'
 import { useLiveBoard } from './board/use-live-board'
 import { pinKeyOf, SEEN_KEY, type SortKey, useBoardView, useDensity, useHiddenSignals, usePinned } from './board/use-board-preferences'
 import { EASE, SPRING } from '@/lib/motion'
@@ -101,7 +102,7 @@ export function SignalBoard({
   const listTop = useRef<HTMLDivElement>(null)
 
   // The board a member left is the board they expect to come back to.
-  const { sort, drift, sports: sportsPicked, markets, periods } = useBoardView()
+  const { sort, drift, sports: sportsPicked, markets, periods, setDrift } = useBoardView()
   const [density, chooseDensity] = useDensity(initialDensity)
   const compact = density === 'compact'
   const [showClosed, setShowClosed] = useState(false)
@@ -348,7 +349,7 @@ export function SignalBoard({
                 <p className="flex items-center gap-1.5 text-[0.95rem] text-pitch">
                   <span className="relative flex size-2">
                     {status?.sharpAvailable && !stale && (
-                      <span className="absolute inline-flex size-full animate-ping rounded-full bg-pitch opacity-60 motion-reduce:hidden" />
+                      <span data-live-dot className="absolute inline-flex size-full animate-ping rounded-full bg-pitch opacity-60 motion-reduce:hidden" />
                     )}
                     <span className="relative inline-flex size-2 rounded-full bg-pitch" />
                   </span>
@@ -503,12 +504,26 @@ export function SignalBoard({
           </AnimatePresence>
 
           {visible.length === 0 ? (
-            <div className="px-6 py-14 text-center">
-              <p className="font-display text-3xl font-bold">
-                {status ? 'Šiuo metu signalų nėra' : 'Signalai dar neskelbiami'}
-              </p>
-              <p className="mx-auto mt-3 max-w-[22rem] text-haze">
-                {onlyNew
+            <EmptyState
+              icon={search.trim() ? SearchX : Radar}
+              title={status ? 'Šiuo metu signalų nėra' : 'Signalai dar neskelbiami'}
+              className="px-6 py-14"
+              action={(() => {
+                const fix = onlyNew
+                  ? { label: 'Rodyti visus', run: () => setOnlyNew(false) }
+                  : search.trim()
+                    ? { label: 'Išvalyti paiešką', run: () => setSearch('') }
+                    : activeDrift !== 'all'
+                      ? { label: 'Rodyti visas kainas', run: () => setDrift('all') }
+                      : null
+                return fix ? (
+                  <button type="button" onClick={fix.run} className="kr-press inline-flex min-h-11 items-center rounded-xl bg-chalk px-5 font-semibold text-night">
+                    {fix.label}
+                  </button>
+                ) : null
+              })()}
+              text={
+                onlyNew
                   ? 'Nuo paskutinio apsilankymo naujų signalų nėra. Išjunk „Nauji“, kad matytum visus.'
                   : search.trim()
                   ? `Pagal „${search.trim()}“ nieko neradom. Pabandyk kitą komandos pavadinimą.`
@@ -520,9 +535,9 @@ export function SignalBoard({
                     ? 'Visus atvirus signalus paslėpei. Juos grąžinsi apačioje.'
                     : looseCount > 0
                       ? `Pagal tavo filtrus nieko nėra, bet iš viso atviri ${looseCount} ${ltPlural(looseCount, 'signalas', 'signalai', 'signalų')}. Pakeisk filtrus arba kontoras.`
-                      : 'Naujas skenavimas vyksta maždaug kas 40 minučių. Puslapis atsinaujins pats.'}
-              </p>
-            </div>
+                      : 'Naujas skenavimas vyksta maždaug kas 40 minučių. Puslapis atsinaujins pats.'
+              }
+            />
           ) : (
             <>
               <div ref={listTop} className="scroll-mt-24" />
@@ -530,7 +545,7 @@ export function SignalBoard({
               <PullToRefresh onRefresh={refresh} />
               {compact && <CompactHeader />}
               <ul>
-                <AnimatePresence key={unlockedAt ?? 'board'} initial={unlockedAt !== null && !reduced}>
+                <AnimatePresence key={unlockedAt ?? 'board'} initial={unlockedAt !== null && !reduced} custom={now.getTime()}>
                   {visible.map((row, index) => renderRow(row, { enterIndex: index }))}
                 </AnimatePresence>
               </ul>
@@ -551,10 +566,12 @@ export function SignalBoard({
         </div>
       </section>
 
-      {/* Desktop detail */}
-      <section aria-label="Signalo informacija" className="hidden min-h-0 overflow-y-auto lg:block">
+      {/* Desktop detail. popLayout: the new detail mounts at once while the old
+          one fades, so the odds and value fly from the row without waiting
+          (FlipFrom); the leaving one is positioned against this section. */}
+      <section aria-label="Signalo informacija" className="relative hidden min-h-0 overflow-y-auto lg:block">
         {selectedRow ? (
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={`${selectedRow.signal.id}-${selectedRow.price.book}`}
               initial={{ opacity: 0, y: 8 }}
@@ -570,6 +587,7 @@ export function SignalBoard({
                 signalsById={signalsById}
                 movement={movementFor(selectedRow)}
                 onTracked={onTracked}
+                flip
               />
             </motion.div>
           </AnimatePresence>

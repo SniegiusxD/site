@@ -15,7 +15,7 @@ export default function NotFound() {
         <h1 className="mt-4 text-[2.6rem] sm:text-[3.2rem]">Tokio puslapio nėra</h1>
         <p className="mt-3 text-haze">Nuoroda gali būti pasenusi arba su klaida adrese.</p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/" className="rounded-xl bg-chalk px-5 py-3 font-semibold text-night hover:bg-white">
+          <Link href="/" className="kr-press rounded-xl bg-chalk px-5 py-3 font-semibold text-night hover:bg-white">
             Į pradžią
           </Link>
           <Link href="/signalai" className="rounded-xl bg-stand px-5 py-3 font-semibold hairline hover:bg-stand-hover">

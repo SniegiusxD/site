@@ -4,9 +4,11 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import type { PublicStats } from '@/lib/public-stats'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
+import type { HeroRecordSignal } from '@/lib/hero-record'
 import { HeroBoard } from './hero-board'
+import { HeroRecord } from './hero-record'
 
-export function Hero({ stats }: { stats: PublicStats | null }) {
+export function Hero({ stats, record = [] }: { stats: PublicStats | null; record?: HeroRecordSignal[] }) {
   const light = useRef<HTMLDivElement>(null)
   const reduced = useReducedMotion()
 
@@ -82,7 +84,8 @@ export function Hero({ stats }: { stats: PublicStats | null }) {
         </div>
 
         <div className="kr-rise min-w-0" style={{ animationDelay: '520ms' }}>
-          <HeroBoard stats={stats} />
+          {/* Real, already started signals when the record has any; the captured demo otherwise. */}
+          {record.length > 0 ? <HeroRecord signals={record} /> : <HeroBoard stats={stats} />}
         </div>
       </div>
     </section>

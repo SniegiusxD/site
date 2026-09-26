@@ -267,7 +267,7 @@ function ProfileSummary({ email, plan, memberSince }: { email: string; plan: str
   const tone = (value: number) => (value > 0.004 ? 'text-pitch' : value < -0.004 ? 'text-brick' : '')
 
   return (
-    <section aria-label="Tavo suvestinė" className="mt-8 overflow-hidden rounded-2xl bg-stand hairline">
+    <section aria-label="Tavo suvestinė" className="mt-8 overflow-hidden rounded-[22px] bg-stand surface">
       <div className="flex items-center gap-4 p-5 sm:p-7">
         <span
           aria-hidden
@@ -303,7 +303,7 @@ function SummaryStat({ label, className = '', children }: { label: string; class
       <dd className={`mt-1.5 font-display text-[1.8rem] leading-none font-bold tnum ${className}`}>
         {children ?? (
           <>
-            <span aria-hidden className="inline-block h-7 w-16 animate-pulse rounded-md bg-rail align-middle" />
+            <span aria-hidden className="inline-block h-7 w-16 kr-skeleton rounded-md align-middle" />
             <span className="sr-only">Įkeliama</span>
           </>
         )}
@@ -400,7 +400,7 @@ function FixedStakeField({ prefs, onChange }: { prefs: Preferences; onChange: (v
 
 function Section({ title, id, children }: { title: string; id?: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="mt-6 scroll-mt-20 rounded-2xl bg-stand p-5 hairline sm:p-7">
+    <section id={id} className="mt-6 scroll-mt-20 rounded-[22px] bg-stand p-5 surface sm:p-7">
       <h2 className="mb-5 text-[1.6rem]">{title}</h2>
       {children}
     </section>

@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 /** A single-choice row of chips (radio semantics). */
 export function ChipGroup<T extends string | number>({
   label,
@@ -14,6 +16,8 @@ export function ChipGroup<T extends string | number>({
   onChange: (value: T) => void
   size?: 'sm' | 'md'
 }) {
+  // Only the chip the member just picked pops, not the one chosen on load.
+  const [picked, setPicked] = useState<T | null>(null)
   const chip = size === 'md' ? 'px-4 py-2 text-[0.95rem]' : 'px-3 py-1.5 text-[0.9rem]'
   return (
     <fieldset>
@@ -25,9 +29,13 @@ export function ChipGroup<T extends string | number>({
             type="button"
             role="radio"
             aria-checked={option.value === value}
-            onClick={() => onChange(option.value)}
+            onClick={() => {
+              setPicked(option.value)
+              onChange(option.value)
+            }}
             className={`rounded-full font-medium transition-colors ${chip} ${
-              option.value === value ? 'bg-chalk text-night' : 'bg-rail text-haze hover:text-chalk'
+              option.value === value
+                ? `${option.value === picked ? 'animate-[kr-chip-pop_260ms_cubic-bezier(0.22,1,0.36,1)] ' : ''}bg-chalk text-night` : 'bg-rail text-haze hover:text-chalk'
             }`}
           >
             {option.label}

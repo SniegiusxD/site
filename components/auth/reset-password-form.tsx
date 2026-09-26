@@ -7,7 +7,7 @@ import { authClient } from '@/lib/auth-client'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const field =
-  'mt-2 h-12 w-full rounded-xl bg-stand px-4 text-chalk outline-none hairline transition-shadow placeholder:text-haze-dim focus:shadow-[inset_0_0_0_1.5px_var(--chalk)]'
+  'mt-2 h-12 w-full rounded-xl bg-night/60 px-4 text-chalk outline-none hairline transition-shadow placeholder:text-haze-dim focus:shadow-[inset_0_0_0_1.5px_var(--chalk)]'
 const submitClass =
   'flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-floodlight font-semibold text-night transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70'
 const linkClass = 'font-medium text-chalk underline decoration-rail-strong underline-offset-4 hover:decoration-chalk'
@@ -62,7 +62,7 @@ export function RequestResetForm() {
 
   if (sent) {
     return (
-      <p role="status" className="mt-9 rounded-xl bg-stand p-5 text-haze hairline">
+      <p role="status" className="mt-9 rounded-xl bg-night/60 p-5 text-haze hairline">
         Jei paskyra su adresu <span className="text-chalk">{email.trim()}</span> yra, išsiuntėm nuorodą slaptažodžiui pakeisti.
         Ji galioja 1 valandą. Laiško nematai? Patikrink „Šlamšto“ aplanką.
       </p>
@@ -109,7 +109,7 @@ export function NewPasswordForm({ token, linkError }: { token: string | null; li
 
   if (linkError || !token) {
     return (
-      <p className="mt-9 rounded-xl bg-stand p-5 text-haze hairline">
+      <p className="mt-9 rounded-xl bg-night/60 p-5 text-haze hairline">
         Ši nuoroda nebegalioja: ji veikia 1 valandą ir tik vieną kartą.{' '}
         <Link href="/slaptazodis" className={linkClass}>
           Gauti naują nuorodą
@@ -120,7 +120,7 @@ export function NewPasswordForm({ token, linkError }: { token: string | null; li
 
   if (done) {
     return (
-      <p role="status" className="mt-9 rounded-xl bg-stand p-5 text-haze hairline">
+      <p role="status" className="mt-9 rounded-xl bg-night/60 p-5 text-haze hairline">
         Slaptažodis pakeistas. Kitose naršyklėse tave atjungėm.{' '}
         <Link href="/prisijungti" className={linkClass}>
           Prisijungti
@@ -168,7 +168,7 @@ export function NewPasswordForm({ token, linkError }: { token: string | null; li
             autoComplete="new-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="h-12 w-full rounded-xl bg-stand pr-12 pl-4 text-chalk outline-none hairline transition-shadow focus:shadow-[inset_0_0_0_1.5px_var(--chalk)]"
+            className="h-12 w-full rounded-xl bg-night/60 pr-12 pl-4 text-chalk outline-none hairline transition-shadow focus:shadow-[inset_0_0_0_1.5px_var(--chalk)]"
           />
           <button
             type="button"

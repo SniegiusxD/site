@@ -2,7 +2,8 @@
 
 import NumberFlow from '@number-flow/react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, Check, ChevronDown, Download, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
+import { AlertTriangle, Check, ChevronDown, Download, ReceiptText, RefreshCw, SlidersHorizontal, TrendingDown, TrendingUp } from 'lucide-react'
+import { EmptyState } from './empty-state'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookMark } from '@/components/landing/book-mark'
@@ -47,7 +48,6 @@ import { ValueChart, signedEuro } from './value-chart'
 import { EASE, SPRING } from '@/lib/motion'
 import { centerOf, MoneyFlight, type MoneyFlightPath, onScreen } from './money-flight'
 import { PullToRefresh } from './pull-to-refresh'
-import { Skeleton } from './skeleton'
 
 const STATUS: Record<BetStatus, { label: string; tone: string }> = {
   laukia: { label: 'Laukia', tone: 'bg-rail text-haze' },
@@ -228,25 +228,26 @@ export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
       {bets === null ? (
         // Until the first list arrives; after a failure the message above replaces it.
         !loadError || loading ? (
-          // The page's own shape while the list loads, so nothing jumps when it arrives.
-          <div role="status" className="mt-6 space-y-4">
+          <div role="status" className="mt-6 space-y-3">
             <span className="sr-only">Įkeliam statymus…</span>
-            <Skeleton className="h-11 w-64" />
-            <Skeleton className="h-40" />
-            <Skeleton className="h-24" />
-            <Skeleton className="h-64" />
+            <div aria-hidden className="kr-skeleton h-11 w-72 max-w-full rounded-xl" />
+            {[0, 1, 2, 3].map((row) => (
+              <div key={row} aria-hidden className="kr-skeleton h-20 rounded-2xl" />
+            ))}
           </div>
         ) : null
       ) : bets.length === 0 ? (
-        <div className="mt-10 rounded-2xl bg-stand p-8 text-center hairline">
-          <p className="font-display text-3xl font-bold">Dar nepažymėjai nė vieno statymo</p>
-          <p className="mx-auto mt-3 max-w-[26rem] text-haze">
-            Kai pastatysi pagal signalą, paspausk „Pastačiau“, ir statymas atsiras čia su rezultatu, verte ir uždarymo kaina.
-          </p>
-          <Link href="/signalai" className="mt-6 inline-block rounded-xl bg-floodlight px-5 py-3 font-semibold text-night transition-transform hover:-translate-y-0.5">
-            Į signalus
-          </Link>
-        </div>
+        <EmptyState
+          icon={ReceiptText}
+          title="Dar nepažymėjai nė vieno statymo"
+          text="Kai pastatysi pagal signalą, paspausk „Pastačiau“, ir statymas atsiras čia su rezultatu, verte ir uždarymo kaina."
+          action={
+            <Link href="/signalai" className="kr-press inline-block rounded-xl bg-floodlight px-5 py-3 font-semibold text-night transition-transform hover:-translate-y-0.5">
+              Į signalus
+            </Link>
+          }
+          className="mt-10 rounded-2xl bg-stand p-8 hairline"
+        />
       ) : (
         <div className={loading ? 'opacity-60 transition-opacity' : 'transition-opacity'}>
           <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -938,7 +939,7 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
               type="button"
               disabled={busy}
               onClick={() => send('PATCH')}
-              className="h-10 rounded-lg bg-chalk px-3.5 font-semibold text-night disabled:opacity-60"
+              className="kr-press h-10 rounded-lg bg-chalk px-3.5 font-semibold text-night disabled:opacity-60"
             >
               Išsaugoti
             </button>

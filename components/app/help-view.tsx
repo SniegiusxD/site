@@ -134,7 +134,7 @@ function FeedbackForm({ from }: { from: string | null }) {
   }
 
   return (
-    <section id="rasyti" className="mt-10 scroll-mt-20 rounded-2xl bg-stand p-5 hairline sm:p-7">
+    <section id="rasyti" className="mt-10 scroll-mt-20 rounded-[22px] bg-stand p-5 surface sm:p-7">
       <h2 className="text-[1.6rem]">Parašyk mums</h2>
       {sent ? (
         <motion.div

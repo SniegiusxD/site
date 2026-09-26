@@ -18,7 +18,7 @@ export function MotionToggle() {
         className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${calm ? 'bg-rail' : 'bg-floodlight'}`}
       >
         <span
-          className={`absolute top-0.5 size-4 rounded-full bg-night transition-[left] duration-200 ${calm ? 'left-0.5' : 'left-[1.125rem]'}`}
+          className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-night transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${calm ? 'translate-x-0' : 'translate-x-4'}`}
         />
       </span>
       Animacijos
