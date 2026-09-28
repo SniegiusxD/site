@@ -61,6 +61,32 @@ export default async function OwnerPage() {
         {health.problem === 'results-stale' && ' Rezultatai neatnaujinti daugiau nei parą, nors rungtynės baigėsi.'}
       </p>
 
+      {health.host && (
+        <Section title="Serveris">
+          <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Stat
+              label="Paskutinis ciklas"
+              value={health.host.cycleSeconds === null ? '—' : minutes(health.host.cycleSeconds / 60)}
+              note="skenavimas ir atsiskaitymas"
+            />
+            <Stat
+              label="Diskas"
+              value={health.host.diskPercent === null ? '—' : `${Math.round(health.host.diskPercent)} %`}
+              note="įspėjimas virš 85 %"
+            />
+            <Stat
+              label="Laisva atmintis"
+              value={health.host.memoryMb === null ? '—' : `${(health.host.memoryMb / 1024).toLocaleString('lt-LT', { maximumFractionDigits: 1 })} GB`}
+            />
+            <Stat
+              label="Įspėjimai"
+              value={formatInteger(health.host.warnings.length)}
+              note={health.host.warnings.length ? health.host.warnings.join(', ') : 'nėra'}
+            />
+          </dl>
+        </Section>
+      )}
+
       <Section title="Atsiskaitymas">
         {backlog && backlogVerdict ? (
           <>

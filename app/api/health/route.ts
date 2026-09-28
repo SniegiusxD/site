@@ -12,6 +12,8 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: Request) {
   const limited = await rateLimitResponse(request, 'expensive-read')
   if (limited) return limited
+  // The VM's host facts (disk, memory, cycle time) are for the owner page only.
   const health = await loadHealth()
+  delete health.host
   return NextResponse.json(health, { status: health.ok ? 200 : 503, headers: { 'Cache-Control': 'no-store' } })
 }

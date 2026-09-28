@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { judgeHealth, resultsStale } from '@/lib/health'
+import { hostFrom, judgeHealth, resultsStale } from '@/lib/health'
 
 describe('judgeHealth', () => {
   const now = new Date('2026-09-24T16:00:00Z')
@@ -40,6 +40,33 @@ describe('results freshness', () => {
     expect(judgeHealth('2026-09-25T09:30:00Z', now, true, { lastResultAt: fresh, finishedRecently: 12 })).toMatchObject({
       ok: true,
       lastResultAt: fresh,
+    })
+  })
+})
+
+describe('hostFrom', () => {
+  it('is null before the VM writes host columns', () => {
+    expect(hostFrom({ updated_at: new Date() })).toBeNull()
+    expect(hostFrom(undefined)).toBeNull()
+  })
+
+  it('reads the Round 27 runner_status columns', () => {
+    expect(
+      hostFrom({
+        cycle_duration_seconds: 677.2,
+        disk_used_percent: '57.0',
+        memory_available_mb: 3100,
+        infrastructure_warnings: ['disk_above_85_percent'],
+      }),
+    ).toEqual({ cycleSeconds: 677.2, diskPercent: 57, memoryMb: 3100, warnings: ['disk_above_85_percent'] })
+  })
+
+  it('treats missing values as unknown, not zero', () => {
+    expect(hostFrom({ cycle_duration_seconds: null, infrastructure_warnings: null })).toEqual({
+      cycleSeconds: null,
+      diskPercent: null,
+      memoryMb: null,
+      warnings: [],
     })
   })
 })

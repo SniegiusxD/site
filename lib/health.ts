@@ -29,6 +29,33 @@ export type Health = {
   minutesSincePublish: number | null
   lastResultAt: string | null
   problem: 'database' | 'no-status' | 'stale' | 'results-stale' | null
+  /**
+   * The VM's own report after each cycle (runner_status, coder Round 27). Shown,
+   * never judged here: its warnings (disk > 85 %, cycle > 1 h) are early signs,
+   * and the monitor already fails on the outcomes they lead to.
+   */
+  host?: HostHealth | null
+}
+
+export type HostHealth = {
+  cycleSeconds: number | null
+  diskPercent: number | null
+  memoryMb: number | null
+  warnings: string[]
+}
+
+const numberOrNull = (value: unknown) => (value === null || value === undefined || Number.isNaN(Number(value)) ? null : Number(value))
+
+/** runner_status row → host facts; null when the VM has not written them yet. */
+export function hostFrom(row: Record<string, unknown> | undefined): HostHealth | null {
+  if (!row || !('cycle_duration_seconds' in row)) return null
+  const warnings = Array.isArray(row.infrastructure_warnings) ? row.infrastructure_warnings.map(String) : []
+  return {
+    cycleSeconds: numberOrNull(row.cycle_duration_seconds),
+    diskPercent: numberOrNull(row.disk_used_percent),
+    memoryMb: numberOrNull(row.memory_available_mb),
+    warnings,
+  }
 }
 
 /** Stuck only when there was something to grade: a quiet day is not a failure. */
@@ -55,9 +82,10 @@ export function judgeHealth(
 
 export async function loadHealth(now: Date = new Date()): Promise<Health> {
   try {
-    const { rows } = await pool.query(`SELECT COALESCE(updated_at, cycle_at) AS at FROM runner_status WHERE id = 1`)
+    // Whole row: the host columns arrive with a VM release, not a site one.
+    const { rows } = await pool.query(`SELECT *, COALESCE(updated_at, cycle_at) AS at FROM runner_status WHERE id = 1`)
     const at = rows[0]?.at ? new Date(rows[0].at).toISOString() : null
-    return judgeHealth(at, now, true, await loadResultsInput())
+    return { ...judgeHealth(at, now, true, await loadResultsInput()), host: hostFrom(rows[0]) }
   } catch (error) {
     console.error('[health]', error)
     return judgeHealth(null, now, false)
