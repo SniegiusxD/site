@@ -311,11 +311,11 @@ export function SignalDetail({
                     <span className="absolute inset-y-0 left-0 rounded-l-full bg-steel" style={{ width: `${Math.min(rowAt, fairAt)}%` }} />
                     {clears && (
                       <motion.span
-                        initial={reduced ? false : { width: 0 }}
-                        animate={{ width: `${rowAt - fairAt}%` }}
+                        initial={reduced ? false : { scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
                         transition={{ duration: 0.6, ease: EASE }}
-                        className="absolute inset-y-0 rounded-r-full bg-floodlight"
-                        style={{ left: `${fairAt}%` }}
+                        className="absolute inset-y-0 origin-left rounded-r-full bg-floodlight"
+                        style={{ left: `${fairAt}%`, width: `${rowAt - fairAt}%` }}
                       />
                     )}
                     <span className="absolute -inset-y-1.5 w-0.5 rounded bg-chalk" style={{ left: `calc(${fairAt}% - 1px)` }} />

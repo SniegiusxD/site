@@ -175,8 +175,8 @@ export function SignalRow({
             whole list can be read without looking at a single number. */}
         <span aria-hidden className="col-span-3 mt-2.5 block h-[3px] rounded-full bg-night-deep">
           <span
-            className={`block h-full rounded-full transition-[width] duration-700 ease-[cubic-bezier(.22,1,.36,1)] ${open ? 'bg-floodlight' : 'bg-steel'}`}
-            style={{ width: `${Math.max(4, Math.min(100, (price.edge / 0.1) * 100))}%` }}
+            className={`block h-full w-full origin-left rounded-full transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)] ${open ? 'bg-floodlight' : 'bg-steel'}`}
+            style={{ transform: `scaleX(${Math.max(0.04, Math.min(1, price.edge / 0.1))})` }}
           />
         </span>
       </button>
