@@ -10,7 +10,7 @@ import { vilniusDay } from '@/lib/bets-calendar'
 import { brand } from '@/lib/brand'
 import { trustLabel } from '@/lib/close-evidence'
 import { loadCloseEvidence } from '@/lib/close-evidence-store'
-import { formatEdge, formatInteger, formatPercent } from '@/lib/format-lt'
+import { formatEdge, formatInteger, formatPercent, ltPlural } from '@/lib/format-lt'
 import { BOOKS } from '@/lib/landing-signals'
 import { kickoffLabel } from '@/lib/live-view'
 import { clvByDay, clvOf, marketFamilyOf, outcomeText, type ResultSummary, summarizeBy, type PastSignal, selectionText, summarize, summarizeByBook } from '@/lib/public-results'
@@ -63,6 +63,15 @@ function toRow(signal: PastSignal): ResultRow {
 const MIN_GROUP = 10
 
 function GroupTable({ caption, rows }: { caption: string; rows: Array<ResultSummary & { label: string }> }) {
+  // Early in a month no group reaches MIN_GROUP: say so instead of headers over nothing.
+  if (rows.length === 0) {
+    return (
+      <div>
+        <p className="mb-2 font-medium text-chalk">{caption}</p>
+        <p className="text-[0.95rem] text-haze">Kol kas nė vienoje grupėje nėra {MIN_GROUP} signalų.</p>
+      </div>
+    )
+  }
   return (
     <table className="w-full text-[0.95rem]">
       <caption className="mb-2 text-left font-medium text-chalk">{caption}</caption>
@@ -157,7 +166,7 @@ export default async function ResultsPage() {
               />
               <Figure
                 value={<Roll value={total.withClose} />}
-                label={`signalų su užfiksuota uždarymo kaina iš ${formatInteger(total.signals)} prasidėjusių`}
+                label={`${ltPlural(total.withClose, 'signalas', 'signalai', 'signalų')} su užfiksuota uždarymo kaina iš ${formatInteger(total.signals)} prasidėjusių`}
               />
             </section>
             <ClvTrust label={trustLabel(closeEvidence)} className="mt-8" />

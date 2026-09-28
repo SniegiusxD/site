@@ -247,7 +247,7 @@ export function Calculator({ counts }: { counts: SignalCounts | null }) {
                         <span>
                           <span className="block font-medium">Apie {timeLabel(minutes)}</span>
                           <span className="block text-[0.85rem] text-haze">
-                            {bets} statymų per dieną, {formatInteger(BETS)} per ~{daysTo(BETS, bets)} d.
+                            {bets} {ltPlural(bets, 'statymas', 'statymai', 'statymų')} per dieną, {formatInteger(BETS)} per ~{daysTo(BETS, bets)} d.
                           </span>
                         </span>
                         <span className={`grid size-6 place-items-center rounded-full ${on ? 'bg-chalk text-night' : 'bg-rail text-transparent'}`}>

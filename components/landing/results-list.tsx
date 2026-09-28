@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import Link from 'next/link'
 import { useId, useMemo, useState } from 'react'
 import { Segmented } from '@/components/app/segmented'
-import { formatEdge, formatOdds } from '@/lib/format-lt'
+import { formatEdge, formatOdds, ltPlural } from '@/lib/format-lt'
 import { DURATION, EASE, SPRING } from '@/lib/motion'
 
 export type ResultRow = {
@@ -70,7 +70,7 @@ export function ResultsList({ rows, books }: { rows: ResultRow[]; books: string[
               </option>
             ))}
           </select>
-          <p className="text-[0.9rem] text-haze">{filtered.length} signalų</p>
+          <p className="text-[0.9rem] text-haze">{filtered.length} {ltPlural(filtered.length, 'signalas', 'signalai', 'signalų')}</p>
         </div>
       </div>
 
