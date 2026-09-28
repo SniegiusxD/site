@@ -171,6 +171,20 @@ committed.
   (`044d6c4`), on phone and desktop. The unlayered `.app-dense input` size rule
   beat the field's `text-6xl`. Big-number fields opt out with
   `data-display-number`, and the member journey checks the size.
+- **A second walk (onboarding, dialogs, statymai with a bet, public pages) found
+  five more:**
+  - The month dialog said "1 statymų", showed "0" bets per day when there
+    was one bet in 28 days (now "< 0,1"), and its three stats sat at different
+    heights (`0d41785`).
+  - The profit calendar only reacted to hover or focus. On an iPhone a tap did
+    nothing; a tap now selects the day, and the hint no longer says "Užvesk"
+    (`5de36f6`).
+  - The `/demo` heading was covered by the fixed site header on phone and
+    desktop (`372ec9e`). The public spec now checks every page for this and
+    fails on the old `/demo`.
+  - `/rezultatai` showed "Sportas" and "Rinka" tables with headers and no rows
+    when no group has 10 signals; each now says so in one line. "1 signalų" and
+    the list's count use the right plural form (`ff1cba2`).
 
 ## Every new moment, and how to try it
 
