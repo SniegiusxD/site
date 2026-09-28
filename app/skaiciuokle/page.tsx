@@ -8,6 +8,7 @@ import { loadSignalCounts } from '@/lib/signal-counts'
 export const metadata: Metadata = {
   title: `Skaičiuoklė | ${brand.name}`,
   description: 'Trys klausimai ir 100 scenarijų iš mūsų tikrų užbaigtų signalų. Parodom ir blogus scenarijus.',
+  alternates: { canonical: '/skaiciuokle' },
 }
 
 // Signal counts change slowly; refresh the page at most every 15 minutes.

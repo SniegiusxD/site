@@ -6,6 +6,8 @@ import { PRICE_EUR_PER_MONTH, TRIAL_DAYS } from '@/lib/subscription'
 
 export const metadata: Metadata = {
   title: `Naudojimosi taisyklės | ${brand.name}`,
+  description: `Kas yra paslauga ir kas ne, prenumerata ir jos nutraukimas, atsakomybė ir amžiaus riba: nuo ${MIN_AGE} metų.`,
+  alternates: { canonical: '/taisykles' },
 }
 
 // Public page: operators are deliberately not named here. The regulator treats a

@@ -5,6 +5,8 @@ import { field, legalEntity, legalEntityComplete, MIN_AGE } from '@/lib/legal-en
 
 export const metadata: Metadata = {
   title: `Privatumo politika | ${brand.name}`,
+  description: 'Kokius duomenis saugom, kodėl, kiek laiko ir kaip juos atsisiųsti ar ištrinti.',
+  alternates: { canonical: '/privatumas' },
 }
 
 export default function PrivacyPage() {

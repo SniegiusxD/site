@@ -8,6 +8,7 @@ import { brand } from '@/lib/brand'
 export const metadata: Metadata = {
   title: `Kaip atrodo signalas | ${brand.name}`,
   description: 'Tikras užfiksuotas signalas: visų kontorų kainos, tikroji kaina be Pinnacle maržos ir siūloma suma.',
+  alternates: { canonical: '/demo' },
 }
 
 export default function DemoPage() {

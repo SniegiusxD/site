@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { EvidenceStrip } from '@/components/landing/evidence-strip'
 import { Faq } from '@/components/landing/faq'
 import { FinalCta } from '@/components/landing/final-cta'
@@ -19,6 +20,10 @@ import { summarize } from '@/lib/public-results'
 import { heroRecordSignals } from '@/lib/hero-record'
 import { loadPastSignals } from '@/lib/public-results-store'
 import { loadPublicStats } from '@/lib/public-stats'
+
+// The title and description come from the root layout; only the canonical is
+// the landing's own.
+export const metadata: Metadata = { alternates: { canonical: '/' } }
 
 // The live numbers read the database; rebuild the page at most every 5 minutes.
 export const revalidate = 300
