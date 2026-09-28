@@ -22,5 +22,14 @@ jobs:
             if [ "$status" = "200" ]; then exit 0; fi
             sleep 60
           done
-          echo "::error title=Statyk health::HTTP $status $(cat body.json 2>/dev/null)"
+          # Name the cause in the title, so the email and the run list say what broke
+          # (lib/health.ts: stale, results-stale, database, no-status) without opening the log.
+          problem=$(jq -r '.problem // "unknown"' body.json 2>/dev/null || echo "no body")
+          minutes=$(jq -r '.minutesSincePublish // "?"' body.json 2>/dev/null || echo "?")
+          echo "::error title=Health: $problem::HTTP $status, minutes since publish $minutes. $(cat body.json 2>/dev/null)"
+          {
+            echo "### Health check failed: \`$problem\`"
+            echo "HTTP $status, minutes since the scanner last published: $minutes."
+            echo "stale = scanner (VM) · results-stale = grading/settle timer · database = Neon · no-status = VM never wrote runner_status"
+          } >> "$GITHUB_STEP_SUMMARY"
           exit 1

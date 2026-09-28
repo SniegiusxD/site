@@ -11,6 +11,7 @@ import { kickoffLabel } from '@/lib/live-view'
 import { formatEuro, formatInteger } from '@/lib/format-lt'
 import { isOwner, ownerMetrics } from '@/lib/owner'
 import { getSessionUser } from '@/lib/session'
+import { BACKLOG_WINDOW_DAYS, judgeBacklog, loadSettlementBacklog } from '@/lib/settlement-backlog'
 import { sportName } from '@/lib/sports-lt'
 
 export const metadata: Metadata = {
@@ -31,14 +32,16 @@ const share = (part: number, whole: number) => (whole ? `${Math.round((part / wh
 export default async function OwnerPage() {
   const user = await getSessionUser()
   if (!user || !isOwner(user.email)) notFound()
-  const [m, members, errors, health, funnel7, funnel30] = await Promise.all([
+  const [m, members, errors, health, funnel7, funnel30, backlog] = await Promise.all([
     ownerMetrics(),
     searchOwnerMembers(''),
     recentErrors(20),
     loadHealth(),
     loadFunnel(7).catch(() => null),
     loadFunnel(30).catch(() => null),
+    loadSettlementBacklog(),
   ])
+  const backlogVerdict = backlog && judgeBacklog(backlog)
   const peak = Math.max(1, ...m.signupsByDay.map((d) => d.count))
   const paying = m.access.active + m.access.ending
 
@@ -57,6 +60,33 @@ export default async function OwnerPage() {
         {health.problem === 'stale' && ' Skeneris vėluoja daugiau nei 90 min.'}
         {health.problem === 'results-stale' && ' Rezultatai neatnaujinti daugiau nei parą, nors rungtynės baigėsi.'}
       </p>
+
+      <Section title="Atsiskaitymas">
+        {backlog && backlogVerdict ? (
+          <>
+            <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <Stat
+                label="Atsiskaityta"
+                value={share(backlog.graded, backlog.due)}
+                note={`${formatInteger(backlog.graded)} iš ${formatInteger(backlog.due)} per ${BACKLOG_WINDOW_DAYS} d.`}
+              />
+              <Stat label="Laukia, iki paros" value={formatInteger(backlog.waiting.underDay)} note="normalu" />
+              <Stat label="Laukia 1–7 d." value={formatInteger(backlog.waiting.days1to7)} note="Flashscore dar turi" />
+              <Stat label="Senesni nei 7 d." value={formatInteger(backlog.waiting.over7)} note="automatiškai nebeatsiskaitys" />
+            </dl>
+            <p className={`mt-4 rounded-xl px-4 py-3 text-[0.95rem] ${backlogVerdict.tone === 'ok' ? 'bg-pitch-soft text-pitch' : 'bg-[rgb(245_165_36/0.12)] text-warning'}`}>
+              {backlogVerdict.note}
+            </p>
+            <p className="mt-3 text-[0.9rem] text-haze">
+              Uždarymo kaina: {share(backlog.withClose, backlog.due)} signalų.
+              {backlog.sources7d.length > 0 &&
+                ` Šaltiniai per 7 d.: ${backlog.sources7d.map((s) => `${s.source} ${formatInteger(s.count)}`).join(', ')}.`}
+            </p>
+          </>
+        ) : (
+          <p className="text-haze">Atsiskaitymo duomenų nepavyko įkelti.</p>
+        )}
+      </Section>
 
       <dl className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Nariai" value={formatInteger(m.members)} note={`+${m.signups7d} per 7 d., +${m.signups30d} per 30 d.`} />
