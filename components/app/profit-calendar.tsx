@@ -78,7 +78,7 @@ export function ProfitCalendar({ bets }: { bets: ActiveBet[] }) {
     ? `${MONTHS_GENITIVE[Number(hot.slice(5, 7)) - 1]} ${Number(hot.slice(8, 10))} d.: ${
         hotDay?.settled ? signedEuro(hotDay.profit) : 'užbaigtų statymų nėra'
       }${hotDay?.pending ? `, ${hotDay.pending} laukia` : ''}`
-    : 'Užvesk ant dienos, kad pamatytum rezultatą'
+    : 'Pasirink dieną, kad pamatytum rezultatą'
 
   const W = 600
   const H = 64
@@ -128,6 +128,8 @@ export function ProfitCalendar({ bets }: { bets: ActiveBet[] }) {
               aria-label={`${MONTHS_GENITIVE[month.index]} ${Number(date.slice(8))} d.${settled ? `, ${signedEuro(day!.profit)}` : ''}${day?.pending ? `, ${day.pending} laukia` : ''}`}
               onPointerEnter={() => setHot(date)}
               onFocus={() => setHot(date)}
+              // Phones have no hover, and iOS Safari does not focus a tapped button.
+              onClick={() => setHot(date)}
               className="relative flex aspect-square flex-col justify-between rounded-md p-1 text-left outline-none sm:aspect-[1.25] sm:p-1.5"
               style={{
                 background: settled ? cellFill(day!.profit, scale, on) : on ? 'var(--stand-hover)' : 'rgb(28 90 64 / 0.45)',
