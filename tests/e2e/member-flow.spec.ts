@@ -129,6 +129,16 @@ test('member can onboard, inspect a signal, record it, and open tracker and help
     const sheet = page.getByRole('dialog', { name: 'Signalo informacija' })
     await expect(sheet).toBeVisible()
     await expect.poll(() => sheet.evaluate((dialog) => dialog.contains(document.activeElement))).toBe(true)
+    // The sheet covers the header and bottom nav: nothing may stack above it
+    // (a view-transition-name on the main column once trapped it below both).
+    for (const y of [10, PERF_VIEWPORTS.phone.height - 10]) {
+      // Polled: the sheet is still springing up when it takes focus.
+      const onTop = () => page.evaluate((at) => Boolean(document.elementFromPoint(200, at)?.closest('[role="dialog"]')), y)
+      await expect.poll(onTop, { message: `sheet is on top at y=${y}` }).toBe(true)
+    }
+    // The stake is a display number, not 16px text beside a 60px euro sign.
+    const stakeSize = await sheet.getByLabel('Statymo suma eurais').evaluate((input) => parseFloat(getComputedStyle(input).fontSize))
+    expect(stakeSize).toBeGreaterThan(40)
     await page.keyboard.press('Escape')
     await expect(sheet).toHaveCount(0)
     await page.setViewportSize(PERF_VIEWPORTS.desktop)

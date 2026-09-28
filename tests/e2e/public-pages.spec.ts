@@ -54,6 +54,15 @@ for (const page of PAGES) {
     )
     expect(overflow, `${page.path} scrolls sideways by ${overflow}px`).toBeLessThanOrEqual(1)
 
+    // A fixed site header must not cover the page's heading (it did on /demo).
+    const covered = await browser.evaluate(() => {
+      const header = [...document.querySelectorAll('header')].find((element) => getComputedStyle(element).position === 'fixed')
+      const heading = document.querySelector('h1')
+      if (!header || !heading) return 0
+      return header.getBoundingClientRect().bottom - heading.getBoundingClientRect().top
+    })
+    expect(covered, `${page.path} heading is under the header by ${covered}px`).toBeLessThanOrEqual(0)
+
     expect(problems, `${page.path} logged errors`).toEqual([])
   })
 
@@ -142,5 +151,23 @@ test('calm mode leaves nothing moving on any public page', async ({ page }) => {
   for (const { path } of PAGES) {
     await page.goto(path)
     await expect.poll(() => runningAnimations(page), { message: `${path} in calm mode`, timeout: 3000 }).toEqual([])
+  }
+})
+
+test('every indexable public page has a canonical and its own description', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'metadata does not depend on width')
+  const seen = new Map<string, string>()
+  for (const { path } of PAGES) {
+    await page.goto(path)
+    const meta = await page.evaluate(() => ({
+      description: document.querySelector('meta[name="description"]')?.getAttribute('content') ?? '',
+      canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? '',
+      noindex: (document.querySelector('meta[name="robots"]')?.getAttribute('content') ?? '').includes('noindex'),
+    }))
+    if (meta.noindex) continue
+    expect(meta.canonical, `${path} has no canonical`).not.toBe('')
+    expect(meta.description.length, `${path} has no description`).toBeGreaterThan(40)
+    expect(seen.get(meta.description), `${path} repeats the description of ${seen.get(meta.description)}`).toBeUndefined()
+    seen.set(meta.description, path)
   }
 })

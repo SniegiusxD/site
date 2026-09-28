@@ -121,8 +121,8 @@ export function HeroBoard({ stats }: { stats: PublicStats | null }) {
                           <span className="w-[4.5rem] shrink-0 truncate text-[0.8125rem] text-haze">{entry.book}</span>
                           <span className="relative h-2.5 flex-1 rounded-full bg-night-deep">
                             <span
-                              className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-700 ${beats ? 'bg-floodlight' : 'bg-steel'}`}
-                              style={{ width: active ? `${at(entry.odds)}%` : '0%' }}
+                              className={`absolute inset-0 origin-left rounded-full transition-transform duration-700 ${beats ? 'bg-floodlight' : 'bg-steel'}`}
+                              style={{ transform: `scaleX(${active ? at(entry.odds) / 100 : 0})` }}
                             />
                             <span className="absolute -inset-y-1 w-px bg-chalk/70" style={{ left: `${at(signal.fairOdds)}%` }} aria-hidden />
                           </span>

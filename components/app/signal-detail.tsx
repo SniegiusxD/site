@@ -59,6 +59,7 @@ export function SignalDetail({
   const { account } = useAccount()
   const prefs = account.preferences
   const stakeId = useId()
+  const longName = eventLabel(price.eventName).length > 40
 
   const limit = prefs.bookLimits[price.book]
   const exposure = exposureFor(signal, bets, signalsById)
@@ -152,8 +153,15 @@ export function SignalDetail({
         </p>
       </div>
 
-      <div className="mt-5 flex items-start justify-between gap-3">
-        <h2 className="text-[2.1rem] sm:text-[2.6rem]">{eventLabel(price.eventName)}</h2>
+      {/* A long fixture name (youth and reserve teams run to 100 characters) gets
+          a smaller size and, on phones, the copy buttons move below it instead of
+          squeezing it into a narrow column. */}
+      <div
+        className={`mt-5 flex items-start justify-between gap-3 ${longName ? 'flex-col sm:flex-row' : ''}`}
+      >
+        <h2 className={`min-w-0 max-w-full break-words hyphens-auto ${longName ? 'text-[1.7rem] sm:text-[2.1rem]' : 'text-[2.1rem] sm:text-[2.6rem]'}`}>
+          {eventLabel(price.eventName)}
+        </h2>
         <span className="mt-1 flex shrink-0 items-center gap-1">
           <CopyButton
             text={price.eventName}
@@ -311,11 +319,11 @@ export function SignalDetail({
                     <span className="absolute inset-y-0 left-0 rounded-l-full bg-steel" style={{ width: `${Math.min(rowAt, fairAt)}%` }} />
                     {clears && (
                       <motion.span
-                        initial={reduced ? false : { width: 0 }}
-                        animate={{ width: `${rowAt - fairAt}%` }}
+                        initial={reduced ? false : { scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
                         transition={{ duration: 0.6, ease: EASE }}
-                        className="absolute inset-y-0 rounded-r-full bg-floodlight"
-                        style={{ left: `${fairAt}%` }}
+                        className="absolute inset-y-0 origin-left rounded-r-full bg-floodlight"
+                        style={{ left: `${fairAt}%`, width: `${rowAt - fairAt}%` }}
                       />
                     )}
                     <span className="absolute -inset-y-1.5 w-0.5 rounded bg-chalk" style={{ left: `calc(${fairAt}% - 1px)` }} />
@@ -377,6 +385,7 @@ export function SignalDetail({
               </span>
               <input
                 id={stakeId}
+                data-display-number
                 inputMode="numeric"
                 value={stakeText}
                 onChange={(event) => {
@@ -387,7 +396,7 @@ export function SignalDetail({
                 }}
                 onBlur={() => setStakeValue(stake)}
                 size={1}
-                className="col-start-1 row-start-1 w-full min-w-0 bg-transparent text-center outline-none"
+                className="col-start-1 row-start-1 w-full min-w-0 rounded-lg bg-transparent text-center outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-chalk"
               />
             </span>
             <span className="font-display text-4xl font-bold text-haze">€</span>

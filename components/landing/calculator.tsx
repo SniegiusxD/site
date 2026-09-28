@@ -200,7 +200,7 @@ export function Calculator({ counts }: { counts: SignalCounts | null }) {
                     autoComplete="off"
                     value={bankrollText}
                     onChange={(event) => setBankrollText(event.target.value.replace(/[^\d\s.,]/g, ''))}
-                    className="w-full min-w-0 bg-transparent font-display text-[3.6rem] leading-none font-extrabold outline-none"
+                    className="w-full min-w-0 rounded-lg bg-transparent font-display text-[3.6rem] leading-none font-extrabold outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-chalk"
                   />
                   <span className="font-display text-4xl font-extrabold text-haze">€</span>
                 </div>
@@ -247,7 +247,7 @@ export function Calculator({ counts }: { counts: SignalCounts | null }) {
                         <span>
                           <span className="block font-medium">Apie {timeLabel(minutes)}</span>
                           <span className="block text-[0.85rem] text-haze">
-                            {bets} statymų per dieną, {formatInteger(BETS)} per ~{daysTo(BETS, bets)} d.
+                            {bets} {ltPlural(bets, 'statymas', 'statymai', 'statymų')} per dieną, {formatInteger(BETS)} per ~{daysTo(BETS, bets)} d.
                           </span>
                         </span>
                         <span className={`grid size-6 place-items-center rounded-full ${on ? 'bg-chalk text-night' : 'bg-rail text-transparent'}`}>

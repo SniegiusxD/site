@@ -124,11 +124,11 @@ export function ClosingLine() {
                     <span aria-hidden className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-rail-strong" />
                     <motion.span
                       aria-hidden
-                      initial={reduced ? false : { width: 0 }}
-                      animate={{ width: seen || reduced ? width : 0 }}
+                      initial={reduced ? false : { scaleX: 0 }}
+                      animate={{ scaleX: seen || reduced ? 1 : 0 }}
                       transition={{ duration: 0.7, delay: reduced ? 0 : 0.08 * index, ease: EASE }}
-                      style={beat ? { left: '50%' } : { right: '50%' }}
-                      className={`absolute inset-y-2 ${beat ? 'rounded-r-full bg-floodlight' : 'rounded-l-full bg-brick'}`}
+                      style={beat ? { left: '50%', width } : { right: '50%', width }}
+                      className={`absolute inset-y-2 ${beat ? 'origin-left rounded-r-full bg-floodlight' : 'origin-right rounded-l-full bg-brick'}`}
                     />
                     <span
                       className={`absolute inset-y-0 flex items-center px-3 text-[0.95rem] font-semibold tnum ${

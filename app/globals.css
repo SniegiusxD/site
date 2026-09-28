@@ -272,8 +272,10 @@
 
 /* The app is a dashboard: the landing's 18px reading size makes it need a zoom
    step to fit. 16px everywhere inside it. */
+/* A big-number field (data-display-number, e.g. the stake) keeps its own size:
+   this rule is unlayered, so it would beat the field's text-6xl utility. */
 .app-dense,
-.app-dense input,
+.app-dense input:not([data-display-number]),
 .app-dense select,
 .app-dense textarea {
   font-size: 1rem;
@@ -321,7 +323,13 @@
 /* App pages arrive with a short fade. Opacity only: a transform would detach fixed sheets. */
 /* Moving between the app's sections (components/app/use-nav-transition.ts):
    the old page leaves and the new one arrives in the direction of the nav.
-   Only the main column is named, so the sidebar and bottom nav stay put. */
+   Only the main column is named, so the sidebar and bottom nav stay put. It
+   is named only while a change runs (data-nav-dir): a view-transition-name
+   makes a stacking context, which trapped the phone signal sheet (z-50) under
+   the header and bottom nav (z-40). */
+:root[data-nav-dir] [data-app-main] {
+  view-transition-name: app-main;
+}
 ::view-transition-old(app-main) {
   animation: vt-out 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }

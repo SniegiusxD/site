@@ -8,7 +8,7 @@ import { recentErrors } from '@/lib/error-store'
 import { loadHealth } from '@/lib/health'
 import { loadFunnel } from '@/lib/onboarding-funnel'
 import { kickoffLabel } from '@/lib/live-view'
-import { formatEuro, formatInteger } from '@/lib/format-lt'
+import { formatEuro, formatInteger, ltPlural } from '@/lib/format-lt'
 import { isOwner, ownerMetrics } from '@/lib/owner'
 import { getSessionUser } from '@/lib/session'
 import { BACKLOG_WINDOW_DAYS, judgeBacklog, loadSettlementBacklog } from '@/lib/settlement-backlog'
@@ -95,7 +95,7 @@ export default async function OwnerPage() {
         <Stat
           label="Bandymas → mokama"
           value={share(m.trialToPaid.paid, m.trialToPaid.trials)}
-          note={`${m.trialToPaid.paid} iš ${m.trialToPaid.trials}; ${m.trialsStarted30d} bandymų per 30 d.`}
+          note={`${m.trialToPaid.paid} iš ${m.trialToPaid.trials}; ${m.trialsStarted30d} ${ltPlural(m.trialsStarted30d, 'bandymas', 'bandymai', 'bandymų')} per 30 d.`}
         />
       </dl>
 
@@ -154,7 +154,7 @@ export default async function OwnerPage() {
 
       <Section title="Statymai ir vykdymas">
         <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat label="Statymų per 7 d." value={formatInteger(m.bets7d)} note={`${m.bettingMembers7d} narių`} />
+          <Stat label="Statymų per 7 d." value={formatInteger(m.bets7d)} note={`${m.bettingMembers7d} ${ltPlural(m.bettingMembers7d, 'narys', 'nariai', 'narių')}`} />
           <Stat label="Signalų su veiksmu, 30 d." value={formatInteger(m.execution.signals)} note={`atidarė ${m.execution.opened}, kopijavo ${m.execution.copied}`} />
           <Stat label="Nuo signalo iki veiksmo" value={minutes(m.execution.medianSeenToActionMin)} note="mediana" />
           <Stat

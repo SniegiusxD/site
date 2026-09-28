@@ -159,6 +159,56 @@ committed.
   now mounts the new detail at once (`ce7d9d9`), and the
   flight starts on the first frame.
 - The owner decided to keep the bookmaker names on public pages as they are.
+- **Fix (my regression): the phone signal sheet sat under the header and bottom
+  nav** (`eb495b2`). The section slide gave the main column a permanent
+  `view-transition-name`, which creates a stacking context and trapped the
+  sheet's `z-50` below the `z-40` header and nav. The top of the sheet was
+  covered, and its last link ("Gavau kitą koeficientą arba sumą") could not be
+  reached. The name is now set only while a section change runs. The member
+  journey now checks that the sheet is on top at both screen edges; the check
+  fails on the previous code.
+- **Fix (older bug): the stake amount showed at 16 px beside a 60 px "€"**
+  (`c9a6fea`), on phone and desktop. The unlayered `.app-dense input` size rule
+  beat the field's `text-6xl`. Big-number fields opt out with
+  `data-display-number`, and the member journey checks the size.
+- **A second walk (onboarding, dialogs, statymai with a bet, public pages) found
+  five more:**
+  - The month dialog said "1 statymų", showed "0" bets per day when there
+    was one bet in 28 days (now "< 0,1"), and its three stats sat at different
+    heights (`e14d032`).
+  - The profit calendar only reacted to hover or focus. On an iPhone a tap did
+    nothing; a tap now selects the day, and the hint no longer says "Užvesk"
+    (`1756d9f`).
+  - The `/demo` heading was covered by the fixed site header on phone and
+    desktop (`a976f10`). The public spec now checks every page for this and
+    fails on the old `/demo`.
+  - `/rezultatai` showed "Sportas" and "Rinka" tables with headers and no rows
+    when no group has 10 signals; each now says so in one line. "1 signalų" and
+    the list's count use the right plural form (`24c6078`).
+- **A sweep by bug class, across every page at 390 and 1440 px:**
+  - No page scrolls sideways, and no page logs a real console error (the only
+    404 is Vercel's analytics script, which exists only on Vercel). No tap
+    target fails WCAG 2.2's size rule.
+  - Keyboard focus was invisible on the stake, onboarding bankroll and
+    calculator fields and on the calendar's days; each now shows an outline
+    (`cafe129`).
+  - Every live number followed by a plural was checked. After "iš", counts
+    ending in 1 need the singular ("iš 21 signalo"). A new `ltGenitive`
+    (unit-tested) fixes four places, and `ltPlural` fixes two counts on the
+    owner page (`e9424de`).
+  - The month dialog's day counts lived only in `title` tooltips, which phones
+    never show. A drag or tap across the bars now reads them out, and the bars
+    grow by transform instead of height (`2951010`). Six more bars animated
+    `width` and now use `scaleX` (`a81074f`).
+  - With a local 100-character fixture name, the signal detail cut the name
+    off on phones and pushed the copy buttons off screen. It now wraps, and
+    long names get a smaller size with the buttons below (`6d65acc`).
+  - Eight public pages, the landing among them, had no canonical, and five
+    shared one description. A public spec test now holds both (`2b56b97`).
+  - Checked and fine: every member page shows an error with a retry when its
+    data fails to load. The board's daily count cannot drop to a false "0",
+    because its bets come from the server and a failed refresh keeps the last
+    list.
 
 ## Every new moment, and how to try it
 

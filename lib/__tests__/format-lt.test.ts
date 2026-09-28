@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { edgeOf, formatEdge, formatEuro, formatInteger, formatOdds, formatPercent, kellyFraction, ltPlural } from '@/lib/format-lt'
+import { edgeOf, formatEdge, formatEuro, formatInteger, formatOdds, formatPercent, kellyFraction, ltGenitive, ltPlural } from '@/lib/format-lt'
 
 const NBSP = ' '
 
@@ -96,5 +96,19 @@ describe('edgeOf and kellyFraction', () => {
     expect(kellyFraction(2, 0.4)).toBe(0)
     expect(kellyFraction(1, 0.9)).toBe(0)
     expect(kellyFraction(0.5, 0.9)).toBe(0)
+  })
+})
+
+describe('ltGenitive', () => {
+  const of = (count: number) => `iš ${count} ${ltGenitive(count, 'signalo', 'signalų')}`
+  it('uses the singular for counts ending in 1, except 11', () => {
+    expect(of(1)).toBe('iš 1 signalo')
+    expect(of(21)).toBe('iš 21 signalo')
+    expect(of(11)).toBe('iš 11 signalų')
+  })
+  it('uses the plural for everything else', () => {
+    expect(of(0)).toBe('iš 0 signalų')
+    expect(of(5)).toBe('iš 5 signalų')
+    expect(of(100)).toBe('iš 100 signalų')
   })
 })

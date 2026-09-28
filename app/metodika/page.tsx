@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: `Kaip mes matuojam | ${brand.name}`,
   description:
     'Iš kur imam tikrąją kainą, kaip fiksuojam uždarymo kainą, kokie imties dydžiai ir laikotarpiai slepiasi už kiekvieno skaičiaus, ir ko šitie skaičiai neįrodo.',
+  alternates: { canonical: '/metodika' },
 }
 
 // The closing-price sample, from the aggregator's CLV database (data/clv.db,

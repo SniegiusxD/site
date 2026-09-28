@@ -1,4 +1,4 @@
-import { formatEdge, formatInteger } from '@/lib/format-lt'
+import { formatEdge, formatInteger, ltGenitive } from '@/lib/format-lt'
 import type { ClvDay } from '@/lib/public-results'
 
 /** A day with fewer closes than this is drawn faintly: one or two signals say little. */
@@ -25,7 +25,7 @@ export function ClvDays({ days }: { days: ClvDay[] }) {
         preserveAspectRatio="none"
         className="h-40 w-full"
         role="img"
-        aria-label={`Vidutinis CLV kiekvieną dieną: ${positive} iš ${days.length} dienų teigiamas.`}
+        aria-label={`Vidutinis CLV kiekvieną dieną: ${positive} iš ${days.length} ${ltGenitive(days.length, 'dienos', 'dienų')} teigiamas.`}
       >
         {days.map((day, index) => {
           const size = (Math.abs(day.meanClv) / peak) * (MIDDLE - 4)
@@ -57,7 +57,7 @@ export function ClvDays({ days }: { days: ClvDay[] }) {
         <span>{shortDate(days[days.length - 1].day)}</span>
       </div>
       <figcaption className="mt-2 text-[0.9rem] text-haze">
-        {positive} iš {days.length} dienų vidutinis CLV teigiamas. Blankūs stulpeliai — dienos, kai buvo mažiau nei {THIN_DAY}{' '}
+        {positive} iš {days.length} {ltGenitive(days.length, 'dienos', 'dienų')} vidutinis CLV teigiamas. Blankūs stulpeliai — dienos, kai buvo mažiau nei {THIN_DAY}{' '}
         signalai su uždarymo kaina.
       </figcaption>
     </figure>

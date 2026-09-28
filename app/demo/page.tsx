@@ -8,13 +8,15 @@ import { brand } from '@/lib/brand'
 export const metadata: Metadata = {
   title: `Kaip atrodo signalas | ${brand.name}`,
   description: 'Tikras užfiksuotas signalas: visų kontorų kainos, tikroji kaina be Pinnacle maržos ir siūloma suma.',
+  alternates: { canonical: '/demo' },
 }
 
 export default function DemoPage() {
   return (
     <>
       <SiteHeader />
-      <main className="pt-10 pb-8">
+      {/* The site header is fixed: clear it, as the other public pages do. */}
+      <main className="pt-28 pb-8 lg:pt-32">
         <div className="mx-auto max-w-[46rem] px-5 sm:px-8">
           <h1 className="text-[clamp(2.2rem,4.5vw,3.4rem)] leading-[0.98]">Taip atrodo signalas iš vidaus</h1>
           <p className="mt-4 text-[clamp(1.05rem,1.4vw,1.2rem)] text-haze">

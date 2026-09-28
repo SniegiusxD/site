@@ -66,7 +66,7 @@ export default async function PastSignalPage({ params }: { params: Promise<{ id:
         <p className="mt-6 text-haze">
           {sportName(signal.sport)} · {kickoffLabel(signal.startsAt)}
         </p>
-        <h1 className="mt-2 text-[2.4rem] leading-[1.05] sm:text-[3.2rem]">{eventOf(signal)}</h1>
+        <h1 className="mt-2 text-[2.4rem] leading-[1.05] break-words hyphens-auto sm:text-[3.2rem]">{eventOf(signal)}</h1>
         <p className="mt-3 text-[1.2rem] text-chalk">{selectionText(signal)}</p>
 
         <dl className="mt-10 grid grid-cols-2 gap-3">

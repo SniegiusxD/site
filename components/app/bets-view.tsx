@@ -27,7 +27,7 @@ import { workQueues } from '@/lib/work-queues'
 import { EquityChart } from './equity-chart'
 import { Glossary } from './glossary'
 import { executionStats } from '@/lib/execution'
-import { formatEdge, formatEuro, formatOdds, formatPercent, ltPlural } from '@/lib/format-lt'
+import { formatEdge, formatEuro, formatOdds, formatPercent, ltGenitive, ltPlural } from '@/lib/format-lt'
 import { BOOKS, type BookName } from '@/lib/landing-signals'
 import { kickoffLabel, ltSelection } from '@/lib/live-view'
 import { OUTCOME_LABEL } from '@/lib/member-outcomes'
@@ -496,7 +496,7 @@ function StatGrid({ stats, bets, closeTrust }: { stats: BetStats; bets: ActiveBe
         recorded since the site began storing the displayed price are counted. */}
     {execution.recorded > 0 && (
       <dl className="mt-3 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-rail sm:grid-cols-4">
-        <Stat label="Gavai kitą kainą" note={`iš ${execution.recorded} įrašytų`}>
+        <Stat label="Gavai kitą kainą" note={`iš ${execution.recorded} ${ltGenitive(execution.recorded, 'įrašyto', 'įrašytų')}`}>
           {execution.differed}
         </Stat>
         <Stat
