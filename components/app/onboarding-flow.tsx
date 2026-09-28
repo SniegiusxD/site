@@ -435,7 +435,7 @@ function BankrollStep({ prefs, text, onText }: { prefs: Preferences; text: strin
             onChange={(event) => onText(event.target.value.replace(/[^\d\s.,]/g, ''))}
             // size=1 removes the input's built-in ~20-character width, which at this font size filled the row.
             size={1}
-            className="col-start-1 row-start-1 w-full min-w-0 bg-transparent outline-none"
+            className="col-start-1 row-start-1 w-full min-w-0 rounded-lg bg-transparent outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-chalk"
           />
         </span>
         <span className="font-display text-5xl font-extrabold text-haze">€</span>

@@ -388,7 +388,7 @@ export function SignalDetail({
                 }}
                 onBlur={() => setStakeValue(stake)}
                 size={1}
-                className="col-start-1 row-start-1 w-full min-w-0 bg-transparent text-center outline-none"
+                className="col-start-1 row-start-1 w-full min-w-0 rounded-lg bg-transparent text-center outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-chalk"
               />
             </span>
             <span className="font-display text-4xl font-bold text-haze">€</span>
