@@ -54,6 +54,15 @@ for (const page of PAGES) {
     )
     expect(overflow, `${page.path} scrolls sideways by ${overflow}px`).toBeLessThanOrEqual(1)
 
+    // A fixed site header must not cover the page's heading (it did on /demo).
+    const covered = await browser.evaluate(() => {
+      const header = [...document.querySelectorAll('header')].find((element) => getComputedStyle(element).position === 'fixed')
+      const heading = document.querySelector('h1')
+      if (!header || !heading) return 0
+      return header.getBoundingClientRect().bottom - heading.getBoundingClientRect().top
+    })
+    expect(covered, `${page.path} heading is under the header by ${covered}px`).toBeLessThanOrEqual(0)
+
     expect(problems, `${page.path} logged errors`).toEqual([])
   })
 
