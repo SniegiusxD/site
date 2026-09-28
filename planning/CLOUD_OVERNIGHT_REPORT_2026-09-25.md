@@ -159,6 +159,18 @@ committed.
   now mounts the new detail at once (`ce7d9d9`), and the
   flight starts on the first frame.
 - The owner decided to keep the bookmaker names on public pages as they are.
+- **Fix (my regression): the phone signal sheet sat under the header and bottom
+  nav** (`86b6da1`). The section slide gave the main column a permanent
+  `view-transition-name`, which creates a stacking context and trapped the
+  sheet's `z-50` below the `z-40` header and nav. The top of the sheet was
+  covered, and its last link ("Gavau kitą koeficientą arba sumą") could not be
+  reached. The name is now set only while a section change runs. The member
+  journey now checks that the sheet is on top at both screen edges; the check
+  fails on the previous code.
+- **Fix (older bug): the stake amount showed at 16 px beside a 60 px "€"**
+  (`044d6c4`), on phone and desktop. The unlayered `.app-dense input` size rule
+  beat the field's `text-6xl`. Big-number fields opt out with
+  `data-display-number`, and the member journey checks the size.
 
 ## Every new moment, and how to try it
 
