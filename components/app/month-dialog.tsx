@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useId, useMemo, useRef } from 'react'
-import { formatInteger } from '@/lib/format-lt'
+import { formatInteger, ltPlural } from '@/lib/format-lt'
 import { monthProgress } from '@/lib/month-progress'
 import { useApi } from '@/lib/use-api'
 import { useFocusTrap } from '@/lib/use-focus-trap'
@@ -77,7 +77,7 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
                 <div>
                   <p className="font-display text-[3.2rem] leading-none font-extrabold tnum">
                     {formatInteger(m.total)}
-                    <span className="ml-2 text-[1.1rem] font-medium text-haze">statymų, riba {formatInteger(m.monthTarget)}</span>
+                    <span className="ml-2 text-[1.1rem] font-medium text-haze">{ltPlural(m.total, 'statymas', 'statymai', 'statymų')}, riba {formatInteger(m.monthTarget)}</span>
                   </p>
                   {/* The bar is the month's limit; no tick for where one "should" be: a pace to keep up with pushes betting. */}
                   <div className="relative mt-5 h-2.5 rounded-full bg-rail">
@@ -92,7 +92,11 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
                   <p className="mt-2 text-[0.9rem] text-haze">Riba, ne tikslas: mažiau statymų yra visai gerai.</p>
                   <dl className="mt-6 grid grid-cols-3 gap-3">
                     <Stat label="Dienų, kai pasiekei ribą" value={`${m.daysReached} iš ${m.today}`} />
-                    <Stat label="Statymų per dieną" value={m.averagePerDay.toLocaleString('lt-LT', { maximumFractionDigits: 1 })} />
+                    {/* One bet in 28 days is not "0 per day". */}
+                    <Stat
+                      label="Statymų per dieną"
+                      value={m.averagePerDay > 0 && m.averagePerDay < 0.1 ? '< 0,1' : m.averagePerDay.toLocaleString('lt-LT', { maximumFractionDigits: 1 })}
+                    />
                     <Stat label="Tokiu tempu per mėnesį" value={formatInteger(m.projected)} />
                   </dl>
                 </div>
@@ -162,7 +166,9 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col-reverse">
+    // Reversed so the label reads after the value; justify-end keeps the values
+    // on one line even when one label wraps and another does not.
+    <div className="flex flex-col-reverse justify-end">
       <dt className="mt-1.5 text-[0.8rem] text-haze">{label}</dt>
       <dd className="font-display text-[1.5rem] leading-none font-bold tnum">{value}</dd>
     </div>
