@@ -5,7 +5,7 @@ import { judgeBacklog, loadSettlementBacklog, type SettlementBacklog as Backlog 
 const { query } = vi.hoisted(() => ({ query: vi.fn() }))
 vi.mock('@/lib/db', () => ({ pool: { query } }))
 
-function backlog(over: Partial<Backlog> & { waiting?: Partial<Backlog['waiting']> }): Backlog {
+function backlog(over: Partial<Omit<Backlog, 'waiting'>> & { waiting?: Partial<Backlog['waiting']> }): Backlog {
   return {
     due: 500,
     graded: 480,
