@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
-import { useId, useMemo, useRef } from 'react'
+import { useId, useMemo, useRef, useState } from 'react'
 import { formatInteger, ltPlural } from '@/lib/format-lt'
 import { monthProgress } from '@/lib/month-progress'
 import { useApi } from '@/lib/use-api'
@@ -32,6 +32,15 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
   useFocusTrap(dialogRef, open, onClose)
 
   const m = useMemo(() => (placed ? monthProgress(placed, now, dailyTarget) : null), [placed, now, dailyTarget])
+  // The day under the finger or the mouse, read out below the bars: phones have
+  // no hover, so a title tooltip never showed there.
+  const [picked, setPicked] = useState<number | null>(null)
+  const pick = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!m) return
+    const box = event.currentTarget.getBoundingClientRect()
+    const day = Math.floor(((event.clientX - box.left) / box.width) * m.daysInMonth) + 1
+    setPicked(Math.min(m.today, Math.max(1, day)))
+  }
   const peak = m ? Math.max(dailyTarget, ...m.perDay) * 1.15 : 1
 
   return (
@@ -109,17 +118,26 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
                       className="absolute inset-x-0 border-t border-dashed border-rail-strong"
                       style={{ bottom: `${(dailyTarget / peak) * 100}%` }}
                     />
-                    <div className="absolute inset-0 flex items-end gap-[2px]" aria-hidden>
+                    <div
+                      className="absolute inset-0 flex touch-pan-y items-end gap-[2px]"
+                      aria-hidden
+                      onPointerDown={(event) => pick(event)}
+                      onPointerMove={(event) => (event.pointerType === 'mouse' || event.buttons ? pick(event) : undefined)}
+                      onPointerLeave={(event) => event.pointerType === 'mouse' && setPicked(null)}
+                    >
                       {m.perDay.map((count, index) => {
                         const day = index + 1
                         const future = day > m.today
                         const reached = count >= dailyTarget && dailyTarget > 0
                         return (
-                          <div key={day} className="group relative flex h-full flex-1 items-end" title={`${day} d.: ${count}`}>
+                          <div key={day} className="relative flex h-full flex-1 items-end">
+                            {/* Grows with scaleY from the baseline: a transform, not a height. */}
                             <motion.div
-                              className={`w-full origin-bottom rounded-t-[3px] ${
+                              className={`w-full origin-bottom rounded-t-[3px] transition-opacity ${
                                 future ? 'bg-rail/40' : reached ? 'bg-floodlight' : 'bg-steel'
-                              } ${day === m.today ? 'outline outline-1 outline-offset-1 outline-chalk' : ''}`}
+                              } ${day === m.today ? 'outline outline-1 outline-offset-1 outline-chalk' : ''} ${
+                                picked !== null && picked !== day ? 'opacity-50' : ''
+                              }`}
                               style={{ height: future ? '2px' : `${Math.max(count ? 4 : 2, (count / peak) * 100)}%` }}
                               initial={reduced ? false : { scaleY: 0 }}
                               animate={{ scaleY: 1 }}
@@ -143,6 +161,12 @@ export function MonthDialog({ open, onClose, dailyTarget, now }: { open: boolean
                     )}
                     <span className="absolute right-0">{m.daysInMonth}</span>
                   </div>
+                  {/* One fixed-height line, so picking a day never moves the dialog. */}
+                  <p aria-hidden className="mt-1 h-5 text-[0.85rem] text-haze tnum">
+                    {picked !== null
+                      ? `${picked} d.: ${m.perDay[picked - 1]} ${ltPlural(m.perDay[picked - 1], 'statymas', 'statymai', 'statymų')}`
+                      : 'Perbrauk per stulpelius, kad pamatytum dienas'}
+                  </p>
                   <table className="sr-only">
                     <caption>Statymai per dieną</caption>
                     <tbody>
