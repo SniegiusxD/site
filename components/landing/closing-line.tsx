@@ -71,9 +71,9 @@ export function ClosingLine() {
         <div>
           <Reveal>
             <h2 className="text-[clamp(2.25rem,4.5vw,4rem)] leading-[0.95]">
-              Kaina juda.
+              Ar paėmei gerą kainą?
               <br />
-              Matuojam kur.
+              Parodo uždarymas.
             </h2>
           </Reveal>
           <Reveal delay={80}>
