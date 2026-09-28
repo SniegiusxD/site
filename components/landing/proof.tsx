@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import type { TrustLabel } from '@/lib/close-evidence'
 import { EVIDENCE, evidencePeriod } from '@/lib/evidence'
-import { formatEdge, formatInteger, formatPercent } from '@/lib/format-lt'
+import { formatEdge, formatInteger, formatPercent, ltGenitive } from '@/lib/format-lt'
 import type { ResultSummary } from '@/lib/public-results'
 import { ClvTrust } from './clv-trust'
 import { Reveal, Roll, useInViewOnce } from './motion-primitives'
@@ -103,7 +103,7 @@ export function Proof({ closeTrust, recent }: { closeTrust: TrustLabel; recent: 
         {recent && recent.withClose > 0 && recent.beatClose !== null && recent.meanClv !== null && (
           <Reveal delay={200}>
             <p className="mt-4 max-w-[64ch] text-[0.95rem] text-haze">
-              Paskutinės 30 dienų: {formatPercent(recent.beatClose, 0)} iš {formatInteger(recent.withClose)} signalų aplenkė uždarymo
+              Paskutinės 30 dienų: {formatPercent(recent.beatClose, 0)} iš {formatInteger(recent.withClose)} {ltGenitive(recent.withClose, 'signalo', 'signalų')} aplenkė uždarymo
               kainą, vidutinis CLV {formatEdge(recent.meanClv)}.{' '}
               <Link href="/rezultatai" className="font-medium text-chalk underline decoration-rail-strong underline-offset-4 hover:decoration-chalk">
                 Kiekvienas signalas

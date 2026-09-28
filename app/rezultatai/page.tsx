@@ -10,7 +10,7 @@ import { vilniusDay } from '@/lib/bets-calendar'
 import { brand } from '@/lib/brand'
 import { trustLabel } from '@/lib/close-evidence'
 import { loadCloseEvidence } from '@/lib/close-evidence-store'
-import { formatEdge, formatInteger, formatPercent, ltPlural } from '@/lib/format-lt'
+import { formatEdge, formatInteger, formatPercent, ltGenitive, ltPlural } from '@/lib/format-lt'
 import { BOOKS } from '@/lib/landing-signals'
 import { kickoffLabel } from '@/lib/live-view'
 import { clvByDay, clvOf, marketFamilyOf, outcomeText, type ResultSummary, summarizeBy, type PastSignal, selectionText, summarize, summarizeByBook } from '@/lib/public-results'
@@ -166,7 +166,7 @@ export default async function ResultsPage() {
               />
               <Figure
                 value={<Roll value={total.withClose} />}
-                label={`${ltPlural(total.withClose, 'signalas', 'signalai', 'signalų')} su užfiksuota uždarymo kaina iš ${formatInteger(total.signals)} prasidėjusių`}
+                label={`${ltPlural(total.withClose, 'signalas', 'signalai', 'signalų')} su užfiksuota uždarymo kaina iš ${formatInteger(total.signals)} ${ltGenitive(total.signals, 'prasidėjusio', 'prasidėjusių')}`}
               />
             </section>
             <ClvTrust label={trustLabel(closeEvidence)} className="mt-8" />

@@ -62,6 +62,14 @@ export function ltPlural(count: number, one: string, few: string, many: string):
   return few
 }
 
+/**
+ * The genitive after "iš" or a percentage base: "iš 21 signalo", "iš 5 signalų".
+ * A count ending in 1 (but not 11) takes the singular; every other the plural.
+ */
+export function ltGenitive(count: number, one: string, many: string): string {
+  return ltPlural(count, one, many, many)
+}
+
 /** Edge of a book price against a fair (margin-free) price. */
 export function edgeOf(bookOdds: number, fairOdds: number): number {
   return bookOdds / fairOdds - 1
