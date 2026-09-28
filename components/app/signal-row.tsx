@@ -4,7 +4,7 @@ import NumberFlow from '@number-flow/react'
 import { motion, type Variants } from 'framer-motion'
 import { useState } from 'react'
 import { AlertTriangle, ArrowDown, ArrowUp, Check, Eye, Star, X } from 'lucide-react'
-import { BookMark } from '@/components/landing/book-mark'
+import { BOOK_ACCENT, BookMark } from '@/components/landing/book-mark'
 import { CopyButton } from '@/components/landing/copy-button'
 import { formatEdge, formatEuro, formatOdds } from '@/lib/format-lt'
 import { agoLabel, type BoardRow, compactUntilLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
@@ -89,9 +89,14 @@ export function SignalRow({
         aria-current={active ? 'true' : undefined}
         className={`relative grid w-full grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 px-4 pt-3.5 pb-3 text-left transition-colors sm:px-6 ${active ? 'bg-stand' : 'hover:bg-stand/60'}`}
       >
-        {active && <span aria-hidden className="absolute inset-y-2 left-0 w-0.5 rounded-r bg-chalk" />}
+        {/* The book's accent on the left edge; the selected row's white bar replaces it. */}
+        <span
+          aria-hidden
+          className={`absolute inset-y-2 left-0 w-0.5 rounded-r ${active ? 'bg-chalk' : ''}`}
+          style={active ? undefined : { backgroundColor: BOOK_ACCENT[price.book], opacity: open ? 0.9 : 0.35 }}
+        />
         <span className="pt-0.5">
-          <BookMark book={price.book} />
+          <BookMark book={price.book} tinted={open} />
         </span>
         <span className="min-w-0">
           <span className="block truncate font-medium">{price.eventName}</span>
@@ -277,7 +282,11 @@ export function CompactSignalRow({
         active ? 'bg-stand' : 'hover:bg-stand/60'
       }`}
     >
-      {active && <span aria-hidden className="absolute inset-y-1 left-0 w-0.5 rounded-r bg-chalk" />}
+      <span
+        aria-hidden
+        className={`absolute inset-y-1 left-0 w-0.5 rounded-r ${active ? 'bg-chalk' : ''}`}
+        style={active ? undefined : { backgroundColor: BOOK_ACCENT[price.book], opacity: open ? 0.9 : 0.35 }}
+      />
       <button
         type="button"
         onClick={onSelect}
@@ -286,7 +295,7 @@ export function CompactSignalRow({
       >
         {/* Phones: two lines. */}
         <span className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 lg:hidden">
-          <BookMark book={price.book} size="sm" />
+          <BookMark book={price.book} size="sm" tinted={open} />
           <span className="truncate font-medium">{price.eventName}</span>
           <span data-flip={`odds-${signal.id}-${price.book}`} className={`font-display text-[1.05rem] font-bold tnum transition-colors duration-700 ${oddsTone}`}>
             <NumberFlow value={price.odds} locales="lt-LT" format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
@@ -302,7 +311,7 @@ export function CompactSignalRow({
         </span>
         {/* Desktop: one line, the columns of the header above the list. */}
         <span className={`hidden items-center gap-x-2 lg:grid ${COMPACT_COLUMNS}`}>
-          <BookMark book={price.book} size="sm" />
+          <BookMark book={price.book} size="sm" tinted={open} />
           <span className="truncate text-haze">{sportName(signal.sport)}</span>
           <span className="flex min-w-0 items-center gap-1.5">
             {pulse === 'new' && <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-pitch" />}

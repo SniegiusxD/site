@@ -829,7 +829,7 @@ function BetRow({ bet, onChanged }: { bet: ActiveBet; onChanged: () => void }) {
   }
   return (
     <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 px-4 py-4 sm:px-5">
-      <span className="pt-0.5">{book ? <BookMark book={book} /> : <span className="block size-8" />}</span>
+      <span className="pt-0.5">{book ? <BookMark book={book} tinted /> : <span className="block size-8" />}</span>
       <div className="min-w-0">
         <p className="truncate font-medium">{bet.match.replace(' vs ', ' – ')}</p>
         <p className="truncate text-[0.9rem] text-haze">
