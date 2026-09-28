@@ -377,6 +377,7 @@ export function SignalDetail({
               </span>
               <input
                 id={stakeId}
+                data-display-number
                 inputMode="numeric"
                 value={stakeText}
                 onChange={(event) => {

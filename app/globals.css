@@ -272,8 +272,10 @@
 
 /* The app is a dashboard: the landing's 18px reading size makes it need a zoom
    step to fit. 16px everywhere inside it. */
+/* A big-number field (data-display-number, e.g. the stake) keeps its own size:
+   this rule is unlayered, so it would beat the field's text-6xl utility. */
 .app-dense,
-.app-dense input,
+.app-dense input:not([data-display-number]),
 .app-dense select,
 .app-dense textarea {
   font-size: 1rem;
