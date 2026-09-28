@@ -9,10 +9,22 @@ import { pollPulses, type Pulse } from '@/lib/price-movement'
 import { ApiError, fetchJson } from '@/lib/use-api'
 
 const POLL_MS = 60_000
+/**
+ * A visible tab nobody touches for this long stops polling until someone moves,
+ * types, scrolls or taps: each poll wakes the database, and on the free tier a
+ * forgotten open board kept it from ever sleeping (Neon compute at 80 %, 09-28).
+ */
+export const IDLE_AFTER_MS = 15 * 60_000
+
+/** Pure: may a timed poll run now? */
+export function shouldPoll(visible: boolean, lastActivityAt: number, now: number) {
+  return visible && now - lastActivityAt < IDLE_AFTER_MS
+}
 
 /**
  * The live board and the member's recent bets, kept fresh: a poll every
- * minute while the tab is visible, one more the moment it comes back, and a
+ * minute while the tab is visible and in use, one more the moment it comes
+ * back (or someone returns after 15 idle minutes), and a
  * clock tick every 30 s so "starts in" labels move. A 401/402 means access
  * changed elsewhere, so the server page is asked again.
  */
@@ -70,15 +82,36 @@ export function useLiveBoard(initial: LiveBoard, initialBets: BoardBet[]) {
   useEffect(() => {
     // A background tab does not need fresh odds: it polls again the moment it
     // comes back, so a hidden board stops asking.
-    const poll = window.setInterval(() => document.visibilityState === 'visible' && refresh(), POLL_MS)
+    let lastActivity = Date.now()
+    let idle = false
+    const poll = window.setInterval(() => {
+      if (shouldPoll(document.visibilityState === 'visible', lastActivity, Date.now())) refresh()
+      else idle = true
+    }, POLL_MS)
+    // Coming back after an idle stretch refreshes at once instead of waiting a minute.
+    const onActivity = () => {
+      lastActivity = Date.now()
+      if (idle && document.visibilityState === 'visible') {
+        idle = false
+        refresh()
+      }
+    }
+    const activity = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const
+    activity.forEach((type) => window.addEventListener(type, onActivity, { passive: true }))
     const tick = window.setInterval(() => document.visibilityState === 'visible' && setNow(new Date()), 30_000)
-    const onFocus = () => document.visibilityState === 'visible' && refresh()
+    const onFocus = () => {
+      if (document.visibilityState !== 'visible') return
+      lastActivity = Date.now()
+      idle = false
+      refresh()
+    }
     document.addEventListener('visibilitychange', onFocus)
     // Back online: fresh prices now, not at the next minute.
     window.addEventListener('online', onFocus)
     return () => {
       window.clearInterval(poll)
       window.clearInterval(tick)
+      activity.forEach((type) => window.removeEventListener(type, onActivity))
       document.removeEventListener('visibilitychange', onFocus)
       window.removeEventListener('online', onFocus)
     }
