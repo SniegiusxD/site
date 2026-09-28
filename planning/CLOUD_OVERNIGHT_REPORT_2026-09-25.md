@@ -185,6 +185,30 @@ committed.
   - `/rezultatai` showed "Sportas" and "Rinka" tables with headers and no rows
     when no group has 10 signals; each now says so in one line. "1 signalų" and
     the list's count use the right plural form (`ff1cba2`).
+- **A sweep by bug class, across every page at 390 and 1440 px:**
+  - No page scrolls sideways, and no page logs a real console error (the only
+    404 is Vercel's analytics script, which exists only on Vercel). No tap
+    target fails WCAG 2.2's size rule.
+  - Keyboard focus was invisible on the stake, onboarding bankroll and
+    calculator fields and on the calendar's days; each now shows an outline
+    (`49473e0`).
+  - Every live number followed by a plural was checked. After "iš", counts
+    ending in 1 need the singular ("iš 21 signalo"). A new `ltGenitive`
+    (unit-tested) fixes four places, and `ltPlural` fixes two counts on the
+    owner page (`75e56ed`).
+  - The month dialog's day counts lived only in `title` tooltips, which phones
+    never show. A drag or tap across the bars now reads them out, and the bars
+    grow by transform instead of height (`e0aebdd`). Six more bars animated
+    `width` and now use `scaleX` (`b4c16b6`).
+  - With a local 100-character fixture name, the signal detail cut the name
+    off on phones and pushed the copy buttons off screen. It now wraps, and
+    long names get a smaller size with the buttons below (`4fb7ff9`).
+  - Eight public pages, the landing among them, had no canonical, and five
+    shared one description. A public spec test now holds both (`4bff11d`).
+  - Checked and fine: every member page shows an error with a retry when its
+    data fails to load. The board's daily count cannot drop to a false "0",
+    because its bets come from the server and a failed refresh keeps the last
+    list.
 
 ## Every new moment, and how to try it
 
