@@ -1,6 +1,7 @@
 'use client'
 
-import { Lock, Plus, X } from 'lucide-react'
+import { Lock, Plus, SlidersHorizontal, X } from 'lucide-react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { formatEdge } from '@/lib/format-lt'
 import { FREE_MAX_EDGE } from '@/lib/free-tier'
@@ -125,6 +126,7 @@ export function FilterChips({ freeTier, counts, onBoard }: { freeTier: boolean; 
   const prefs = account.preferences
   const { drift, sports: sportsPicked, markets, periods, setDrift, setSportsPicked, setMarkets, setPeriods } = useBoardView()
   const activeDrift = freeTier ? 'all' : drift
+  const [open, setOpen] = useState(false)
 
   function toggleBook(book: BookName) {
     const next = prefs.books.includes(book) ? prefs.books.filter((b) => b !== book) : BOOKS.filter((b) => b === book || prefs.books.includes(b))
@@ -138,8 +140,31 @@ export function FilterChips({ freeTier, counts, onBoard }: { freeTier: boolean; 
   const marketsValue = listLabel(markets, marketLabel, 'visos rinkos')
   const periodsValue = listLabel(periods, periodLabel, 'visi periodai')
 
+  // Filters that narrow the board beyond the always-set time and value limits.
+  const narrowing = [
+    prefs.books.length < BOOKS.length, sportsPicked.length > 0, band?.key !== 'all',
+    markets.length > 0, activeDrift !== 'all', periods.length > 0,
+  ].filter(Boolean).length
+
   return (
     <div className="mt-2.5 flex flex-wrap gap-1.5">
+      {/* In a narrow board column (phones, the desktop list) the eight chips took
+          four rows and pushed every signal below the fold, so they fold away there. */}
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-[0.9rem] font-medium transition-colors @md:hidden ${
+          open || narrowing ? 'bg-chalk text-night' : 'bg-stand text-chalk hairline hover:bg-stand-hover'
+        }`}
+      >
+        <SlidersHorizontal className="size-4" aria-hidden />
+        Filtrai{narrowing ? ` (${narrowing})` : ''}
+        <span className={open || narrowing ? 'text-night/70' : 'text-haze'}>
+          {prefs.maxHoursToStart} val. · {freeTier ? `iki ${formatEdge(FREE_MAX_EDGE)}` : `${Math.round(prefs.minEdge * 100)} %+`}
+        </span>
+      </button>
+      <div className={open ? 'contents' : 'hidden @md:contents'}>
       <FilterChip label="Kontoros" value={prefs.books.length < BOOKS.length ? booksValue : 'Kontoros'} active={prefs.books.length < BOOKS.length}>
         {BOOKS.map((book) => (
           <FilterOption
@@ -273,6 +298,7 @@ export function FilterChips({ freeTier, counts, onBoard }: { freeTier: boolean; 
           />
         ))}
       </FilterChip>
+      </div>
     </div>
   )
 }
