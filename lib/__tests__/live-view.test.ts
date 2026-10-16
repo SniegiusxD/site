@@ -161,6 +161,9 @@ describe('labels', () => {
   it('turns leftover English market words into Lithuanian', () => {
     expect(ltSelection('Mountfield HK regulation moneyline')).toBe('Mountfield HK laimės per pagrindinį laiką')
     expect(ltSelection('Soles Mexicali moneyline')).toBe('Soles Mexicali laimės')
+    expect(ltSelection('Draw 1X2')).toBe('Lygiosios (1X2)')
+    expect(ltSelection('Draw regulation moneyline')).toBe('Lygiosios per pagrindinį laiką')
+    expect(ltSelection('Gillingham 1X2')).toBe('Gillingham laimės (1X2)')
     expect(ltSelection('Handikapas: Soles Mexicali -2.5')).toBe('Handikapas: Soles Mexicali −2,5')
   })
 

@@ -172,6 +172,10 @@ export function ltSelection(text: string): string {
   return ltNumbers(
     text
       .replace(INTERPOLATED, '')
+      // The draw arrives like a team name ("Draw 1X2", "Draw regulation moneyline").
+      .replace(/^Draw\s+regulation moneyline\b/i, 'Lygiosios per pagrindinį laiką')
+      .replace(/^Draw\s+1X2\b/i, 'Lygiosios (1X2)')
+      .replace(/\s+1X2$/i, ' laimės (1X2)')
       .replace(/\s+regulation moneyline\b/i, ' laimės per pagrindinį laiką')
       .replace(/\s+moneyline\b/i, ' laimės'),
   )

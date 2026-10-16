@@ -453,8 +453,8 @@ export function SignalBoard({
               <SavedViewsChip />
               <SortChip freeTier={freeTier} />
             </div>
-            </div>
             <FilterChips freeTier={freeTier} counts={counts} onBoard={onBoard} />
+            </div>
 
             {saveError && <p className="mt-3 text-[0.9rem] text-brick">{saveError}</p>}
           </div>
