@@ -20,10 +20,22 @@ import { summarize } from '@/lib/public-results'
 import { heroRecordSignals } from '@/lib/hero-record'
 import { loadPastSignals } from '@/lib/public-results-store'
 import { loadPublicStats } from '@/lib/public-stats'
+import { brand } from '@/lib/brand'
 
 // The title and description come from the root layout; only the canonical is
 // the landing's own.
 export const metadata: Metadata = { alternates: { canonical: '/' } }
+
+// Lets search engines show the brand as the site's name. The URL follows the
+// production address, like metadataBase, so it moves with the domain.
+const BASE = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'http://localhost:3100'
+const SITE_LD = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'WebSite', name: brand.name, url: BASE, inLanguage: 'lt' },
+    { '@type': 'Organization', name: brand.name, url: BASE, logo: `${BASE}/apple-icon.png`, description: brand.description },
+  ],
+}
 
 // The live numbers read the database; rebuild the page at most every 5 minutes.
 export const revalidate = 300
@@ -34,6 +46,7 @@ export default async function LandingPage() {
     <>
       <SiteHeader />
       <main>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_LD) }} />
         <Hero stats={stats} record={heroRecordSignals(past, new Date())} />
         <EvidenceStrip />
         <OddsTicker />

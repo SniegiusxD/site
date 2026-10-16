@@ -4,7 +4,7 @@ import NumberFlow from '@number-flow/react'
 import { FlipFrom } from './board/flip-from'
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/lib/use-reduced-motion'
-import { AlertTriangle, ArrowLeft, Clock, Loader2, Minus, Plus } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Clock, ExternalLink, Loader2, Minus, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -20,6 +20,7 @@ import { agoLabel, clockLabel, eventLabel, isInterpolatedLabel, kickoffLabel, lt
 import { sportName } from '@/lib/sports-lt'
 import { trackBet } from '@/lib/track-bet'
 import { useAccount } from './account-provider'
+import { safeBookEventUrl } from '@/lib/book-event-link'
 import type { ResultSummary } from '@/lib/public-results'
 import { marketLabel } from '@/lib/signal-taxonomy'
 import { useApi } from '@/lib/use-api'
@@ -92,6 +93,7 @@ export function SignalDetail({
   const [error, setError] = useState<string | null>(null)
 
   const open = signal.status === 'open'
+  const bookEventUrl = safeBookEventUrl(price.book, price.eventUrl)
   const valueGone = price.edge <= 0
   const setStakeValue = (value: number, own = true) => {
     if (own) setOwnStake(true)
@@ -251,6 +253,19 @@ export function SignalDetail({
             )}
           </div>
         </div>
+        {open && bookEventUrl && (
+          <a
+            href={bookEventUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => reportExecution('open_book', signal, price)}
+            className="mt-4 flex h-12 w-full items-center justify-center gap-2.5 rounded-xl bg-night/60 font-semibold text-chalk transition-colors hairline hover:bg-rail"
+          >
+            <BookMark book={price.book} size="sm" />
+            Atidaryti {price.book}
+            <ExternalLink className="size-4" aria-hidden />
+          </a>
+        )}
       </div>
 
       {movement && Math.abs(edgeOf(movement.first, signal.fairOdds) - price.edge) >= 0.005 && (

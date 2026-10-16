@@ -1,15 +1,16 @@
+import Image from 'next/image'
 import type { BookName } from '@/lib/landing-signals'
 
 /**
- * A neutral short mark for a book: letters on our own surface, never the book's
- * logo. Lithuanian law allows an operator's trademark only in its own narrow ad
- * format (LPT guidance 2025-06-30), so the logos were removed on 2026-09-25.
- * Squares of fixed size, so a row of them lines up and nothing shifts.
+ * Each book's own app mark, taken from that book's own site (7bet.lt/icon.svg,
+ * topsport.lt favicon, betsson.lt app icon). Restored 2026-10-16 at the owner's
+ * request after the 09-25 removal; the owner does not treat the LPT ad guidance
+ * as a blocker. Squares of fixed size, so a row of them lines up.
  */
-const BOOK_INITIALS: Record<BookName, string> = {
-  '7BET': '7B',
-  TopSport: 'TS',
-  Betsson: 'BS',
+const BOOK_LOGO: Record<BookName, { src: string; ground: string }> = {
+  '7BET': { src: '/books/7bet.svg', ground: 'bg-[#242731]' },
+  TopSport: { src: '/books/topsport.png', ground: 'bg-white' },
+  Betsson: { src: '/books/betsson.png', ground: 'bg-[#f47b20]' },
 }
 
 /**
@@ -26,26 +27,17 @@ export const BOOK_ACCENT: Record<BookName, string> = {
 }
 
 export function BookMark({ book, size = 'md', tinted = false }: { book: BookName; size?: 'sm' | 'md' | 'lg'; tinted?: boolean }) {
+  const logo = BOOK_LOGO[book]
   const box = size === 'sm' ? 'size-6' : size === 'lg' ? 'size-10' : 'size-8'
-  // Drawn as SVG text: the mark is decorative (the name is written next to it)
-  // and sits inside cards that are deliberately faded in stacks.
+  // Decorative: the book's name is always written next to the mark.
   return (
-    <svg
+    <span
       aria-hidden
-      viewBox="0 0 32 32"
-      className={`shrink-0 rounded-[7px] bg-night hairline ${box}`}
-      style={tinted ? { boxShadow: `inset 0 0 0 1.5px ${BOOK_ACCENT[book]}` } : undefined}
+      className={`inline-grid shrink-0 place-items-center overflow-hidden rounded-[7px] ${box} ${logo.ground}`}
+      style={tinted ? { boxShadow: `0 0 0 1.5px ${BOOK_ACCENT[book]}` } : undefined}
     >
-      <text
-        x="16"
-        y="16"
-        dominantBaseline="central"
-        textAnchor="middle"
-        className="fill-chalk font-semibold"
-        style={{ fontSize: 12, letterSpacing: '-0.02em', ...(tinted ? { fill: BOOK_ACCENT[book] } : {}) }}
-      >
-        {BOOK_INITIALS[book]}
-      </text>
-    </svg>
+      {/* Images are unoptimized (next.config.mjs), so this renders a plain lazy <img>; the box fixes its size. */}
+      <Image src={logo.src} alt="" width={40} height={40} loading="lazy" className="size-full" />
+    </span>
   )
 }
