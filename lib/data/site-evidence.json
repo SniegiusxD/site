@@ -1,30 +1,30 @@
 {
-  "averageOdds": 2.0121,
+  "averageOdds": 2.0321,
   "beatsZero": false,
   "byBook": {
-    "7BET": 1433,
-    "Betsson": 564,
-    "TopSport": 867
+    "7BET": 2289,
+    "Betsson": 761,
+    "TopSport": 1298
   },
-  "clvMean": 0.01314,
-  "clvMedian": 0.008,
+  "clvMean": 0.01235,
+  "clvMedian": 0.01073,
   "firstDate": "2026-09-09",
-  "fixtures": 957,
-  "fixturesBeatingClose": 515,
-  "fixturesWithClosing": 879,
-  "generatedAt": "2026-09-19",
-  "lastDate": "2026-09-19",
+  "fixtures": 1576,
+  "fixturesBeatingClose": 886,
+  "fixturesWithClosing": 1455,
+  "generatedAt": "2026-10-16",
+  "lastDate": "2026-09-27",
   "outcomes": {
-    "half_lost": 7,
-    "half_won": 4,
-    "lost": 1342,
-    "push": 71,
-    "won": 1440
+    "half_lost": 10,
+    "half_won": 8,
+    "lost": 1986,
+    "push": 117,
+    "won": 2227
   },
-  "roi": -0.00925,
-  "roiHigh": 0.05075,
-  "roiLow": -0.06925,
-  "signals": 2864,
-  "signalsPerFixture": 2.993,
+  "roi": 0.02498,
+  "roiHigh": 0.07283,
+  "roiLow": -0.02286,
+  "signals": 4348,
+  "signalsPerFixture": 2.759,
   "source": "settlement_output/ledger.json joined to data/clv.db surfaced_bets by signal_id; scope=published; site books only; flat stakes; one fixture counts once"
 }
