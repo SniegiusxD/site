@@ -26,6 +26,8 @@ const request = (body: unknown) => new Request('http://localhost/api/owner/users
   headers: { 'content-type': 'application/json' },
   body: JSON.stringify(body),
 })
+// A week ahead: the route refuses a grant ending in the past (a fixed date expired on 2026-10-01).
+const UNTIL = new Date(Date.now() + 7 * 86_400_000).toISOString()
 const context = (action = 'grant') => ({ params: Promise.resolve({ id: 'member-1', action }) })
 
 describe('owner user actions route', () => {
@@ -38,7 +40,7 @@ describe('owner user actions route', () => {
 
   it('is a 404 and does not mutate for anyone except an owner', async () => {
     const { POST } = await import('@/app/api/owner/users/[id]/[action]/route')
-    const response = await POST(request({ reason: 'support', until: '2026-10-01T00:00:00Z' }), context())
+    const response = await POST(request({ reason: 'support', until: UNTIL }), context())
     expect(response.status).toBe(404)
     expect(state.applied).toEqual([])
   })
@@ -48,7 +50,7 @@ describe('owner user actions route', () => {
     state.owner = true
     state.limited = new Response('limited', { status: 429 })
     const { POST } = await import('@/app/api/owner/users/[id]/[action]/route')
-    expect((await POST(request({ reason: 'support', until: '2026-10-01T00:00:00Z' }), context())).status).toBe(429)
+    expect((await POST(request({ reason: 'support', until: UNTIL }), context())).status).toBe(429)
     expect(state.applied).toEqual([])
   })
 
@@ -56,7 +58,7 @@ describe('owner user actions route', () => {
     state.user = { id: 'owner-1', email: 'owner@example.lt' }
     state.owner = true
     const { POST } = await import('@/app/api/owner/users/[id]/[action]/route')
-    const response = await POST(request({ reason: ' support case ', until: '2026-10-01T00:00:00Z' }), context())
+    const response = await POST(request({ reason: ' support case ', until: UNTIL }), context())
     expect(response.status).toBe(200)
     expect(state.applied).toHaveLength(1)
     expect(state.applied[0][0]).toBe('member-1')
