@@ -14,7 +14,11 @@ allowBuilds:
 # Security floors for transitive packages (pnpm audit --prod, 2026-09-24):
 # browserslist and baseline-browser-mapping come in through next/styled-jsx,
 # vitest through better-auth. Raise or remove when the parents catch up.
+# 2026-10-16: sharp (librsvg advisory) and source-map-js (event-loop DoS)
+# come in through next.
 overrides:
+  sharp: '^0.35.5'
+  source-map-js: '^1.2.2'
   browserslist: '^4.28.7'
   baseline-browser-mapping: '^2.11.0'
   vitest: '^4.1.11'
