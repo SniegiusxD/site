@@ -321,7 +321,24 @@ export function SignalDetail({
 
       <section className="mt-4 rounded-2xl bg-stand p-5 hairline sm:p-6" aria-label="Kainos visose kontorose">
         <h3 className="text-[1.5rem]">Kainos visose kontorose</h3>
-        <div className="mt-5 space-y-4">
+        {/* Names the white line, above it, in the bars' own column. */}
+        <div aria-hidden className="mt-4 grid grid-cols-[auto_5.25rem_minmax(0,1fr)_3.25rem] items-end gap-3">
+          <span className="invisible">
+            <BookMark book={price.book} size="sm" />
+          </span>
+          <span />
+          <span className="relative block h-9">
+            <span
+              className="absolute bottom-0 flex flex-col items-center text-center leading-tight whitespace-nowrap"
+              style={{ left: `${fairAt}%`, transform: `translateX(${fairAt > 80 ? '-100%' : fairAt < 20 ? '0' : '-50%'})` }}
+            >
+              <span className="text-[0.75rem] text-haze">tikroji</span>
+              <span className="text-[0.9rem] font-semibold text-chalk tnum">{formatOdds(signal.fairOdds)}</span>
+            </span>
+          </span>
+          <span />
+        </div>
+        <div className="mt-2 space-y-4">
           {prices.map((row) => {
             const rowAt = at(row.odds)
             const clears = row.odds > signal.fairOdds
@@ -361,7 +378,7 @@ export function SignalDetail({
           ))}
         </div>
         <p className="mt-5 border-t border-rail pt-4 text-[0.9rem] text-haze">
-          Balta linija: tikroji kaina {formatOdds(signal.fairOdds)}.
+          Balta linija — tikroji kaina {formatOdds(signal.fairOdds)}: viskas, kas žaliai už jos, yra vertė.
           {signal.pinnacleOdds ? ` Pinnacle su marža siūlo ${formatOdds(signal.pinnacleOdds)}.` : ''}
         </p>
       </section>

@@ -87,13 +87,19 @@ export async function loadMovement(signalIds: string[]): Promise<MovementMap> {
   return map
 }
 
-/** Every recorded price for one signal, oldest first: the detail sparkline. */
-export async function loadSeries(signalId: string): Promise<Array<{ book: BookName; odds: number; at: string }>> {
+/** Every recorded price for one signal, oldest first, with the fair price it was measured against: the detail chart. */
+export async function loadSeries(signalId: string): Promise<Array<{ book: BookName; odds: number; fair: number; at: string }>> {
   await ensureAppSchema()
-  const { rows } = await pool.query<{ book: string; odds: number; capturedAt: Date }>(
-    `SELECT book, odds, "capturedAt" FROM price_observation WHERE "signalId" = $1 ORDER BY "capturedAt"`,
+  const { rows } = await pool.query<{ book: string; odds: number; edge: number; capturedAt: Date }>(
+    `SELECT book, odds, edge, "capturedAt" FROM price_observation WHERE "signalId" = $1 ORDER BY "capturedAt"`,
     [signalId],
   )
-  return rows.map((row) => ({ book: row.book as BookName, odds: Number(row.odds), at: row.capturedAt.toISOString() }))
+  return rows.map((row) => ({
+    book: row.book as BookName,
+    odds: Number(row.odds),
+    // edge = odds / fair - 1, so the fair price at that scan is recoverable.
+    fair: Number(row.odds) / (1 + Number(row.edge)),
+    at: row.capturedAt.toISOString(),
+  }))
 }
 
