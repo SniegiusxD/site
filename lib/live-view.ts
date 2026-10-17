@@ -193,3 +193,25 @@ export function isStale(cycleAt: string | undefined, now: Date): boolean {
   if (!cycleAt) return true
   return now.getTime() - new Date(cycleAt).getTime() > STALE_AFTER_MINUTES * 60_000
 }
+
+const vilniusDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Vilnius', year: 'numeric', month: '2-digit', day: '2-digit' })
+
+/** The timeline layout's sections: open rows grouped by how soon the match starts (Vilnius calendar days). Empty groups are dropped. */
+export function timelineGroups(rows: BoardRow[], now: Date): Array<{ key: string; label: string; rows: BoardRow[] }> {
+  const today = vilniusDay.format(now)
+  const tomorrow = vilniusDay.format(new Date(now.getTime() + 86_400_000))
+  const groups = [
+    { key: 'hour', label: 'Prasideda per valandą', rows: [] as BoardRow[] },
+    { key: 'soon', label: 'Per 1–3 valandas', rows: [] as BoardRow[] },
+    { key: 'today', label: 'Vėliau šiandien', rows: [] as BoardRow[] },
+    { key: 'tomorrow', label: 'Rytoj', rows: [] as BoardRow[] },
+    { key: 'later', label: 'Vėliau', rows: [] as BoardRow[] },
+  ]
+  for (const row of rows) {
+    const minutes = (new Date(row.signal.startsAt).getTime() - now.getTime()) / 60_000
+    const day = vilniusDay.format(new Date(row.signal.startsAt))
+    const index = minutes <= 60 ? 0 : minutes <= 180 ? 1 : day === today ? 2 : day === tomorrow ? 3 : 4
+    groups[index].rows.push(row)
+  }
+  return groups.filter((group) => group.rows.length > 0)
+}

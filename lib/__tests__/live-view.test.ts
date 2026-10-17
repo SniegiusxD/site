@@ -11,6 +11,7 @@ import {
   linkedRow,
   ltNumbers,
   ltSelection,
+  timelineGroups,
   playablePrice,
   timeUntilLabel,
 } from '@/lib/live-view'
@@ -231,5 +232,18 @@ describe('compactUntilLabel', () => {
   it('counts days past a day', () => {
     expect(compactUntilLabel(at(24 * 60), NOW)).toBe('1 d.')
     expect(compactUntilLabel(at(28 * 60 + 10), NOW)).toBe('1 d. 4 val.')
+  })
+})
+
+describe('timelineGroups', () => {
+  const row = (startsAt: string) => ({ signal: { startsAt } as never, price: {} as never })
+  it('groups by time to kickoff and Vilnius day, dropping empty groups', () => {
+    const now = new Date('2026-10-17T10:00:00Z') // 13:00 in Vilnius
+    const groups = timelineGroups(
+      [row('2026-10-17T10:30:00Z'), row('2026-10-17T12:00:00Z'), row('2026-10-17T18:00:00Z'), row('2026-10-18T15:00:00Z'), row('2026-10-20T15:00:00Z'), row('2026-10-17T10:45:00Z')],
+      now,
+    )
+    expect(groups.map((g) => [g.key, g.rows.length])).toEqual([['hour', 2], ['soon', 1], ['today', 1], ['tomorrow', 1], ['later', 1]])
+    expect(timelineGroups([row('2026-10-18T09:00:00Z')], now).map((g) => g.key)).toEqual(['tomorrow'])
   })
 })

@@ -42,13 +42,17 @@ test('member can onboard, inspect a signal, record it, and open tracker and help
 
     // Compact board: one line per signal, remembered, and a row still opens its detail.
     await page.goto('/signalai')
+    const layoutPicker = page.getByRole('button', { name: /^Išdėstymas:/ })
+    await layoutPicker.click()
     await page.getByRole('radio', { name: 'Kompaktiškas' }).click()
     await page.reload()
-    await expect(page.getByRole('radio', { name: 'Kompaktiškas' })).toHaveAttribute('aria-checked', 'true')
+    await expect(layoutPicker).toContainText('Kompaktiškas')
+    await page.keyboard.press('Escape')
     const compactRow = page.getByRole('region', { name: 'Signalų sąrašas' }).getByRole('listitem').filter({ hasText: 'Vilniaus Testas' })
     await compactRow.getByRole('button').first().click()
     await expect(page).toHaveURL(/signal=ci-signal-1/)
     await expect(page.getByText('Kodėl šis statymas').first()).toBeVisible()
+    await layoutPicker.click()
     await page.getByRole('radio', { name: 'Įprastas' }).click()
 
     // The board must not shift while it loads or is scrolled, at phone and desktop width.
@@ -120,8 +124,13 @@ test('member can onboard, inspect a signal, record it, and open tracker and help
     await expect(monthDialog).toHaveCount(0)
     await expect(month).toBeFocused()
 
-    await page.getByRole('radio', { name: 'Kompaktiškas' }).click()
-    await axe('compact board')
+    for (const layout of ['Kompaktiškas', 'Lentelė: visos kontoros', 'Laiko juosta', 'Fokusas: po vieną']) {
+      await layoutPicker.click()
+      await page.getByRole('radio', { name: layout }).click()
+      await page.keyboard.press('Escape')
+      await axe(`${layout} board`)
+    }
+    await layoutPicker.click()
     await page.getByRole('radio', { name: 'Įprastas' }).click()
 
     await page.setViewportSize(PERF_VIEWPORTS.phone)
