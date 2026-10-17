@@ -318,12 +318,13 @@ export function BetsView({ closeTrust }: { closeTrust?: TrustLabel }) {
           <MoneyFlight path={flight} onLanded={land} />
           <Glossary />
           <StatGrid stats={stats} bets={scoped} closeTrust={closeTrust} />
+          {/* The member's own bets come right after the numbers: they are what the page is opened for. */}
+          <WorkQueueNotice bets={scoped} />
+          <History pending={pending} settled={settled} tab={tab} onTab={setTab} onChanged={load} />
           <ValueCard series={series} stats={stats} />
           <ProfitCalendar bets={scoped} />
-          <WorkQueueNotice bets={scoped} />
           <EquityChart bets={scoped} />
           <Breakdowns bets={scoped} />
-          <History pending={pending} settled={settled} tab={tab} onTab={setTab} onChanged={load} />
         </div>
       )}
     </main>

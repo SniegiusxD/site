@@ -49,6 +49,7 @@ import { BetFlight, useBetFlight } from './board/bet-flight'
 import { LockedStrip } from './board/locked-strip'
 import { PhoneSheet } from './board/phone-sheet'
 import { EmptyState } from './empty-state'
+import { useListKeys } from './board/use-list-keys'
 import { useLiveBoard } from './board/use-live-board'
 import { pinKeyOf, SEEN_KEY, type SortKey, useBoardView, useDensity, useHiddenSignals, usePinned } from './board/use-board-preferences'
 import { EASE, SPRING } from '@/lib/motion'
@@ -242,6 +243,8 @@ export function SignalBoard({
   // then it is an ordinary selection that a re-sort or a poll does not move.
   if (desktop && !selected && visible[0]) setSelected(visible[0])
 
+  useListKeys(desktop && !focus, visible, selectedRow, setSelected)
+
   // After the first render the address follows the selection, so a refresh or
   // a copied link opens the same signal.
   useEffect(() => {
@@ -417,6 +420,13 @@ export function SignalBoard({
                 <>
                   , geriausia vertė <span className="font-semibold text-floodlight">{formatEdge(best)}</span>
                 </>
+              )}
+              {!focus && visible.length > 1 && (
+                <span className="text-haze-dim max-lg:hidden">
+                  {' · '}
+                  <kbd className="rounded border border-rail px-1 font-sans text-[0.8rem]">↑</kbd>{' '}
+                  <kbd className="rounded border border-rail px-1 font-sans text-[0.8rem]">↓</kbd> naršyti
+                </span>
               )}
             </p>
 
