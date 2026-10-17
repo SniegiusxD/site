@@ -421,13 +421,6 @@ export function SignalBoard({
                   , geriausia vertė <span className="font-semibold text-floodlight">{formatEdge(best)}</span>
                 </>
               )}
-              {!focus && visible.length > 1 && (
-                <span className="text-haze-dim max-lg:hidden">
-                  {' · '}
-                  <kbd className="rounded border border-rail px-1 font-sans text-[0.8rem]">↑</kbd>{' '}
-                  <kbd className="rounded border border-rail px-1 font-sans text-[0.8rem]">↓</kbd> naršyti
-                </span>
-              )}
             </p>
 
             <DailyTarget
@@ -497,6 +490,14 @@ export function SignalBoard({
               onBoard={onBoard}
               sortChip={<SortChip freeTier={freeTier} />}
               savedChip={<SavedViewsChip />}
+              hint={
+                !focus && visible.length > 1 ? (
+                  <span title="Naršyk signalus rodyklėmis ↑ ↓ (arba j, k)" className="ml-auto flex items-center gap-1 self-center text-[0.8rem] text-haze-dim max-lg:hidden">
+                    <kbd className="rounded border border-rail px-1 font-sans">↑</kbd>
+                    <kbd className="rounded border border-rail px-1 font-sans">↓</kbd>
+                  </span>
+                ) : null
+              }
             />
             </div>
 

@@ -290,36 +290,6 @@ export function SignalDetail({
 
       {/* The reasoning in the member's own terms, built from this signal's own
           numbers rather than a stock sentence. */}
-      <section className="mt-4 rounded-2xl bg-stand p-5 hairline sm:p-6" aria-label="Kodėl šis statymas">
-        <h3 className="text-[1.5rem]">Kodėl šis statymas</h3>
-        <ul className="mt-3 grid gap-2 text-[0.95rem] text-haze">
-          <li>
-            Pinnacle kaina be maržos yra <span className="font-semibold text-chalk tnum">{formatOdds(signal.fairOdds)}</span>, tai yra{' '}
-            <span className="font-semibold text-chalk tnum">{formatPercent(signal.fairProb, 1)}</span> tikimybė.
-          </li>
-          <li>
-            {price.book} siūlo <span className="font-semibold text-chalk tnum">{formatOdds(price.odds)}</span> — už tą patį įvykį moka{' '}
-            <span className="font-semibold text-floodlight tnum">{formatEdge(price.edge)}</span> daugiau, nei jis vertas.
-          </li>
-          <li>
-            Iš {formatEuro(prefs.bankroll)} bankrollo tai{' '}
-            <span className="font-semibold text-chalk tnum">{formatEuro(sizing.suggested)}</span>{' '}
-            {prefs.fixedStake ? 'pagal tavo fiksuotą sumą' : `pagal ${KELLY_WORDS[prefs.kellyFraction] ?? 'pasirinktą dalį'} Kelly`}
-            {sizing.suggested < sizing.kelly - 0.005 ? ', apkirpta pagal tavo limitą arba jau pastatytą sumą' : ''}.
-          </li>
-          <li>
-            {price.fairPriceInterpolated === true
-              ? 'Pinnacle šitos linijos neturi, todėl tikroji kaina interpoliuota tarp gretimų — vertė čia mažiau tiksli.'
-              : 'Pinnacle turi lygiai tokią pačią liniją, todėl palyginimas tikslus.'}
-          </li>
-          <SimilarSignals sport={signal.sport} market={signal.market} book={price.book} />
-          <li>Vertė nieko negarantuoja: ji atsiperka per šimtus statymų, o ne šitame.</li>
-        </ul>
-        <p className="mt-4 border-t border-rail pt-3.5 text-[0.85rem] text-haze-dim">
-          Tai nėra rekomendacija statyti. Tai matematinis būdas nustatyti statymus, kurių siūlomas koeficientas gali būti didesnis, nei rodo apskaičiuota tikimybė.
-        </p>
-      </section>
-
       <section className="mt-4 rounded-2xl bg-stand p-5 hairline sm:p-6" aria-label="Kainos visose kontorose">
         <h3 className="text-[1.5rem]">Kainos visose kontorose</h3>
         {/* Names the white line, above it, in the bars' own column. */}
@@ -385,6 +355,36 @@ export function SignalDetail({
       </section>
 
       <PriceHistoryChart signalId={signal.id} book={price.book} fairOdds={signal.fairOdds} />
+
+      <section className="mt-4 rounded-2xl bg-stand p-5 hairline sm:p-6" aria-label="Kodėl šis statymas">
+        <h3 className="text-[1.5rem]">Kodėl šis statymas</h3>
+        <ul className="mt-3 grid gap-2 text-[0.95rem] text-haze">
+          <li>
+            Pinnacle kaina be maržos yra <span className="font-semibold text-chalk tnum">{formatOdds(signal.fairOdds)}</span>, tai yra{' '}
+            <span className="font-semibold text-chalk tnum">{formatPercent(signal.fairProb, 1)}</span> tikimybė.
+          </li>
+          <li>
+            {price.book} siūlo <span className="font-semibold text-chalk tnum">{formatOdds(price.odds)}</span> — už tą patį įvykį moka{' '}
+            <span className="font-semibold text-floodlight tnum">{formatEdge(price.edge)}</span> daugiau, nei jis vertas.
+          </li>
+          <li>
+            Iš {formatEuro(prefs.bankroll)} bankrollo tai{' '}
+            <span className="font-semibold text-chalk tnum">{formatEuro(sizing.suggested)}</span>{' '}
+            {prefs.fixedStake ? 'pagal tavo fiksuotą sumą' : `pagal ${KELLY_WORDS[prefs.kellyFraction] ?? 'pasirinktą dalį'} Kelly`}
+            {sizing.suggested < sizing.kelly - 0.005 ? ', apkirpta pagal tavo limitą arba jau pastatytą sumą' : ''}.
+          </li>
+          <li>
+            {price.fairPriceInterpolated === true
+              ? 'Pinnacle šitos linijos neturi, todėl tikroji kaina interpoliuota tarp gretimų — vertė čia mažiau tiksli.'
+              : 'Pinnacle turi lygiai tokią pačią liniją, todėl palyginimas tikslus.'}
+          </li>
+          <SimilarSignals sport={signal.sport} market={signal.market} book={price.book} />
+          <li>Vertė nieko negarantuoja: ji atsiperka per šimtus statymų, o ne šitame.</li>
+        </ul>
+        <p className="mt-4 border-t border-rail pt-3.5 text-[0.85rem] text-haze-dim">
+          Tai nėra rekomendacija statyti. Tai matematinis būdas nustatyti statymus, kurių siūlomas koeficientas gali būti didesnis, nei rodo apskaičiuota tikimybė.
+        </p>
+      </section>
 
       {(exposure.selection.count > 0 || exposure.match.count > 0) && tracking !== 'done' && (
         <ExposureNotice exposure={exposure} kelly={sizing.kelly} remaining={sizing.remaining} />
@@ -484,7 +484,7 @@ export function SignalDetail({
         </p>
       )}
 
-      <div ref={actions} className="fixed inset-x-0 bottom-0 z-10 border-t border-rail bg-night/90 p-4 backdrop-blur-xl lg:static lg:mt-6 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+      <div ref={actions} className="fixed inset-x-0 bottom-0 z-10 border-t border-rail bg-night/90 p-4 backdrop-blur-xl lg:sticky lg:mt-6 lg:border-0 lg:bg-night/85 lg:px-0 lg:pt-3 lg:pb-4">
         {tracking === 'done' ? (
           <motion.p
             initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
