@@ -124,8 +124,13 @@ test('member can onboard, inspect a signal, record it, and open tracker and help
     await expect(monthDialog).toHaveCount(0)
     await expect(month).toBeFocused()
 
-    await page.getByRole('radio', { name: 'Kompaktiškas' }).click()
-    await axe('compact board')
+    for (const layout of ['Kompaktiškas', 'Lentelė: visos kontoros', 'Laiko juosta', 'Fokusas: po vieną']) {
+      await layoutPicker.click()
+      await page.getByRole('radio', { name: layout }).click()
+      await page.keyboard.press('Escape')
+      await axe(`${layout} board`)
+    }
+    await layoutPicker.click()
     await page.getByRole('radio', { name: 'Įprastas' }).click()
 
     await page.setViewportSize(PERF_VIEWPORTS.phone)
