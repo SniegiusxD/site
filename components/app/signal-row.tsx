@@ -103,7 +103,8 @@ export function SignalRow({
           {/* Several lines of one match are separate signals: the bet itself tells them apart. */}
           <span className="block truncate text-[0.9rem] text-chalk/85">{ltSelection(price.selectionLabel)}</span>
         </span>
-        <span className="text-right">
+        {/* Spans the meta line too: odds, value and the true price stand beside match, bet and meta. */}
+        <span className="row-span-2 text-right">
           <span
             className={`flex items-center justify-end gap-0.5 font-display text-[1.55rem] leading-none font-bold tnum transition-colors duration-700 ${
               pulse === 'up' ? 'text-pitch' : pulse === 'down' ? 'text-haze' : ''
@@ -138,7 +139,7 @@ export function SignalRow({
             </span>
           </span>
         </span>
-        <span className="col-span-2 col-start-2 mt-2 flex min-w-0 items-center gap-2 text-[0.85rem]">
+        <span className="col-start-2 row-start-2 mt-2 flex min-w-0 items-center gap-2 self-end text-[0.85rem]">
           {pulse === 'new' && <span className="shrink-0 rounded-full bg-pitch-soft px-1.5 py-0.5 text-[0.75rem] font-semibold text-pitch">Naujas</span>}
           <span className="min-w-0 truncate text-haze">
             {sportName(signal.sport)},{' '}
