@@ -473,7 +473,7 @@ function StatGrid({ stats, bets, closeTrust }: { stats: BetStats; bets: ActiveBe
   return (
     <>
     <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-rail sm:grid-cols-4">
-      <Stat label="Laimėta, pralaimėta, grąžinta">
+      <Stat label="Rezultatai" note="laimėta–pralaimėta–grąžinta">
         {stats.won}–{stats.lost}–{stats.pushed}
       </Stat>
       <Stat label="Grąža">{stats.roi === null ? '–' : formatEdge(stats.roi)}</Stat>

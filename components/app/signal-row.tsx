@@ -7,7 +7,7 @@ import { AlertTriangle, ArrowDown, ArrowUp, Check, Eye, Star, X } from 'lucide-r
 import { BOOK_ACCENT, BookMark } from '@/components/landing/book-mark'
 import { CopyButton } from '@/components/landing/copy-button'
 import { formatEdge, formatEuro, formatOdds } from '@/lib/format-lt'
-import { agoLabel, type BoardRow, compactUntilLabel, ltSelection, timeUntilLabel } from '@/lib/live-view'
+import { agoLabel, type BoardRow, compactUntilLabel, ltSelection } from '@/lib/live-view'
 import { driftOf, DRIFT_FLOOR, type Movement, type Pulse } from '@/lib/price-movement'
 import { sportName } from '@/lib/sports-lt'
 import { DURATION, EASE, SPRING } from '@/lib/motion'
@@ -121,18 +121,22 @@ export function SignalRow({
           <span className={`mt-1 block text-[0.9rem] font-semibold ${open ? 'text-floodlight' : 'text-haze-dim line-through'}`}>
             <span data-flip={`edge-${signal.id}-${price.book}`}>{formatEdge(price.edge)}</span>
           </span>
-          {moved && (
-            <span
-              className={`mt-1 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[0.75rem] font-semibold tnum ${
-                drift < 0 ? 'bg-brick-soft text-brick' : 'bg-pitch-soft text-pitch'
-              }`}
-              title={`Nuo pirmo skenavimo: ${formatOdds(movement!.first)} → ${formatOdds(movement!.last)}`}
-            >
-              {drift < 0 ? <ArrowDown className="size-3" aria-hidden /> : <ArrowUp className="size-3" aria-hidden />}
-              <span className="sr-only">{drift < 0 ? 'Kaina krito nuo ' : 'Kaina pakilo nuo '}</span>
-              {formatOdds(movement!.first)}
+          {/* The true price under the book's, as on a terminal; movement rides the same line so every row is the same height. */}
+          <span className="mt-1 flex items-center justify-end gap-1.5 text-[0.75rem] leading-tight text-haze tnum">
+            {moved && (
+              <span
+                className={`inline-flex items-center gap-0.5 rounded-full px-1 font-semibold ${drift < 0 ? 'bg-brick-soft text-brick' : 'bg-pitch-soft text-pitch'}`}
+                title={`Nuo pirmo skenavimo: ${formatOdds(movement!.first)} → ${formatOdds(movement!.last)}`}
+              >
+                {drift < 0 ? <ArrowDown className="size-3" aria-hidden /> : <ArrowUp className="size-3" aria-hidden />}
+                <span className="sr-only">{drift < 0 ? 'Kaina krito nuo ' : 'Kaina pakilo nuo '}</span>
+                {formatOdds(movement!.first)}
+              </span>
+            )}
+            <span className="whitespace-nowrap">
+              tikroji <span className="font-semibold text-chalk/90">{formatOdds(signal.fairOdds)}</span>
             </span>
-          )}
+          </span>
         </span>
         <span className="col-span-2 col-start-2 mt-2 flex min-w-0 items-center gap-2 text-[0.85rem]">
           {pulse === 'new' && <span className="shrink-0 rounded-full bg-pitch-soft px-1.5 py-0.5 text-[0.75rem] font-semibold text-pitch">Naujas</span>}
@@ -141,7 +145,7 @@ export function SignalRow({
             {open ? (
               <span className={soonMinutes(signal.startsAt, now) !== null ? 'text-warning' : undefined}>
                 <StartingSoon startsAt={signal.startsAt} now={now} />
-                {timeUntilLabel(signal.startsAt, now)}
+                po {compactUntilLabel(signal.startsAt, now)}
               </span>
             ) : signal.status === 'started' ? (
               'prasidėjo'
@@ -149,7 +153,7 @@ export function SignalRow({
               'užsidarė'
             )}
             {/* How long the price has stood: an old signal is more likely gone at the book. */}
-            {open && <> · rastas {agoLabel(signal.firstSeenAt, now)}</>}
+            {open && <span className="max-lg:hidden"> · rastas {agoLabel(signal.firstSeenAt, now)}</span>}
           </span>
           <span className="ml-auto flex shrink-0 items-center gap-2">
             {sameMatch > 0 && tracked === 0 && (

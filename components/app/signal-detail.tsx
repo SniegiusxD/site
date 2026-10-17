@@ -113,7 +113,8 @@ export function SignalDetail({
   const fairAt = at(signal.fairOdds)
 
   async function track(actual?: { odds?: number; stake?: number; placement?: 'accepted' | 'limited' | 'rejected' }) {
-    if (stake <= 0) {
+    // A typed "got a different stake" counts, even when the suggestion is 0 €.
+    if ((actual?.stake ?? stake) <= 0) {
       setError('Įrašyk sumą.')
       return
     }
@@ -510,13 +511,15 @@ export function SignalDetail({
             <button
               type="button"
               onClick={() => track()}
-              disabled={tracking === 'pending'}
+              disabled={tracking === 'pending' || stake <= 0}
               className={`flex h-14 w-full items-center justify-center gap-2 rounded-2xl text-[1.05rem] font-semibold transition-transform hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 ${
-                open ? 'bg-floodlight text-night' : 'bg-stand text-chalk hairline'
+                open && stake > 0 ? 'bg-floodlight text-night' : 'bg-stand text-chalk hairline'
               }`}
             >
               {tracking === 'pending' && <Loader2 className="size-5 animate-spin" aria-hidden />}
-              {open
+              {stake <= 0
+                ? 'Pasirink sumą, kad pažymėtum'
+                : open
                 ? `Pastačiau ${formatEuro(stake)} už ${formatOdds(price.odds)}`
                 : `Vis tiek pažymėti ${formatEuro(stake)} už ${formatOdds(price.odds)}`}
             </button>
