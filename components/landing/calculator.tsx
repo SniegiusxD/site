@@ -113,7 +113,7 @@ export function Calculator({ counts }: { counts: SignalCounts | null }) {
         <dl className="mt-8 space-y-3 text-[0.95rem]">
           <div>
             <dt className="inline font-semibold">
-              {formatInteger(TRACK_RECORD.bets)} {ltPlural(TRACK_RECORD.bets, 'užbaigtas signalas', 'užbaigti signalai', 'užbaigtų signalų')}
+              {formatInteger(TRACK_RECORD.bets)} {ltPlural(TRACK_RECORD.bets, 'rungtynės su užbaigtu signalu', 'rungtynės su užbaigtais signalais', 'rungtynių su užbaigtais signalais')}
             </dt>{' '}
             <dd className="inline text-haze">
               {recordPeriodLabel()}, grąža {formatEdge(TRACK_RECORD.roi)}, vid. koeficientas {TRACK_RECORD.averageOdds.toFixed(2).replace('.', ',')}
@@ -307,8 +307,8 @@ function Method() {
       <div className="mt-3 space-y-3 text-haze">
         <p>
           100 kartų „sužaidžiam“ {formatInteger(BETS)} statymų ta pačia suma. Kiekvienas statymas atsitiktinai ištraukiamas iš{' '}
-          {formatInteger(TRACK_RECORD.bets)} mūsų užbaigtų signalų ({recordPeriodLabel()}) su tikrais koeficientais ir tikrais rezultatais:
-          laimėta {formatInteger(TRACK_RECORD.won)}, pralaimėta {formatInteger(TRACK_RECORD.lost)}, grąžinta {formatInteger(TRACK_RECORD.pushed)}.
+          {formatInteger(TRACK_RECORD.bets)} mūsų rungtynių su užbaigtais signalais ({recordPeriodLabel()}) su tikrais koeficientais ir tikrais rezultatais:
+          pliuse {formatInteger(TRACK_RECORD.won)}, minuse {formatInteger(TRACK_RECORD.lost)}, ties nuliu {formatInteger(TRACK_RECORD.pushed)}.
         </p>
         <p>
           Suma yra ¼ Kelly nuo tavo bankrollo tipiniam mūsų signalui. Tikroje programėlėje suma kinta pagal kiekvieno signalo vertę ir
