@@ -390,7 +390,7 @@ export function CompactSignalRow({
 
 /** Shared by the compact rows and their column header, so the two line up. */
 export const COMPACT_COLUMNS =
-  'grid-cols-[1.5rem_5.25rem_minmax(0,1fr)_minmax(0,1.25fr)_3.25rem_3.25rem_3.5rem_3.5rem_5.75rem]'
+  'grid-cols-[1.5rem_5.25rem_minmax(0,1fr)_minmax(0,1fr)_3.25rem_3.25rem_3.5rem_3.5rem_5.75rem]'
 
 /** The column names above the compact list, desktop only. Rows name each figure for screen readers. */
 export function CompactHeader() {
