@@ -28,8 +28,9 @@ export function OddsTicker() {
             <span className="text-haze-dim">
               tikroji <span className="tnum">{item.fair}</span>
             </span>
-            {/* The book's price against the true one; each lights up in turn. */}
-            <span className="kr-value-flash flex items-center gap-2 rounded-md px-1.5 py-0.5" style={{ animationDelay: `${(index % items.length) * 1.4}s` }}>
+            {/* The book's price against the true one; each lights up in turn. A negative delay staggers them
+                and still lets calm mode end the animation at once. */}
+            <span className="kr-value-flash flex items-center gap-2 rounded-md px-1.5 py-0.5" style={{ animationDelay: `-${(index % items.length) * 1.4}s` }}>
               <span>{item.book}</span>
               <span className="font-semibold text-chalk tnum">{item.odds}</span>
               <span className="font-semibold text-floodlight tnum">{item.value}</span>
