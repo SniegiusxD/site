@@ -42,7 +42,10 @@ export function PriceHistoryChart({ signalId, book, fairOdds }: { signalId: stri
   const pad = Math.max((max - min) * 0.25, 0.03)
   const low = min - pad
   const high = max + pad
-  const x = (index: number) => (index / (mine.length - 1)) * W
+  // Scans are spaced by real time: the runner's gaps vary (a quiet night, a restart).
+  const t0 = Date.parse(mine[0].at)
+  const span = Date.parse(mine[mine.length - 1].at) - t0
+  const x = (index: number) => (span > 0 ? ((Date.parse(mine[index].at) - t0) / span) * W : (index / (mine.length - 1)) * W)
   const y = (value: number) => H - ((value - low) / (high - low)) * H
   const line = (values: number[]) => values.map((value, index) => `${index ? 'L' : 'M'}${x(index).toFixed(1)},${y(value).toFixed(1)}`).join(' ')
   const area = `${line(odds)} ${fairs
@@ -55,7 +58,7 @@ export function PriceHistoryChart({ signalId, book, fairOdds }: { signalId: stri
   const change = last.odds / first.odds - 1
   const lineColor = change < 0 ? 'var(--brick)' : 'var(--floodlight)'
   const hours = Math.max(0, Math.round((Date.parse(last.at) - Date.parse(first.at)) / 3_600_000))
-  const ticks = [first, mine[Math.floor((mine.length - 1) / 2)], last]
+  const ticks = [first.at, new Date(t0 + span / 2).toISOString(), last.at]
 
   return (
     <section aria-label="Kainos istorija" className="mt-4 rounded-2xl bg-stand p-5 hairline sm:p-6">
@@ -111,7 +114,7 @@ export function PriceHistoryChart({ signalId, book, fairOdds }: { signalId: stri
         </div>
         <div aria-hidden className="mt-1.5 flex justify-between text-[0.75rem] text-haze-dim tnum">
           {ticks.map((point, index) => (
-            <span key={index}>{clockLabel(point.at)}</span>
+            <span key={index}>{clockLabel(point)}</span>
           ))}
         </div>
       </div>
