@@ -843,7 +843,7 @@ function PaceStep({ prefs, update }: StepProps) {
         <HardTimes returns={returns} stake={stake} dailyBets={prefs.dailyBets} />
       </div>
       <p className="mt-6 text-[0.85rem] text-haze-dim">
-        Scenarijai iš {formatInteger(TRACK_RECORD.bets)} mūsų užbaigtų signalų ({recordPeriodLabel()}, grąža {formatEdge(TRACK_RECORD.roi)}). Tai ne
+        Scenarijai iš {formatInteger(TRACK_RECORD.bets)} mūsų rungtynių su užbaigtais signalais ({recordPeriodLabel()}, grąža {formatEdge(TRACK_RECORD.roi)}). Tai ne
         prognozė.{' '}
         <Link href="/skaiciuokle" className="underline decoration-rail-strong underline-offset-4 hover:text-chalk">
           Skaičiuoklė

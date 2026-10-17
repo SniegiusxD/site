@@ -18,7 +18,7 @@ export const FAQ_QUESTIONS: Array<{ q: string; a: React.ReactNode }> = [
     q: 'Ar tikrai uždirbsiu?',
     a: (
       <>
-        Pažadėti to niekas negali. Mūsų {formatInteger(TRACK_RECORD.bets)} užbaigtų signalų ({recordPeriodLabel()}) grąža kol kas{' '}
+        Pažadėti to niekas negali. Mūsų {formatInteger(TRACK_RECORD.bets)} rungtynių su užbaigtais signalais ({recordPeriodLabel()}) grąža kol kas{' '}
         {formatEdge(TRACK_RECORD.roi)}, o istorija dar trumpa. Skaičiuoklėje, kuri naudoja tuos pačius rezultatus, maždaug {negativeInTen} iš 10
         scenarijų po 1 000 statymų baigiasi minuse. Todėl rodom ir CLV: jis parodo, ar kainos buvo geros, net kai rezultatas dar svyruoja.{' '}
         <Link href="/skaiciuokle" className={linkClass}>
