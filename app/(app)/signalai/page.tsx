@@ -18,6 +18,9 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic'
 
+/** A dynamic page renders once per request: its clock goes to the board so time labels hydrate unchanged. */
+const serverClock = () => Date.now()
+
 export default async function SignalsPage({ searchParams }: { searchParams: Promise<{ atrakinta?: string; signal?: string; book?: string }> }) {
   const user = await getSessionUser()
   if (!user) return null
@@ -36,6 +39,7 @@ export default async function SignalsPage({ searchParams }: { searchParams: Prom
       justUnlocked={atrakinta === '1' && access.hasAccess}
       link={signal ? { signal, book } : undefined}
       initialDensity={densityFromCookie(jar.get(DENSITY_COOKIE)?.value)}
+      renderedAt={serverClock()}
     />
   )
 }

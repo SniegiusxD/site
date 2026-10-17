@@ -28,11 +28,16 @@ export function shouldPoll(visible: boolean, lastActivityAt: number, now: number
  * clock tick every 30 s so "starts in" labels move. A 401/402 means access
  * changed elsewhere, so the server page is asked again.
  */
-export function useLiveBoard(initial: LiveBoard, initialBets: BoardBet[]) {
+export function useLiveBoard(initial: LiveBoard, initialBets: BoardBet[], renderedAt?: number) {
   const router = useRouter()
   const [board, setBoard] = useState(initial)
   const [bets, setBets] = useState(initialBets)
-  const [now, setNow] = useState(() => new Date())
+  // The first render uses the server's clock, so "po 14 min" matches the HTML
+  // it hydrates (a minute ticking over in between was React error #418); the
+  // browser's own clock takes over right after.
+  const [now, setNow] = useState(() => (renderedAt ? new Date(renderedAt) : new Date()))
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- one switch to the local clock after hydration
+  useEffect(() => setNow(new Date()), [])
   const [refreshing, setRefreshing] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 

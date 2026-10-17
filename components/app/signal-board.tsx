@@ -82,6 +82,7 @@ export function SignalBoard({
   justUnlocked = false,
   link,
   initialDensity = 'normal',
+  renderedAt,
 }: {
   initial: LiveBoard
   initialBets: BoardBet[]
@@ -94,6 +95,8 @@ export function SignalBoard({
   link?: { signal?: string; book?: string }
   /** From the kr-board-density cookie, so the chosen density is there in the first frame. */
   initialDensity?: Density
+  /** The server's clock when it rendered, so time labels hydrate unchanged. */
+  renderedAt?: number
 }) {
   const router = useRouter()
   const reduced = useReducedMotion()
@@ -101,7 +104,7 @@ export function SignalBoard({
   const { account, updateSettings, saveError } = useAccount()
   const prefs = account.preferences
 
-  const { board, bets, addBet, now, refreshing, loadError, pulses, refresh, refreshBets } = useLiveBoard(initial, initialBets)
+  const { board, bets, addBet, now, refreshing, loadError, pulses, refresh, refreshBets } = useLiveBoard(initial, initialBets, renderedAt)
   const [search, setSearch] = useState('')
   const [onlyNew, setOnlyNew] = useState(false)
   // The moment this member last had the board open, on this device. Read once,

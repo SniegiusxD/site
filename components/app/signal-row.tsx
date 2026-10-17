@@ -300,7 +300,7 @@ export function CompactSignalRow({
         <span className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 lg:hidden">
           <BookMark book={price.book} size="sm" tinted={open} />
           <span className="truncate font-medium">{price.eventName}</span>
-          <span data-flip={`odds-${signal.id}-${price.book}`} className={`font-display text-[1.05rem] font-bold tnum transition-colors duration-700 ${oddsTone}`}>
+          <span data-flip={`odds-${signal.id}-${price.book}`} className={`text-right font-display text-[1.05rem] font-bold tnum transition-colors duration-700 ${oddsTone}`}>
             <NumberFlow value={price.odds} locales="lt-LT" format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
           </span>
           <span className="col-span-2 col-start-1 truncate text-[0.85rem] text-haze">
@@ -309,7 +309,7 @@ export function CompactSignalRow({
           </span>
           <span className="flex items-center justify-end gap-2 text-[0.85rem] tnum">
             <span data-flip={`edge-${signal.id}-${price.book}`} className={`font-semibold ${edgeTone}`}>{formatEdge(price.edge)}</span>
-            {amount}
+            <span className="min-w-[2.6rem] text-right">{amount}</span>
           </span>
         </span>
         {/* Desktop: one line, the columns of the header above the list. */}
@@ -390,7 +390,7 @@ export function CompactSignalRow({
 
 /** Shared by the compact rows and their column header, so the two line up. */
 export const COMPACT_COLUMNS =
-  'grid-cols-[1.5rem_4.5rem_minmax(0,1.4fr)_minmax(0,1fr)_3.25rem_3.25rem_3.5rem_3.5rem_5.75rem]'
+  'grid-cols-[1.5rem_5.25rem_minmax(0,1fr)_minmax(0,1.25fr)_3.25rem_3.25rem_3.5rem_3.5rem_5.75rem]'
 
 /** The column names above the compact list, desktop only. Rows name each figure for screen readers. */
 export function CompactHeader() {
