@@ -127,6 +127,7 @@ export function FilterChips({
   onBoard,
   sortChip,
   savedChip,
+  hint,
 }: {
   freeTier: boolean
   counts: FilterCounts
@@ -135,6 +136,8 @@ export function FilterChips({
   sortChip?: React.ReactNode
   /** Folds away with the other chips in a narrow column. */
   savedChip?: React.ReactNode
+  /** Desktop: the arrow-key hint, at the end of the row. */
+  hint?: React.ReactNode
 }) {
   const { account, updateSettings } = useAccount()
   const prefs = account.preferences
@@ -315,6 +318,7 @@ export function FilterChips({
         ))}
       </FilterChip>
       </div>
+      {hint}
     </div>
   )
 }
