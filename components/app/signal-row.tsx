@@ -87,7 +87,7 @@ export function SignalRow({
         type="button"
         onClick={onSelect}
         aria-current={active ? 'true' : undefined}
-        className={`relative grid w-full grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 px-4 pt-3.5 pb-3 text-left transition-colors sm:px-6 ${active ? 'bg-stand' : 'hover:bg-stand/60'}`}
+        className={`relative grid w-full grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 pt-3.5 pr-12 pb-3 pl-4 text-left transition-colors sm:pr-14 sm:pl-6 ${active ? 'bg-stand' : 'hover:bg-stand/60'}`}
       >
         {/* The book's accent on the left edge; the selected row's white bar replaces it. */}
         <span
@@ -134,7 +134,7 @@ export function SignalRow({
             </span>
           )}
         </span>
-        <span className="col-span-2 col-start-2 mt-2 flex min-w-0 items-center gap-2 pr-8 text-[0.85rem]">
+        <span className="col-span-2 col-start-2 mt-2 flex min-w-0 items-center gap-2 text-[0.85rem]">
           {pulse === 'new' && <span className="shrink-0 rounded-full bg-pitch-soft px-1.5 py-0.5 text-[0.75rem] font-semibold text-pitch">Naujas</span>}
           <span className="min-w-0 truncate text-haze">
             {sportName(signal.sport)},{' '}
@@ -167,9 +167,9 @@ export function SignalRow({
             ) : (
               open &&
               stake > 0 && (
-                <span className="rounded-full bg-rail px-2 py-0.5 font-semibold tnum">
-                  <span className="sr-only">Siūloma suma </span>
-                  {formatEuro(stake)}
+                <span className="inline-flex items-baseline gap-1 rounded-md bg-night-deep/70 px-2 py-0.5 ring-1 ring-rail">
+                  <span className="text-[0.75rem] text-haze">suma</span>
+                  <span className="font-semibold text-chalk tnum">{formatEuro(stake)}</span>
                 </span>
               )
             )}
@@ -193,7 +193,7 @@ export function SignalRow({
         }}
         aria-pressed={pinned}
         aria-label={pinned ? `Nebesekti: ${price.eventName}` : `Sekti rungtynes: ${price.eventName}`}
-        className={`absolute right-2 bottom-11 grid size-8 place-items-center rounded-lg transition-colors sm:right-4 ${
+        className={`absolute top-3 right-2 grid size-8 place-items-center rounded-lg transition-colors sm:right-3 ${
           pinned ? 'text-chalk' : 'text-haze-dim hover:bg-rail hover:text-chalk'
         }`}
       >
@@ -204,7 +204,7 @@ export function SignalRow({
           type="button"
           onClick={onToggleHidden}
           aria-label={isHidden ? `Grąžinti į sąrašą: ${price.eventName}` : `Paslėpti: ${price.eventName}`}
-          className="absolute right-2 bottom-2 grid size-8 place-items-center rounded-lg text-haze-dim transition-colors hover:bg-rail hover:text-chalk sm:right-4"
+          className="absolute right-2 bottom-2 grid size-8 place-items-center rounded-lg text-haze-dim transition-colors hover:bg-rail hover:text-chalk sm:right-3"
         >
           {isHidden ? <Eye className="size-4" aria-hidden /> : <X className="size-4" aria-hidden />}
         </button>
