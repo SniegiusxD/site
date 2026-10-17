@@ -381,7 +381,7 @@ export function SignalBoard({
                 </p>
               </div>
               <div className="flex items-center gap-1">
-                <FilterChip label="Vaizdas" value={DENSITIES.find((option) => option.value === density)?.label ?? 'Vaizdas'} active={false}>
+                <FilterChip label="Išdėstymas" value={DENSITIES.find((option) => option.value === density)?.label ?? 'Išdėstymas'} active={false}>
                   {DENSITIES.map((option) => (
                     <FilterOption
                       key={option.value}
