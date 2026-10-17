@@ -121,7 +121,21 @@ export function SortChip({ freeTier }: { freeTier: boolean }) {
 }
 
 /** Always visible, the way a member actually works: narrow, look, widen. */
-export function FilterChips({ freeTier, counts, onBoard }: { freeTier: boolean; counts: FilterCounts; onBoard: string[] }) {
+export function FilterChips({
+  freeTier,
+  counts,
+  onBoard,
+  sortChip,
+  savedChip,
+}: {
+  freeTier: boolean
+  counts: FilterCounts
+  onBoard: string[]
+  /** Always beside the Filtrai button, so the folded row is one even line. */
+  sortChip?: React.ReactNode
+  /** Folds away with the other chips in a narrow column. */
+  savedChip?: React.ReactNode
+}) {
   const { account, updateSettings } = useAccount()
   const prefs = account.preferences
   const { drift, sports: sportsPicked, markets, periods, setDrift, setSportsPicked, setMarkets, setPeriods } = useBoardView()
@@ -160,11 +174,13 @@ export function FilterChips({ freeTier, counts, onBoard }: { freeTier: boolean; 
       >
         <SlidersHorizontal className="size-4" aria-hidden />
         Filtrai{narrowing ? ` (${narrowing})` : ''}
-        <span className={open || narrowing ? 'text-night/70' : 'text-haze'}>
+        <span className={`hidden @sm:inline ${open || narrowing ? 'text-night/70' : 'text-haze'}`}>
           {prefs.maxHoursToStart} val. · {freeTier ? `iki ${formatEdge(FREE_MAX_EDGE)}` : `${Math.round(prefs.minEdge * 100)} %+`}
         </span>
       </button>
+      {sortChip}
       <div className={open ? 'contents' : 'hidden @md:contents'}>
+      {savedChip}
       <FilterChip label="Kontoros" value={prefs.books.length < BOOKS.length ? booksValue : 'Kontoros'} active={prefs.books.length < BOOKS.length}>
         {BOOKS.map((book) => (
           <FilterOption

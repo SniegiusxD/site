@@ -477,10 +477,14 @@ export function SignalBoard({
                   Nauji {newCount}
                 </button>
               )}
-              <SavedViewsChip />
-              <SortChip freeTier={freeTier} />
             </div>
-            <FilterChips freeTier={freeTier} counts={counts} onBoard={onBoard} />
+            <FilterChips
+              freeTier={freeTier}
+              counts={counts}
+              onBoard={onBoard}
+              sortChip={<SortChip freeTier={freeTier} />}
+              savedChip={<SavedViewsChip />}
+            />
             </div>
 
             {saveError && <p className="mt-3 text-[0.9rem] text-brick">{saveError}</p>}
