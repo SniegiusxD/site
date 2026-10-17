@@ -137,7 +137,7 @@ export function SignalDetail({
   }
 
   return (
-    <article className="mx-auto max-w-[46rem] px-4 pt-4 pb-32 sm:px-8 lg:pt-8 lg:pb-12">
+    <article className="@container mx-auto max-w-[46rem] px-4 pt-4 pb-32 sm:px-8 lg:pt-8 lg:pb-12">
       <div className="flex items-center gap-2.5 text-[0.95rem] text-haze">
           {onClose && (
             <button
@@ -157,12 +157,12 @@ export function SignalDetail({
       </div>
 
       {/* A long fixture name (youth and reserve teams run to 100 characters) gets
-          a smaller size and, on phones, the copy buttons move below it instead of
-          squeezing it into a narrow column. */}
+          a smaller size and, in a narrow panel (phones, the compact board's side
+          column), the copy buttons move below it instead of squeezing it. */}
       <div
-        className={`mt-5 flex items-start justify-between gap-3 ${longName ? 'flex-col sm:flex-row' : ''}`}
+        className={`mt-5 flex items-start justify-between gap-3 ${longName ? 'flex-col @lg:flex-row' : ''}`}
       >
-        <h2 className={`min-w-0 max-w-full break-words hyphens-auto ${longName ? 'text-[1.7rem] sm:text-[2.1rem]' : 'text-[2.1rem] sm:text-[2.6rem]'}`}>
+        <h2 className={`min-w-0 max-w-full break-words hyphens-auto ${longName ? 'text-[1.7rem] @lg:text-[2.1rem]' : 'text-[2.1rem] @lg:text-[2.6rem]'}`}>
           {eventLabel(price.eventName)}
         </h2>
         <span className="mt-1 flex shrink-0 items-center gap-1">
