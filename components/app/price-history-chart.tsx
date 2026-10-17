@@ -125,7 +125,7 @@ export function PriceHistoryChart({ signalId, book, fairOdds }: { signalId: stri
           <dt className="text-[0.75rem] text-haze">Dabar</dt>
           <dd className="font-display text-[1.15rem] font-bold tnum">
             {formatOdds(last.odds)}{' '}
-            <span className={`text-[0.8rem] font-semibold ${change < 0 ? 'text-brick' : change > 0 ? 'text-floodlight' : 'text-haze'}`}>{formatEdge(change)}</span>
+            <span className={`text-[0.8rem] font-semibold ${change < 0 ? 'text-brick' : change > 0 ? 'text-floodlight' : 'text-haze'}`}>{Math.abs(change) < 0.0005 ? 'be pokyčio' : formatEdge(change)}</span>
           </dd>
         </div>
         <div className="rounded-xl px-3 py-2 hairline">
