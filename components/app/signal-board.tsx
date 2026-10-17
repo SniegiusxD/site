@@ -22,6 +22,7 @@ import {
   clockLabel,
   isStale,
   linkedRow,
+  timelineGroups,
   sportsIn,
 } from '@/lib/live-view'
 import type { Density } from '@/lib/board-density'
@@ -35,7 +36,9 @@ import { useAccount } from './account-provider'
 import { FirstSteps } from './first-steps'
 import { SignalDetail } from './signal-detail'
 import { CompactHeader, CompactSignalRow, SignalRow } from './signal-row'
-import { Segmented } from './segmented'
+import { FilterChip, FilterOption } from './filter-chip'
+import { FocusDeck } from './board/focus-deck'
+import { MarketGridHeader, MarketGridRow } from './board/market-grid-row'
 import { TrialRecap } from './trial-recap'
 import { DailyTarget } from './board/daily-target'
 import { NewSignalsPill } from './board/new-signals-pill'
@@ -50,9 +53,14 @@ import { useLiveBoard } from './board/use-live-board'
 import { pinKeyOf, SEEN_KEY, type SortKey, useBoardView, useDensity, useHiddenSignals, usePinned } from './board/use-board-preferences'
 import { EASE, SPRING } from '@/lib/motion'
 
+// The board's layouts. The member picks one; it is remembered per browser and
+// in a cookie, so the server renders the chosen layout in the first frame.
 const DENSITIES: Array<{ value: Density; label: string }> = [
   { value: 'normal', label: 'Įprastas' },
   { value: 'compact', label: 'Kompaktiškas' },
+  { value: 'grid', label: 'Lentelė: visos kontoros' },
+  { value: 'timeline', label: 'Laiko juosta' },
+  { value: 'focus', label: 'Fokusas: po vieną' },
 ]
 function useIsDesktop() {
   const [desktop, setDesktop] = useState(false)
@@ -105,6 +113,8 @@ export function SignalBoard({
   const { sort, drift, sports: sportsPicked, markets, periods, setDrift } = useBoardView()
   const [density, chooseDensity] = useDensity(initialDensity)
   const compact = density === 'compact'
+  const grid = density === 'grid'
+  const focus = density === 'focus'
   const [showClosed, setShowClosed] = useState(false)
   const [showHidden, setShowHidden] = useState(false)
   // The moment the trial starts: the newly visible signals rise in one after
@@ -290,6 +300,18 @@ export function SignalBoard({
   function renderRow(row: BoardRow, options: { isHidden?: boolean; enterIndex?: number } = {}) {
     const exposure = exposureFor(row.signal, bets, signalsById)
     const { suggested } = boardStake(prefs, row.signal, row.price, exposure)
+    if (grid) {
+      return (
+        <MarketGridRow
+          key={row.signal.id}
+          row={row}
+          now={now}
+          active={selectedRow?.signal.id === row.signal.id}
+          movement={board.movement?.[row.signal.id]}
+          onSelect={() => setSelected(row)}
+        />
+      )
+    }
     if (compact) {
       return (
         <CompactSignalRow
@@ -335,7 +357,9 @@ export function SignalBoard({
   return (
     <main
       className={`lg:grid lg:h-dvh ${
-        compact
+        focus
+          ? 'lg:grid-cols-[minmax(0,1fr)]'
+          : compact || grid
           ? 'lg:grid-cols-[minmax(0,44rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,52rem)_minmax(0,1fr)] 2xl:grid-cols-[minmax(0,60rem)_minmax(0,1fr)]'
           : 'lg:grid-cols-[minmax(0,29rem)_minmax(0,1fr)]'
       }`}
@@ -357,13 +381,16 @@ export function SignalBoard({
                 </p>
               </div>
               <div className="flex items-center gap-1">
-                <Segmented
-                  label="Sąrašo tankis"
-                  options={DENSITIES}
-                  value={density}
-                  onChange={chooseDensity}
-                  size="sm"
-                />
+                <FilterChip label="Vaizdas" value={DENSITIES.find((option) => option.value === density)?.label ?? 'Vaizdas'} active={false}>
+                  {DENSITIES.map((option) => (
+                    <FilterOption
+                      key={option.value}
+                      label={option.label}
+                      checked={density === option.value}
+                      onChange={() => chooseDensity(option.value)}
+                    />
+                  ))}
+                </FilterChip>
                 <Link
                   href="/profilis#telegram"
                   aria-label="Telegram pranešimai"
@@ -544,11 +571,42 @@ export function SignalBoard({
               <NewSignalsPill pulses={pulses} listTop={listTop} />
               <PullToRefresh onRefresh={refresh} />
               {compact && <CompactHeader />}
-              <ul>
-                <AnimatePresence key={unlockedAt ?? 'board'} initial={unlockedAt !== null && !reduced} custom={now.getTime()}>
-                  {visible.map((row, index) => renderRow(row, { enterIndex: index }))}
-                </AnimatePresence>
-              </ul>
+              {grid && <MarketGridHeader />}
+              {focus ? (
+                <FocusDeck rows={visible} current={selectedRow ?? visible[0] ?? null} onPick={setSelected}>
+                  {(selectedRow ?? visible[0]) && (
+                    <SignalDetail
+                      key={`${(selectedRow ?? visible[0]).signal.id}-${(selectedRow ?? visible[0]).price.book}`}
+                      signal={(selectedRow ?? visible[0]).signal}
+                      price={(selectedRow ?? visible[0]).price}
+                      now={now}
+                      bets={bets}
+                      signalsById={signalsById}
+                      movement={movementFor(selectedRow ?? visible[0])}
+                      onTracked={onTracked}
+                    />
+                  )}
+                </FocusDeck>
+              ) : density === 'timeline' ? (
+                timelineGroups(visible, now).map((group) => (
+                  <section key={group.key} aria-label={group.label}>
+                    <h2 className="sticky top-0 z-10 border-b border-rail bg-night/90 px-4 py-2 text-[0.85rem] font-semibold text-haze backdrop-blur sm:px-6">
+                      {group.label} <span className="font-normal text-haze-dim tnum">· {group.rows.length}</span>
+                    </h2>
+                    <ul>
+                      <AnimatePresence initial={false} custom={now.getTime()}>
+                        {group.rows.map((row) => renderRow(row))}
+                      </AnimatePresence>
+                    </ul>
+                  </section>
+                ))
+              ) : (
+                <ul>
+                  <AnimatePresence key={unlockedAt ?? 'board'} initial={unlockedAt !== null && !reduced} custom={now.getTime()}>
+                    {visible.map((row, index) => renderRow(row, { enterIndex: index }))}
+                  </AnimatePresence>
+                </ul>
+              )}
             </>
           )}
 
@@ -569,7 +627,7 @@ export function SignalBoard({
       {/* Desktop detail. popLayout: the new detail mounts at once while the old
           one fades, so the odds and value fly from the row without waiting
           (FlipFrom); the leaving one is positioned against this section. */}
-      <section aria-label="Signalo informacija" className="relative hidden min-h-0 overflow-y-auto lg:block">
+      <section aria-label="Signalo informacija" className={`relative hidden min-h-0 overflow-y-auto ${focus ? '' : 'lg:block'}`}>
         {selectedRow ? (
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
@@ -610,7 +668,7 @@ export function SignalBoard({
       <BetFlight flight={flight} onLanded={land} />
 
       {/* Phone detail sheet */}
-      <PhoneSheet open={!desktop && selectedRow !== null} onClose={() => setSelected(null)}>
+      <PhoneSheet open={!desktop && !focus && selectedRow !== null} onClose={() => setSelected(null)}>
         {selectedRow && (
           <SignalDetail
             key={`${selectedRow.signal.id}-${selectedRow.price.book}`}
