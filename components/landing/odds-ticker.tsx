@@ -3,7 +3,7 @@ import { landingSignals } from '@/lib/landing-signals'
 
 const items = landingSignals.map((signal) => {
   const price = signal.prices.find((item) => item.book === signal.valueBook) ?? signal.prices[0]
-  return { id: signal.id, event: price.event, book: price.book, odds: formatOdds(price.odds), value: formatEdge(edgeOf(price.odds, signal.fairOdds)) }
+  return { id: signal.id, event: price.event, book: price.book, fair: formatOdds(signal.fairOdds), odds: formatOdds(price.odds), value: formatEdge(edgeOf(price.odds, signal.fairOdds)) }
 })
 
 /**
@@ -25,9 +25,16 @@ export function OddsTicker() {
             className="flex items-center gap-2.5 border-r border-rail px-5 text-[0.875rem] whitespace-nowrap text-haze"
           >
             <span className="text-chalk">{item.event}</span>
-            <span>{item.book}</span>
-            <span className="font-semibold text-chalk tnum">{item.odds}</span>
-            <span className="font-semibold text-floodlight tnum">{item.value}</span>
+            <span className="text-haze-dim">
+              tikroji <span className="tnum">{item.fair}</span>
+            </span>
+            {/* The book's price against the true one; each lights up in turn. A negative delay staggers them
+                and still lets calm mode end the animation at once. */}
+            <span className="kr-value-flash flex items-center gap-2 rounded-md px-1.5 py-0.5" style={{ animationDelay: `-${(index % items.length) * 1.4}s` }}>
+              <span>{item.book}</span>
+              <span className="font-semibold text-chalk tnum">{item.odds}</span>
+              <span className="font-semibold text-floodlight tnum">{item.value}</span>
+            </span>
           </li>
         ))}
       </ul>
